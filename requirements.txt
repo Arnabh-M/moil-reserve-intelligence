@@ -1,0 +1,9 @@
+scikit-learn
+xgboost
+pykrige
+geopandas
+rasterio
+neo4j
+pandas
+numpy
+jupyter

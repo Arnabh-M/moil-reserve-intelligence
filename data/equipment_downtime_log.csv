@@ -1,0 +1,37 @@
+equipment_id,site_id,down_start,down_end,duration_hours,reason
+eq_bal_03,balaghat,2026-03-01 06:00:00,2026-03-01 12:45:06,6.75,scheduled maintenance
+eq_bal_01,balaghat,2026-03-04 22:00:00,2026-03-05 01:07:47,3.13,scheduled maintenance
+eq_nag_03,nagpur,2026-03-06 07:00:00,2026-03-07 21:47:03,38.78,weather delay
+eq_nag_03,nagpur,2026-03-09 01:00:00,2026-03-09 10:50:36,9.84,operator shift gap
+eq_bal_03,balaghat,2026-03-15 01:00:00,2026-03-15 07:44:31,6.74,weather delay
+eq_nag_03,nagpur,2026-03-26 00:00:00,2026-03-26 03:22:08,3.37,hydraulic leak
+eq_nag_01,nagpur,2026-03-28 00:00:00,2026-03-29 18:14:10,42.24,weather delay
+eq_bal_02,balaghat,2026-03-30 00:00:00,2026-03-30 04:56:13,4.94,scheduled maintenance
+eq_bhd_02,bhandara,2026-03-31 13:00:00,2026-04-01 22:25:21,33.42,weather delay
+eq_nag_02,nagpur,2026-04-04 03:00:00,2026-04-04 07:10:43,4.18,spare parts unavailable
+eq_nag_01,nagpur,2026-04-09 11:00:00,2026-04-10 08:20:45,21.35,weather delay
+eq_bhd_05,bhandara,2026-04-23 00:00:00,2026-04-23 02:23:35,2.39,scheduled maintenance
+eq_bal_05,balaghat,2026-04-24 07:00:00,2026-04-25 04:06:33,21.11,mechanical failure
+eq_bal_04,balaghat,2026-04-24 10:00:00,2026-04-24 18:53:44,8.9,hydraulic leak
+eq_bal_05,balaghat,2026-04-25 12:00:00,2026-04-26 02:35:13,14.59,hydraulic leak
+eq_bal_02,balaghat,2026-04-27 22:00:00,2026-04-28 08:57:30,10.96,operator shift gap
+eq_nag_03,nagpur,2026-04-30 05:00:00,2026-05-01 03:23:55,22.4,operator shift gap
+eq_bal_05,balaghat,2026-05-09 05:00:00,2026-05-10 02:54:30,21.91,electrical fault
+eq_nag_05,nagpur,2026-05-21 10:00:00,2026-05-22 04:17:42,18.3,hydraulic leak
+eq_nag_02,nagpur,2026-05-24 20:00:00,2026-05-25 04:25:02,8.42,electrical fault
+eq_bal_02,balaghat,2026-05-26 05:00:00,2026-05-26 10:32:28,5.54,scheduled maintenance
+eq_bal_05,balaghat,2026-05-27 01:00:00,2026-05-27 18:21:57,17.37,electrical fault
+eq_bhd_05,bhandara,2026-05-31 12:00:00,2026-06-01 09:37:51,21.63,hydraulic leak
+eq_bal_01,balaghat,2026-06-05 14:00:00,2026-06-06 08:46:39,18.78,electrical fault
+eq_nag_04,nagpur,2026-06-14 18:00:00,2026-06-15 05:57:14,11.95,spare parts unavailable
+eq_bal_04,balaghat,2026-06-17 05:00:00,2026-06-17 21:42:53,16.71,hydraulic leak
+eq_bhd_02,bhandara,2026-06-21 15:00:00,2026-06-21 18:26:53,3.45,scheduled maintenance
+eq_bhd_01,bhandara,2026-06-30 21:00:00,2026-07-01 02:15:32,5.26,mechanical failure
+eq_nag_04,nagpur,2026-07-03 20:00:00,2026-07-04 16:37:38,20.63,electrical fault
+eq_bhd_05,bhandara,2026-07-11 14:00:00,2026-07-11 21:29:30,7.49,scheduled maintenance
+eq_bal_02,balaghat,2026-07-19 01:00:00,2026-07-19 06:45:41,5.76,hydraulic leak
+eq_bal_01,balaghat,2026-07-26 00:00:00,2026-07-26 15:15:48,15.26,mechanical failure
+eq_nag_02,nagpur,2026-08-19 23:00:00,2026-08-20 18:44:12,19.74,spare parts unavailable
+eq_bhd_01,bhandara,2026-08-24 07:00:00,2026-08-24 17:34:55,10.58,electrical fault
+eq_bal_04,balaghat,2026-08-26 10:00:00,2026-08-26 18:11:20,8.19,mechanical failure
+eq_bal_03,balaghat,2026-08-28 20:00:00,2026-08-30 16:35:21,44.59,weather delay
