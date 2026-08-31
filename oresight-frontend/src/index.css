@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+/* ── Design Tokens (CSS Custom Properties) ─────────────────────────── */
+:root {
+  --navy: #101a2b;
+  --navy2: #16233a;
+  --orange: #e0793a;
+  --orange-soft: #f2a768;
+  --teal: #2a7f8c;
+  --bg: #f4f6f9;
+  --border: #e2e7ee;
+  --white: #ffffff;
+  --text-primary: #1a2332;
+  --text-secondary: #5a6577;
+  --text-muted: #8896a8;
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+}
+
+/* ── TailwindCSS v4 theme extension ────────────────────────────────── */
+@theme {
+  --color-navy: #101a2b;
+  --color-navy2: #16233a;
+  --color-orange: #e0793a;
+  --color-orange-soft: #f2a768;
+  --color-teal: #2a7f8c;
+  --color-bg: #f4f6f9;
+  --color-border: #e2e7ee;
+  --color-text-primary: #1a2332;
+  --color-text-secondary: #5a6577;
+  --color-text-muted: #8896a8;
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ── Base Styles ───────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+/* ── Scrollbar Styling ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ── Utility Classes ───────────────────────────────────────────────── */
+.page-container {
+  padding: 1.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.grid-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Table Styles ──────────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.8125rem;
+}
+
+.data-table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+  background: rgba(42, 127, 140, 0.04);
+}
+
+.data-table tbody td {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  opacity: 0;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
