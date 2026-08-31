@@ -222,6 +222,82 @@ volume; editing `NEO4J_PASSWORD` in `.env` afterward does not change it.
   (`docker volume rm oresight-backend_oresight_neo4j_data`), then
   `docker compose up -d` to reinitialize with the current `.env` value.
 
+## Agent layer (`app/agents/`)
+
+Watcher, Simulator, and Planner — see each file's module docstring for the
+full design rationale. Quick facts:
+
+- **Watcher** (`watcher.py`) polls Postgres for new equipment-down /
+  production-shortfall signals, dedupes against unresolved `risk_events`,
+  and writes a linked row + Neo4j `RiskEvent` node (`external_ref` ties
+  them together) for anything genuinely new.
+- **Simulator** (`simulator.py`) runs the trained shortfall model
+  (`models/shortfall_forecaster.pkl` — see below) on real Postgres state,
+  before vs. after a hypothetical scenario, plus a live ≤3-hop Neo4j
+  traversal. Strictly read-only. This is what `app/routers/simulate.py`'s
+  stub gets replaced with.
+- **Planner** (`planner.py`) searches for redeploy/reschedule/adjust-plan
+  candidates and scores each with a real `SimulatorAgent` call rather than
+  a hand-authored number. Replaces `app/routers/recommendations.py`'s stub.
+
+**Both replacement routers need a reshape, not just a stub swap** — the
+agents return the *real* `SimulateResponse`/`RecommendationOut` shapes
+(`affected_graph_path`, `production_forecast_tonnes`, per-option
+`confidence`, etc.), not the shape in the original Day 3 task doc, which
+predated reading this repo's actual schemas/stubs. See the "INTEGRATION
+NOTE" comments at the top of `simulator.py` and `planner.py` for exactly
+what differs and why.
+
+**Before running any agent**, train the shortfall model — from the repo
+root (one level up), not from here:
+
+```bash
+cd ..
+python train_shortfall_model.py
+```
+
+This reads `data/production_history.csv` / `data/equipment_downtime_log.csv`
+(Day 1) and writes `oresight-backend/models/shortfall_forecaster.pkl` +
+`feature_columns.json`. Both are gitignored (`*.pkl` under "Model
+artefacts") — every clone needs to run this once locally.
+
+Each agent has a `__main__` block that runs it against your local stack and
+prints the result — good for checking things work before wiring in FastAPI:
+
+```bash
+python -m app.agents.watcher
+python -m app.agents.simulator
+python -m app.agents.planner
+```
+
+**Known gap:** Neo4j's Equipment fleet (Day 1's `seed_graph.cypher`) and
+Postgres's (`app/seed_dev.py`) are two independently-seeded fleets with
+different names and partially different `type` vocabularies — there's no
+reliable 1:1 mapping between a specific Postgres equipment row and a
+specific Neo4j node. `app/agents/_bridge.py` documents this and does a
+best-effort match by (site, normalized type); callers correctly get `None`
+back (and log a warning) rather than a guessed match for the types that
+don't overlap (`haul_truck`, `crusher` have no Neo4j counterpart).
+Worth reconciling into one shared equipment seed before Day 4 if the demo
+needs `redeploy` to reliably fire for every equipment type.
+
+**Known model limitation:** the trained shortfall model's response to
+`rolling_7day_downtime_pct` and `schedule_pressure` is weak or
+counter-intuitive (pushing downtime to its max barely moves the
+prediction; higher `schedule_pressure` actually predicts *less* shortfall)
+— an honest consequence of 6 months of synthetic data with few severe
+downtime events and no true backlog dynamics behind `schedule_pressure`,
+not a bug in the agents. `rainfall_proxy`/seasonality dominates and behaves
+intuitively. See the top of `train_shortfall_model.py` for detail. Worth
+revisiting if `equipment_down`/`delay_blasting` scenarios need to look more
+dramatic for a demo.
+
+**2026-08-31 note:** this dev machine already had an unrelated project's
+Postgres container bound to host port 5432, so local testing here used
+`docker-compose.local.yml` (postgres remapped to `5433`, gitignored,
+untracked) instead of `docker-compose.yml` directly. A fresh machine
+doesn't need this — just follow Setup above as written.
+
 ## For frontend teammates
 
 > **2026-08-31 note:** on the dev machine right now, port 8000 is stuck held

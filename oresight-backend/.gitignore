@@ -30,6 +30,9 @@ ENV/
 .env
 .env.local
 
+# Local port-remap copy (machine-specific; not part of the shared stack)
+docker-compose.local.yml
+
 # Databases
 *.db
 *.sqlite
@@ -42,9 +45,10 @@ ENV/
 .coverage
 htmlcov/
 
-# Model artefacts
+# Model artefacts (regenerate locally: cd .. && python train_shortfall_model.py)
 *.joblib
 *.pkl
+models/feature_columns.json
 
 # IDE
 .vscode/
