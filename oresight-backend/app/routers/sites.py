@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import ReserveZone, RiskEvent, Site
 from app.schemas import SiteOut
-from app.services.geo import to_geojson_feature
+from app.services.geo import to_geojson_feature, to_geojson_feature_collection
 from app.services.lookups import get_site_or_404
 
 router = APIRouter(prefix="/sites", tags=["sites"])
@@ -54,6 +54,26 @@ def list_sites(db: Session = Depends(get_db)) -> list[SiteOut]:
     """
     sites = db.scalars(select(Site).order_by(Site.name)).all()
     return [_site_to_out(db, site) for site in sites]
+
+
+@router.get(
+    "/geojson",
+    summary="Get all sites' boundaries as GeoJSON",
+    response_description="A GeoJSON FeatureCollection with one Feature per site polygon",
+)
+def list_sites_geojson(db: Session = Depends(get_db)) -> dict:
+    """Return every site's boundary polygon as a single GeoJSON
+    FeatureCollection, ready for direct use as a MapLibre GeoJSON source.
+
+    Registered ahead of `/{site_id}` so the literal path `geojson` is never
+    swallowed by the `site_id: int` path converter.
+    """
+    sites = db.scalars(select(Site).order_by(Site.name)).all()
+    return to_geojson_feature_collection(
+        sites,
+        "geom",
+        lambda s: {"id": s.id, "name": s.name, "belt_name": s.belt_name},
+    )
 
 
 @router.get("/{site_id}", response_model=SiteOut, summary="Get a single mine site")
