@@ -6,3 +6,4 @@ export { default as Sidebar } from './Sidebar';
 export { default as TopBar } from './TopBar';
 export { default as RecommendationCard } from './RecommendationCard';
 export { default as ProductionChart } from './ProductionChart';
+export { default as CausalGraph } from './CausalGraph';

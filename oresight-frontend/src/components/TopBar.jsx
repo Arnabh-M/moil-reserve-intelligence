@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell, Search, Calendar, Server, Database } from 'lucide-react';
-import { isMockEnabled, setMockEnabled, subscribeMockState } from '../api/config';
-import { useToast } from '../context/ToastContext';
+import { USE_MOCK, setUseMock, subscribeUseMock } from '../api/client';
+import toast from 'react-hot-toast';
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -25,23 +25,24 @@ export default function TopBar() {
   const title = pageTitles[location.pathname]
     || (location.pathname.startsWith('/site/') ? 'Site Detail' : 'OreSight');
 
-  const [mockActive, setMockActive] = useState(isMockEnabled());
-  const { addToast } = useToast();
+  const [mockActive, setMockActive] = useState(USE_MOCK);
 
   useEffect(() => {
-    return subscribeMockState(setMockActive);
+    return subscribeUseMock(setMockActive);
   }, []);
 
   const toggleMock = () => {
     const nextState = !mockActive;
-    setMockEnabled(nextState);
-    addToast({
-      type: nextState ? 'info' : 'success',
-      title: nextState ? 'Mock Mode Enabled' : 'Live API Mode Enabled',
-      message: nextState
-        ? 'Using realistic seeded in-memory responses for offline testing.'
-        : 'Connecting to live FastAPI backend at http://localhost:8000.',
-    });
+    setUseMock(nextState);
+    toast(
+      <div>
+        <p className="font-semibold text-xs">{nextState ? 'Mock Engine Active' : 'Live API Mode Active'}</p>
+        <p className="text-[11px] text-white/70 mt-0.5">
+          {nextState ? 'Simulating backend responses offline.' : 'Connecting to live FastAPI at http://localhost:8000.'}
+        </p>
+      </div>,
+      { id: 'mode-toast' }
+    );
   };
 
   return (
