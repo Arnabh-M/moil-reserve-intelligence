@@ -1,103 +1,116 @@
-import React from 'react';
-import { RecommendationCard } from '../components';
-
-const recommendations = [
-  {
-    trigger:
-      'Heavy rainfall detected near Balaghat — BlastPlan #14 (bp_bal_01) delayed by 2 days. OreZone oz_bal_01 extraction schedule at risk.',
-    options: [
-      {
-        title: 'Reschedule',
-        description:
-          'Push bp_bal_01 to Sep 1 when weather clears. Extends timeline by 4 days but preserves equipment safety margins.',
-        impact: '+12% safety margin',
-        impactVariant: 'operational',
-      },
-      {
-        title: 'Redeploy',
-        description:
-          'Move Excavator BAL-1 to Nagpur site for active extraction while Balaghat waits. Recovers 680 t of idle capacity.',
-        impact: '+680 t recovered',
-        impactVariant: 'info',
-      },
-      {
-        title: 'Adjust Plan',
-        description:
-          'Reduce blast charge and proceed with modified parameters during lighter rain windows. Higher risk, faster turnaround.',
-        impact: '-8% confidence',
-        impactVariant: 'warning',
-      },
-    ],
-  },
-  {
-    trigger:
-      'Drill NAG-1 (eq_nag_02) at Nagpur went down due to hydraulic failure. BlastPlan bp_nag_01 readiness blocked — estimated 48hr repair.',
-    options: [
-      {
-        title: 'Reschedule',
-        description:
-          'Delay bp_nag_01 by 3 days until eq_nag_02 repair is complete. No additional cost, schedule slips to Sep 5.',
-        impact: '-3 day slip',
-        impactVariant: 'warning',
-      },
-      {
-        title: 'Redeploy',
-        description:
-          'Transfer idle Drill BHD-1 from Bhandara to Nagpur. Same type, no blast plan dependency. Transport takes 6 hours.',
-        impact: '+15% recovery',
-        impactVariant: 'operational',
-      },
-      {
-        title: 'Adjust Plan',
-        description:
-          'Use Excavator NAG-1 as interim drilling substitute with modified bit. Slower but avoids full delay.',
-        impact: '-22% efficiency',
-        impactVariant: 'delayed',
-      },
-    ],
-  },
-  {
-    trigger:
-      'Production shortfall at Bhandara Mine — actual output 720 t/day vs 960 t target (25% below). Conveyor BHD-1 throughput degraded.',
-    options: [
-      {
-        title: 'Reschedule',
-        description:
-          'Schedule conveyor maintenance for next weekend. Accept shortfall this week, full recovery by Monday.',
-        impact: '+4 day delay',
-        impactVariant: 'warning',
-      },
-      {
-        title: 'Redeploy',
-        description:
-          'Route Bhandara output through Loader BHD-1 bypass path. 85% of conveyor capacity, eliminates bottleneck.',
-        impact: '+85% capacity',
-        impactVariant: 'operational',
-      },
-      {
-        title: 'Adjust Plan',
-        description:
-          'Increase Balaghat and Nagpur targets by 120 t/day each to offset Bhandara shortfall across the portfolio.',
-        impact: '+240 t/day offset',
-        impactVariant: 'info',
-      },
-    ],
-  },
-];
+import React, { useState, useEffect } from 'react';
+import { Loader2, AlertCircle, RefreshCw, Sparkles, Filter } from 'lucide-react';
+import { RecommendationCard, Card, Button } from '../components';
+import { getAllRecommendations, USE_MOCK } from '../api/client';
 
 export default function Recommendations() {
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filterType, setFilterType] = useState('all');
+
+  const fetchRecommendations = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getAllRecommendations();
+      setRecommendations(data || []);
+    } catch (err) {
+      console.error('[Recommendations] Error fetching recommendations:', err);
+      setError(err.message || 'Failed to fetch recommendations from server');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
+
   return (
     <div className="page-container">
-      <h2 className="page-title">AI Recommendations</h2>
-      <p className="page-subtitle">
-        Intelligent response options for active disruptions — review, simulate, and action
-      </p>
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className="page-title flex items-center gap-2">
+            <span>AI Recommendations</span>
+            <span className="p-1 rounded-md bg-orange/10 text-orange text-xs flex items-center gap-1 font-semibold">
+              <Sparkles size={12} /> GET /recommendations
+            </span>
+          </h2>
+          <p className="page-subtitle mb-0">
+            Real-time mitigation and response options generated from active risk events
+          </p>
+        </div>
 
-      <div className="space-y-5 stagger-children">
-        {recommendations.map((rec, idx) => (
-          <RecommendationCard key={idx} trigger={rec.trigger} options={rec.options} />
-        ))}
+        {USE_MOCK && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            USE_MOCK = true (Simulated Engine)
+          </div>
+        )}
       </div>
+
+      {/* Loading Skeletons */}
+      {loading && (
+        <div className="space-y-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i} className="animate-pulse">
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border">
+                <div className="w-8 h-8 rounded-lg bg-border" />
+                <div className="h-4 bg-border rounded w-3/4" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {[1, 2, 3].map(j => (
+                  <div key={j} className="h-32 bg-border/40 rounded-lg p-3 space-y-2">
+                    <div className="h-4 bg-border rounded w-20" />
+                    <div className="h-3 bg-border rounded w-full" />
+                    <div className="h-3 bg-border rounded w-4/5" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Error state */}
+      {!loading && error && (
+        <Card className="border-danger/30">
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle size={28} className="text-danger mb-2" />
+            <h4 className="text-sm font-bold text-text-primary mb-1">Failed to Load Recommendations</h4>
+            <p className="text-xs text-text-muted max-w-sm mb-4">{error}</p>
+            <Button variant="ghost" size="sm" onClick={fetchRecommendations}>
+              <RefreshCw size={14} /> Retry API Request
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* Recommendations List */}
+      {!loading && !error && recommendations.length === 0 && (
+        <Card>
+          <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted text-xs">
+            <p className="text-sm font-semibold text-text-primary mb-1">No Active Recommendations</p>
+            <p>All mine operations are running within optimal parameters. No mitigation actions required.</p>
+          </div>
+        </Card>
+      )}
+
+      {!loading && !error && recommendations.length > 0 && (
+        <div className="space-y-5 stagger-children">
+          {recommendations.map((rec, idx) => (
+            <RecommendationCard
+              key={rec.risk_event_id ? `rec-${rec.risk_event_id}-${idx}` : `rec-${idx}`}
+              trigger={rec.trigger}
+              risk_event_id={rec.risk_event_id}
+              site_id={rec.site_id || ((idx % 3) + 1)}
+              options={rec.options}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
