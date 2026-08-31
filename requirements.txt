@@ -3,6 +3,10 @@ xgboost
 pykrige
 geopandas
 rasterio
+shapely
+pyproj
+scipy
+joblib
 neo4j
 pandas
 numpy

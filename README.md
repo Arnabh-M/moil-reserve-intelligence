@@ -1,6 +1,8 @@
 # MOIL Reserve Intelligence — SIH26009
 
 Day 1 build: Neo4j graph foundation + synthetic datasets.
+Day 2 build: Reserve Prospectivity model (structural features, classifier,
+kriged confidence surface, GeoJSON export) + Shortfall Forecaster feature prep.
 
 ## Files
 
@@ -9,7 +11,43 @@ Day 1 build: Neo4j graph foundation + synthetic datasets.
   risk events) + 3 verification queries.
 - `generate_datasets.py` — generates `data/production_history.csv`,
   `data/equipment_downtime_log.csv`, `data/deposit_ground_truth.csv`.
+- `geo_utils.py` — shared geospatial helpers (site bboxes, UTM
+  projection, point-to-structure distance, spatially-correlated
+  random fields). Imported by every Day 2 script below.
+- `generate_features.py` — Day 2 Part 1: generates
+  `data/structural_lines.csv` and `data/training_features.csv`;
+  persists `models/ndvi_field.pkl` / `models/elevation_field.pkl`.
+- `train_reserve_classifier.py` — Day 2 Part 2: trains
+  RandomForest + XGBoost on `training_features.csv`, saves the
+  better model to `models/reserve_classifier.pkl`.
+- `build_confidence_surface.py` — Day 2 Part 3: predicts probability
+  over a 50x50 grid, krige-smooths it (PyKrige), resamples to a
+  100x100 grid → `data/confidence_surface.npz`.
+- `export_reserve_zones.py` — Day 2 Part 4: converts the kriged
+  surface into `data/reserve_zones.geojson` (cell polygons with
+  `confidence_score` + `site_id`).
+- `shortfall_features_wip.py` — Day 2 Part 5: engineers features for
+  tomorrow's shortfall forecaster → `data/shortfall_features_wip.csv`
+  (no model trained yet).
 - `requirements.txt` — Python environment.
+
+### Day 2 run order
+
+Parts 1-4 have a hard dependency chain — run them in this order:
+
+```bash
+python generate_features.py          # Part 1
+python train_reserve_classifier.py   # Part 2
+python build_confidence_surface.py   # Part 3
+python export_reserve_zones.py       # Part 4
+python shortfall_features_wip.py     # Part 5 (independent, needs Day 1 CSVs only)
+```
+
+> `export_reserve_zones.py` assumes `site_id` in `reserve_zones.geojson`
+> should be the same lowercase string (`balaghat`/`nagpur`/`bhandara`)
+> used everywhere else in this project. That hasn't been checked
+> against P1's actual `/reserve-zones` endpoint code — confirm the
+> expected id format with whoever owns P1 before wiring it up.
 
 ## 1. Set up the Python environment
 
