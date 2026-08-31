@@ -5,3 +5,4 @@ export { default as Button } from './Button';
 export { default as Sidebar } from './Sidebar';
 export { default as TopBar } from './TopBar';
 export { default as RecommendationCard } from './RecommendationCard';
+export { default as ProductionChart } from './ProductionChart';

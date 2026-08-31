@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "lucide-react": "^1.37.0",
+    "plotly.js-dist-min": "^4.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-hot-toast": "^2.6.0",
+    "react-plotly.js": "^4.1.0",
     "react-router-dom": "^7.18.3",
     "recharts": "^3.10.1"
   },

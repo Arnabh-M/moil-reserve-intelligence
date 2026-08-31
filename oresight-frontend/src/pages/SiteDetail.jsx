@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { MapPin, ShieldAlert, Clock, Network, BarChart3 } from 'lucide-react';
-import { Card, KPIStat, Badge, RecommendationCard } from '../components';
-import { sites, oreZones, riskEvents, equipment } from '../data/mockData';
+import {
+  MapPin, ShieldAlert, Clock, Network, BarChart3,
+} from 'lucide-react';
+import { Card, KPIStat, Badge, RecommendationCard, ProductionChart } from '../components';
+import { sites, oreZones, equipment } from '../data/mockData';
+import { SITE_MAP } from '../api/client';
 
 const siteExtras = {
   balaghat: {
@@ -110,10 +113,12 @@ export default function SiteDetail() {
   const { id } = useParams();
   const [activeTab, setActiveTab] = useState('production');
 
-  const site = sites.find(s => s.id === id);
-  const extras = siteExtras[id] || siteExtras.balaghat;
-  const siteEquipment = equipment.filter(e => e.site_id === id);
-  const siteZones = oreZones.filter(z => z.site_id === id);
+  const site = sites.find(s => s.id === id || String(SITE_MAP[s.id]) === String(id));
+  const normalizedSiteId = site?.id || id;
+  const numericSiteId = SITE_MAP[normalizedSiteId] || 1;
+  const extras = siteExtras[normalizedSiteId] || siteExtras.balaghat;
+  const siteEquipment = equipment.filter(e => e.site_id === normalizedSiteId);
+  const siteZones = oreZones.filter(z => z.site_id === normalizedSiteId);
 
   if (!site) {
     return (
@@ -191,29 +196,17 @@ export default function SiteDetail() {
         })}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content: Production History */}
       {activeTab === 'production' && (
-        <Card title="Production History" subtitle={`Daily output for ${site.name}`}>
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-orange/10 flex items-center justify-center mb-3">
-              <BarChart3 size={24} className="text-orange" />
-            </div>
-            <p className="text-sm font-medium text-text-secondary mb-1">
-              Production Chart
-            </p>
-            <p className="text-xs text-text-muted max-w-sm">
-              This container will render a site-specific production trend chart
-              once the time-series API is wired on Day 3-4. Data scope: daily
-              actual vs target for {site.name}.
-            </p>
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-bg border border-border text-[10px] text-text-muted">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange animate-pulse" />
-              Chart renders after API integration
-            </div>
-          </div>
+        <Card
+          title="Production History"
+          subtitle={`30-day extraction telemetry for ${site.name} (Solid: Actual, Dashed: Target)`}
+        >
+          <ProductionChart site_id={numericSiteId} days={30} className="mt-2" />
         </Card>
       )}
 
+      {/* Tab Content: Recommendations */}
       {activeTab === 'recommendations' && (
         <div className="space-y-5 stagger-children">
           {extras.recommendations.map((rec, idx) => (
@@ -222,6 +215,7 @@ export default function SiteDetail() {
         </div>
       )}
 
+      {/* Tab Content: Graph */}
       {activeTab === 'graph' && (
         <Card title="Knowledge Graph" subtitle={`Neo4j subgraph for ${site.name}`}>
           <div className="flex flex-col items-center justify-center py-16 text-center">
