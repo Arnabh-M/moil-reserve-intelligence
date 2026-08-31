@@ -34,10 +34,10 @@ export default function Login() {
         <rect width="100%" height="100%" fill="url(#contours)" />
       </svg>
 
-      <div className="relative z-10 w-full max-w-[920px] grid grid-cols-1 md:grid-cols-[1.1fr_1fr] overflow-hidden rounded-md border border-white/10 shadow-panel">
+      <div className="relative z-10 w-full max-w-[920px] grid grid-cols-1 md:grid-cols-[1.1fr_1fr] overflow-hidden rounded-md border border-white/10 shadow-subtle">
         <div className="hidden md:flex flex-col justify-between bg-navy2/60 p-10 border-r border-white/10">
           <div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-orange text-white">
                 <Mountain size={20} strokeWidth={2.25} />
               </div>
@@ -56,14 +56,14 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 text-xs text-white/50">
+          <div className="flex items-center gap-3 text-xs text-white/50">
             <ShieldCheck size={15} className="text-teal" />
             Digital twin last synced 2 min ago
           </div>
         </div>
 
         <div className="bg-white p-8 sm:p-10 flex flex-col justify-center">
-          <div className="md:hidden flex items-center gap-2.5 mb-8">
+          <div className="md:hidden flex items-center gap-3 mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-orange text-white">
               <Mountain size={18} strokeWidth={2.25} />
             </div>
@@ -71,11 +71,11 @@ export default function Login() {
           </div>
 
           <h1 className="font-heading text-xl font-semibold text-navy">Sign in to your console</h1>
-          <p className="mt-1.5 text-sm text-slate-500">Access the mine production planning dashboard.</p>
+          <p className="mt-2 text-sm text-slate-500">Access the mine production planning dashboard.</p>
 
           <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold text-navy">
+              <label htmlFor="email" className="mb-2 block text-xs font-semibold text-navy">
                 Work email
               </label>
               <div className="relative">
@@ -87,13 +87,13 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@moil.co.in"
-                  className="w-full rounded-sm border border-border bg-white py-2.5 pl-10 pr-3 text-sm text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
+                  className="w-full rounded-sm border border-border bg-white py-3 pl-10 pr-3 text-sm text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-xs font-semibold text-navy">
+              <label htmlFor="password" className="mb-2 block text-xs font-semibold text-navy">
                 Password
               </label>
               <div className="relative">
@@ -105,7 +105,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-sm border border-border bg-white py-2.5 pl-10 pr-3 text-sm text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
+                  className="w-full rounded-sm border border-border bg-white py-3 pl-10 pr-3 text-sm text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
                 />
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function Login() {
                   type="checkbox"
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
-                  className="h-3.5 w-3.5 rounded-sm border-border text-orange focus:ring-orange/40"
+                  className="h-4 w-4 rounded-sm border-border text-orange focus:ring-orange/40"
                 />
                 Remember me
               </label>
@@ -125,7 +125,7 @@ export default function Login() {
               </a>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full mt-2 py-2.5">
+            <Button type="submit" variant="primary" className="w-full mt-2 py-3">
               Sign In
               <ArrowRight size={16} />
             </Button>

@@ -7,19 +7,31 @@ import { getEventTimestamp, formatRelativeTime } from '../lib/time'
 
 const POLL_INTERVAL_MS = 15000
 
-function severityDotClass(event) {
+function severityVariant(event) {
   const severity = (event.severity || '').toLowerCase()
-  if (severity === 'high' || severity === 'critical') return 'bg-orange'
-  if (severity === 'medium') return 'bg-orange-soft'
-  if (severity === 'low' || severity === 'info') return 'bg-teal'
+  if (severity === 'high' || severity === 'critical') return 'danger'
+  if (severity === 'medium') return 'warning'
+  if (severity === 'low' || severity === 'info') return 'success'
 
   // Fall back to the risk score when the backend has no severity field yet.
   if (typeof event.score === 'number') {
-    if (event.score >= 0.7) return 'bg-orange'
-    if (event.score >= 0.4) return 'bg-orange-soft'
-    return 'bg-teal'
+    if (event.score >= 0.7) return 'danger'
+    if (event.score >= 0.4) return 'warning'
+    return 'success'
   }
-  return 'bg-slate-400'
+  return 'neutral'
+}
+
+function severityLabel(event) {
+  const severity = (event.severity || '').toLowerCase()
+  if (severity) return severity
+
+  if (typeof event.score === 'number') {
+    if (event.score >= 0.7) return 'high'
+    if (event.score >= 0.4) return 'medium'
+    return 'low'
+  }
+  return 'unknown'
 }
 
 function eventTitle(event) {
@@ -89,7 +101,7 @@ export default function LiveEventFeed() {
 
         {status === 'error' && (
           <div className="flex items-start gap-2 px-2 py-4 text-xs text-orange">
-            <AlertCircle size={14} className="mt-0.5 shrink-0" />
+            <AlertCircle size={14} className="mt-1 shrink-0" />
             <span>Unable to reach the risk-events service. Retrying every 15s.</span>
           </div>
         )}
@@ -106,13 +118,15 @@ export default function LiveEventFeed() {
                 freshIds.has(event.id) ? 'animate-fade-in' : ''
               }`}
             >
-              <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${severityDotClass(event)}`} />
               <div className="min-w-0 flex-1">
-                <span className="text-[13px] font-semibold text-navy">{eventTitle(event)}</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-[13px] font-semibold text-navy">{eventTitle(event)}</span>
+                  <Badge variant={severityVariant(event)}>{severityLabel(event)}</Badge>
+                </div>
                 {event.description && (
-                  <p className="mt-0.5 text-xs text-slate-500">{event.description}</p>
+                  <p className="mt-1 text-xs text-slate-500">{event.description}</p>
                 )}
-                <div className="mt-1.5 flex items-center gap-2 text-[11px] text-slate-400">
+                <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-400">
                   {event.site_id && <span className="font-medium text-slate-500">{event.site_id}</span>}
                   {event.site_id && <span>&middot;</span>}
                   <span>{formatRelativeTime(getEventTimestamp(event))}</span>

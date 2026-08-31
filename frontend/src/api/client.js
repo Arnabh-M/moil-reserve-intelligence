@@ -24,3 +24,7 @@ export function getEquipment(siteId) {
 export function getRiskEvents() {
   return request('/risk-events')
 }
+
+export function getRecommendations() {
+  return request('/recommendations')
+}

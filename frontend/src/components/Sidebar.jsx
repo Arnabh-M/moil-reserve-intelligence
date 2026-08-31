@@ -27,7 +27,7 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col bg-navy text-white/90">
-      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-white/10">
+      <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10">
         <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-orange text-white">
           <Mountain size={18} strokeWidth={2.25} />
         </div>
@@ -45,7 +45,7 @@ export default function Sidebar() {
             end={end}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-sm px-3 py-3 text-sm font-medium transition-colors',
                 isActive
                   ? 'bg-white/10 text-white border-l-2 border-orange -ml-px pl-[11px]'
                   : 'text-white/60 hover:bg-white/5 hover:text-white/90'

@@ -5,21 +5,7 @@ import KPIStat from '../components/KPIStat'
 import LiveEventFeed from '../components/LiveEventFeed'
 import { getSites, getRiskEvents } from '../api/client'
 import { getEventTimestamp, formatRelativeTime } from '../lib/time'
-
-// The /sites payload isn't guaranteed to carry a reserve-confidence field
-// yet, so this derives a stable mock value per site when one is missing —
-// same site always yields the same value.
-function estimateReserveConfidence(site) {
-  const provided = site.reserve_confidence ?? site.reserveConfidence ?? site.confidence
-  if (typeof provided === 'number') return provided > 1 ? provided / 100 : provided
-
-  const seed = String(site.id ?? site.name ?? '')
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    hash = (hash * 31 + seed.charCodeAt(i)) % 1000
-  }
-  return 0.55 + (hash / 1000) * 0.33 // spread roughly between 0.55 and 0.88
-}
+import { estimateReserveConfidence } from '../lib/metrics'
 
 export default function CommandCenter() {
   const [sites, setSites] = useState([])
@@ -94,7 +80,7 @@ export default function CommandCenter() {
       </div>
 
       {kpiStatus === 'error' && (
-        <div className="flex items-center gap-2 rounded-sm border border-orange/30 bg-orange/5 px-4 py-2.5 text-xs text-orange">
+        <div className="flex items-center gap-2 rounded-sm border border-orange/30 bg-orange/5 px-4 py-3 text-xs text-orange">
           <AlertCircle size={14} className="shrink-0" />
           Unable to reach the backend at http://localhost:8000 — showing unavailable KPI data.
         </div>

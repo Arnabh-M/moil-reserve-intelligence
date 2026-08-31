@@ -19,11 +19,10 @@ export default {
       borderRadius: {
         sm: '8px',
         DEFAULT: '8px',
-        md: '10px',
+        md: '12px',
       },
       boxShadow: {
-        subtle: '0 1px 2px 0 rgba(16, 26, 43, 0.06), 0 1px 3px 0 rgba(16, 26, 43, 0.08)',
-        panel: '0 2px 8px 0 rgba(16, 26, 43, 0.08)',
+        subtle: '0 1px 3px 0 rgba(20, 30, 50, 0.04)',
       },
       keyframes: {
         'fade-in': {
