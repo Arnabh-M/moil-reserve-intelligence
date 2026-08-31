@@ -10,6 +10,7 @@ import Recommendations from './pages/Recommendations'
 import SiteDetail from './pages/SiteDetail'
 import DataInput from './pages/DataInput'
 import Reports from './pages/Reports'
+import GraphTest from './pages/GraphTest'
 
 function DashboardLayout() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/site/:id" element={<SiteDetail />} />
         <Route path="/data-input" element={<DataInput />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/graph-test" element={<GraphTest />} />
       </Route>
     </Routes>
   )

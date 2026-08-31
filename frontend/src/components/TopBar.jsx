@@ -9,6 +9,7 @@ const TITLES = {
   '/recommendations': 'Recommendations',
   '/data-input': 'Data Input',
   '/reports': 'Reports',
+  '/graph-test': 'Graph Test',
 }
 
 function resolveTitle(pathname) {
