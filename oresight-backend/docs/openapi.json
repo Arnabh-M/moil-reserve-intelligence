@@ -1,0 +1,1587 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OreSight API",
+    "description": "Backend API for OreSight - a mine reserve intelligence prototype built for SIH26009 (MOIL manganese mining).",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites": {
+      "get": {
+        "tags": [
+          "sites"
+        ],
+        "summary": "List all mine sites",
+        "description": "Return every mine site with its live active-risk count and average\nreserve confidence.",
+        "operationId": "list_sites_sites_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SiteOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Sites Sites Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{site_id}": {
+      "get": {
+        "tags": [
+          "sites"
+        ],
+        "summary": "Get a single mine site",
+        "description": "Return one mine site by id, or 404 if it doesn't exist.",
+        "operationId": "get_site_sites__site_id__get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sites/{site_id}/geojson": {
+      "get": {
+        "tags": [
+          "sites"
+        ],
+        "summary": "Get a site's boundary as GeoJSON",
+        "description": "Return the site's boundary polygon as a GeoJSON FeatureCollection, ready\nfor direct use as a MapLibre GeoJSON source.",
+        "operationId": "get_site_geojson_sites__site_id__geojson_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Site Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A GeoJSON FeatureCollection with a single Feature for the site polygon",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Site Geojson Sites  Site Id  Geojson Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/equipment": {
+      "get": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "List equipment",
+        "description": "Return equipment, optionally filtered to a single site.",
+        "operationId": "list_equipment_equipment_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site's equipment",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site's equipment"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EquipmentOut"
+                  },
+                  "title": "Response List Equipment Equipment Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/equipment/{equipment_id}/status": {
+      "post": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "Update an equipment's status",
+        "description": "Update an equipment's status and reason. Marking it 'down' also opens a\nhigh-severity `equipment_failure` risk event for its site.",
+        "operationId": "update_equipment_status_equipment__equipment_id__status_post",
+        "parameters": [
+          {
+            "name": "equipment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Equipment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EquipmentStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/production": {
+      "get": {
+        "tags": [
+          "production"
+        ],
+        "summary": "List production records",
+        "description": "Return production records from the last `days` days, ordered oldest to\nnewest.",
+        "operationId": "list_production_records_production_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site"
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 365,
+              "minimum": 1,
+              "description": "How many trailing days to include",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "How many trailing days to include"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProductionRecordOut"
+                  },
+                  "title": "Response List Production Records Production Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "production"
+        ],
+        "summary": "Record a day's production",
+        "description": "Insert a new production record. Returns 409 if one already exists for\nthis site and date.",
+        "operationId": "create_production_record_production_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductionRecordCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risk-events": {
+      "get": {
+        "tags": [
+          "risk-events"
+        ],
+        "summary": "List risk events",
+        "description": "Return risk events, newest first, optionally filtered by site and/or\nresolved status.",
+        "operationId": "list_risk_events_risk_events_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site"
+          },
+          {
+            "name": "resolved",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by resolved status",
+              "title": "Resolved"
+            },
+            "description": "Filter by resolved status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RiskEventOut"
+                  },
+                  "title": "Response List Risk Events Risk Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/risk-events/{risk_event_id}/causal-graph": {
+      "get": {
+        "tags": [
+          "risk-events"
+        ],
+        "summary": "Get the causal graph behind a risk event",
+        "description": "Return the causal chain that led to this risk event.\n\nSTUB: replaced on Day 3 with a live Neo4j traversal. For now returns a\nfixed, realistically-shaped 5-node chain so the frontend can build the\nReact Flow graph view today.",
+        "operationId": "get_causal_graph_risk_events__risk_event_id__causal_graph_get",
+        "parameters": [
+          {
+            "name": "risk_event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Risk Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CausalGraphOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reserve-zones": {
+      "get": {
+        "tags": [
+          "reserve-zones"
+        ],
+        "summary": "Get reserve zones as GeoJSON",
+        "description": "Return reserve zone polygons as a GeoJSON FeatureCollection. Each\nfeature's `confidence_score` property drives the frontend's map colour\nramp.",
+        "operationId": "list_reserve_zones_reserve_zones_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site's zones",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site's zones"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A GeoJSON FeatureCollection of reserve zone polygons",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Reserve Zones Reserve Zones Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recommendations": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Get mitigation recommendations for a risk event",
+        "description": "Return mitigation options for a risk event.\n\nSTUB: replaced on Day 4 with real recommendation-engine output. For now\nreturns 2 hand-authored recommendations referencing the actual\nsite/equipment behind the given risk event, so the frontend can build the\nrecommendations UI today.",
+        "operationId": "get_recommendations_recommendations_get",
+        "parameters": [
+          {
+            "name": "risk_event_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "The risk event to generate recommendations for",
+              "title": "Risk Event Id"
+            },
+            "description": "The risk event to generate recommendations for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecommendationOut"
+                  },
+                  "title": "Response Get Recommendations Recommendations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simulate": {
+      "post": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Run a what-if scenario simulation",
+        "description": "Simulate the impact of a disruption scenario on one site's twin state.\n\nSTUB: replaced on Day 4-5 with the real simulation engine. For now applies\na small deterministic model: the 'before' snapshot is grounded in today's\nreal data for the site, then perturbed by `scenario_type` and\n`duration_days` for 'after' - so the numbers are plausible, move in the\ncorrect direction, and scale with duration rather than being random or\nconstant.",
+        "operationId": "simulate_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kpi/summary": {
+      "get": {
+        "tags": [
+          "kpi"
+        ],
+        "summary": "Get Command Center KPI summary",
+        "description": "Return the 4 headline KPIs for the Command Center dashboard: active\nrisk events, average reserve confidence, sites currently under watch\n(i.e. with at least one active risk), and when the twin state was last\nupdated.",
+        "operationId": "get_kpi_summary_kpi_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KPISummaryOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/jobs": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List background scheduler jobs and their status",
+        "description": "Return each registered scheduler job's id, next run time, and last run\nstatus \u2014 proof the ingestion scheduler is alive during the demo.",
+        "operationId": "list_jobs_admin_jobs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/JobStatusOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Jobs Admin Jobs Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CausalGraphOut": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges"
+        ],
+        "title": "CausalGraphOut",
+        "example": {
+          "edges": [
+            {
+              "relationship": "DELAYS",
+              "source": "weather_2026_03_14",
+              "target": "blast_plan_b204"
+            },
+            {
+              "relationship": "AFFECTS",
+              "source": "blast_plan_b204",
+              "target": "zone_b2"
+            },
+            {
+              "relationship": "OPERATES_IN",
+              "source": "equipment_ex201",
+              "target": "zone_b2"
+            },
+            {
+              "relationship": "CAUSES",
+              "source": "zone_b2",
+              "target": "risk_event_shortfall"
+            }
+          ],
+          "nodes": [
+            {
+              "id": "weather_2026_03_14",
+              "label": "Heavy Rainfall 14 Mar",
+              "type": "WeatherEvent"
+            },
+            {
+              "id": "blast_plan_b204",
+              "label": "Blast Plan B-204",
+              "type": "BlastPlan"
+            },
+            {
+              "id": "zone_b2",
+              "label": "Zone B2",
+              "type": "OreZone"
+            },
+            {
+              "id": "equipment_ex201",
+              "label": "Excavator EX-201",
+              "type": "Equipment"
+            },
+            {
+              "id": "risk_event_shortfall",
+              "label": "Production shortfall risk",
+              "type": "RiskEvent"
+            }
+          ]
+        }
+      },
+      "EquipmentOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_name": {
+            "type": "string",
+            "title": "Site Name"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "equipment_type": {
+            "type": "string",
+            "title": "Equipment Type"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Status"
+          },
+          "last_status_change": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Status Change"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "site_name",
+          "name",
+          "equipment_type",
+          "status",
+          "last_status_change",
+          "status_reason"
+        ],
+        "title": "EquipmentOut",
+        "example": {
+          "equipment_type": "excavator",
+          "id": 1,
+          "last_status_change": "2026-08-30T05:11:27.578760+00:00",
+          "name": "Excavator EX-201",
+          "site_id": 1,
+          "site_name": "Balaghat",
+          "status": "down",
+          "status_reason": "Hydraulic pump failure - spare part on order, ETA 3 days"
+        }
+      },
+      "EquipmentStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "EquipmentStatusUpdate",
+        "example": {
+          "reason": "Engine overheating - pulled for inspection",
+          "status": "down"
+        }
+      },
+      "GraphEdge": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "relationship": {
+            "type": "string",
+            "title": "Relationship"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "relationship"
+        ],
+        "title": "GraphEdge"
+      },
+      "GraphNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "type"
+        ],
+        "title": "GraphNode"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JobStatusOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "next_run_time": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run Time"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "last_status": {
+            "type": "string",
+            "title": "Last Status"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "next_run_time",
+          "last_run_at",
+          "last_status",
+          "last_error"
+        ],
+        "title": "JobStatusOut",
+        "example": {
+          "id": "ingest_satellite_data",
+          "last_status": "never_run",
+          "next_run_time": "2026-08-31T14:00:00+00:00"
+        }
+      },
+      "KPISummaryOut": {
+        "properties": {
+          "active_risk_events": {
+            "type": "integer",
+            "title": "Active Risk Events"
+          },
+          "avg_reserve_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Reserve Confidence"
+          },
+          "sites_under_watch": {
+            "type": "integer",
+            "title": "Sites Under Watch"
+          },
+          "twin_last_updated": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Twin Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_risk_events",
+          "avg_reserve_confidence",
+          "sites_under_watch",
+          "twin_last_updated"
+        ],
+        "title": "KPISummaryOut",
+        "example": {
+          "active_risk_events": 5,
+          "avg_reserve_confidence": 0.64,
+          "sites_under_watch": 3,
+          "twin_last_updated": "2026-08-31T05:11:27.578760+00:00"
+        }
+      },
+      "ProductionRecordCreate": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "actual_output": {
+            "type": "number",
+            "title": "Actual Output"
+          },
+          "target_output": {
+            "type": "number",
+            "title": "Target Output"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "date",
+          "actual_output",
+          "target_output"
+        ],
+        "title": "ProductionRecordCreate",
+        "example": {
+          "actual_output": 1180.0,
+          "date": "2026-08-31",
+          "site_id": 1,
+          "target_output": 1250.0
+        }
+      },
+      "ProductionRecordOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "actual_output": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Output"
+          },
+          "target_output": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Output"
+          },
+          "variance_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "date",
+          "actual_output",
+          "target_output",
+          "variance_pct"
+        ],
+        "title": "ProductionRecordOut",
+        "example": {
+          "actual_output": 712.4,
+          "date": "2026-08-29",
+          "id": 42,
+          "site_id": 1,
+          "target_output": 1062.5,
+          "variance_pct": -32.96
+        }
+      },
+      "RecommendationOption": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "reschedule",
+              "redeploy",
+              "adjust_plan"
+            ],
+            "title": "Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "projected_impact": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Projected Impact"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "description",
+          "projected_impact",
+          "confidence"
+        ],
+        "title": "RecommendationOption"
+      },
+      "RecommendationOut": {
+        "properties": {
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "risk_event_id": {
+            "type": "integer",
+            "title": "Risk Event Id"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationOption"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trigger",
+          "risk_event_id",
+          "options"
+        ],
+        "title": "RecommendationOut",
+        "example": {
+          "options": [
+            {
+              "confidence": 0.78,
+              "description": "Delay the next blast at Balaghat by 2 days to let Excavator EX-201 return to service.",
+              "projected_impact": 62.5,
+              "type": "reschedule"
+            },
+            {
+              "confidence": 0.82,
+              "description": "Redeploy Rock Drill DR-101 to cover Excavator EX-201's workload at Balaghat for the outage.",
+              "projected_impact": 71.0,
+              "type": "redeploy"
+            },
+            {
+              "confidence": 0.9,
+              "description": "Lower Balaghat's daily target output by 15% until Excavator EX-201 is repaired.",
+              "projected_impact": 45.0,
+              "type": "adjust_plan"
+            }
+          ],
+          "risk_event_id": 1,
+          "trigger": "Excavator EX-201 hydraulic failure at Balaghat"
+        }
+      },
+      "RiskEventOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_name": {
+            "type": "string",
+            "title": "Site Name"
+          },
+          "risk_type": {
+            "type": "string",
+            "title": "Risk Type"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Severity"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "resolved": {
+            "type": "boolean",
+            "title": "Resolved"
+          },
+          "detected_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Detected At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "site_name",
+          "risk_type",
+          "severity",
+          "score",
+          "description",
+          "resolved",
+          "detected_at"
+        ],
+        "title": "RiskEventOut",
+        "example": {
+          "description": "Haul Truck HT-302 engine overheating has taken the unit fully offline.",
+          "detected_at": "2026-08-31T05:11:27.578760+00:00",
+          "id": 5,
+          "resolved": false,
+          "risk_type": "equipment_failure",
+          "score": 0.93,
+          "severity": "critical",
+          "site_id": 2,
+          "site_name": "Nagpur"
+        }
+      },
+      "SimStateSnapshot": {
+        "properties": {
+          "reserve_confidence": {
+            "type": "number",
+            "title": "Reserve Confidence"
+          },
+          "production_forecast_tonnes": {
+            "type": "number",
+            "title": "Production Forecast Tonnes"
+          },
+          "risk_score": {
+            "type": "number",
+            "title": "Risk Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reserve_confidence",
+          "production_forecast_tonnes",
+          "risk_score"
+        ],
+        "title": "SimStateSnapshot"
+      },
+      "SimulateRequest": {
+        "properties": {
+          "scenario_type": {
+            "type": "string",
+            "enum": [
+              "equipment_down",
+              "delay_blasting",
+              "rainfall_event"
+            ],
+            "title": "Scenario Type"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "duration_days": {
+            "type": "integer",
+            "maximum": 90.0,
+            "minimum": 1.0,
+            "title": "Duration Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario_type",
+          "site_id",
+          "duration_days"
+        ],
+        "title": "SimulateRequest",
+        "example": {
+          "duration_days": 5,
+          "scenario_type": "equipment_down",
+          "site_id": 1
+        }
+      },
+      "SimulateResponse": {
+        "properties": {
+          "before": {
+            "$ref": "#/components/schemas/SimStateSnapshot"
+          },
+          "after": {
+            "$ref": "#/components/schemas/SimStateSnapshot"
+          },
+          "affected_graph_path": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Affected Graph Path"
+          },
+          "updated_graph": {
+            "$ref": "#/components/schemas/CausalGraphOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "before",
+          "after",
+          "affected_graph_path",
+          "updated_graph"
+        ],
+        "title": "SimulateResponse",
+        "example": {
+          "affected_graph_path": [
+            "sim_equipment_down",
+            "equipment_1",
+            "production_forecast",
+            "risk_event_sim"
+          ],
+          "after": {
+            "production_forecast_tonnes": 950.8,
+            "reserve_confidence": 0.663,
+            "risk_score": 0.67
+          },
+          "before": {
+            "production_forecast_tonnes": 1187.3,
+            "reserve_confidence": 0.67,
+            "risk_score": 0.42
+          },
+          "updated_graph": {
+            "edges": [
+              {
+                "relationship": "TRIGGERS",
+                "source": "sim_equipment_down",
+                "target": "equipment_1"
+              },
+              {
+                "relationship": "REDUCES",
+                "source": "equipment_1",
+                "target": "production_forecast"
+              },
+              {
+                "relationship": "TRIGGERS",
+                "source": "production_forecast",
+                "target": "risk_event_sim"
+              }
+            ],
+            "nodes": [
+              {
+                "id": "sim_equipment_down",
+                "label": "Simulated: Equipment Down at Balaghat",
+                "type": "SimulatedEvent"
+              },
+              {
+                "id": "equipment_1",
+                "label": "Excavator EX-201",
+                "type": "Equipment"
+              },
+              {
+                "id": "production_forecast",
+                "label": "Production Forecast",
+                "type": "ProductionForecast"
+              },
+              {
+                "id": "risk_event_sim",
+                "label": "Simulated Equipment Down Risk",
+                "type": "RiskEvent"
+              }
+            ]
+          }
+        }
+      },
+      "SiteOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "belt_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Belt Name"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
+          "centroid_lat": {
+            "type": "number",
+            "title": "Centroid Lat"
+          },
+          "centroid_lon": {
+            "type": "number",
+            "title": "Centroid Lon"
+          },
+          "active_risk_count": {
+            "type": "integer",
+            "title": "Active Risk Count"
+          },
+          "avg_reserve_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avg Reserve Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "belt_name",
+          "district",
+          "state",
+          "centroid_lat",
+          "centroid_lon",
+          "active_risk_count",
+          "avg_reserve_confidence"
+        ],
+        "title": "SiteOut",
+        "example": {
+          "active_risk_count": 2,
+          "avg_reserve_confidence": 0.67,
+          "belt_name": "Balaghat Manganese Belt",
+          "centroid_lat": 21.8,
+          "centroid_lon": 80.19,
+          "district": "Balaghat",
+          "id": 1,
+          "name": "Balaghat",
+          "state": "Madhya Pradesh"
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
