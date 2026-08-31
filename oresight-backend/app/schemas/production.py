@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProductionRecordOut(BaseModel):
@@ -42,5 +42,5 @@ class ProductionRecordCreate(BaseModel):
 
     site_id: int
     date: date
-    actual_output: float
-    target_output: float
+    actual_output: float = Field(ge=0, description="Tonnes actually produced; must be non-negative")
+    target_output: float = Field(gt=0, description="Planned tonnes target; must be positive")

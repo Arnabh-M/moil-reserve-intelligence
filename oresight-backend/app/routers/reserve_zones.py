@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models import ReserveZone
 from app.services.geo import to_geojson_feature_collection
+from app.services.lookups import get_site_or_404
 
 router = APIRouter(prefix="/reserve-zones", tags=["reserve-zones"])
 
@@ -27,6 +28,9 @@ def list_reserve_zones(
     feature's `confidence_score` property drives the frontend's map colour
     ramp.
     """
+    if site_id is not None:
+        get_site_or_404(db, site_id)
+
     stmt = select(ReserveZone)
     if site_id is not None:
         stmt = stmt.where(ReserveZone.site_id == site_id)

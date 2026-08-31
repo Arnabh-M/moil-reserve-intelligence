@@ -20,7 +20,7 @@ first-time steps: venv, `pip install`, `.env`), this is everything needed to
 go from a stopped stack to a running, seeded API:
 
 ```bash
-docker compose up -d && alembic upgrade head && python -m app.seed_dev && uvicorn app.main:app --reload
+docker compose up -d && alembic upgrade head && python -m app.seed_dev && python -m scripts.import_p2_data && uvicorn app.main:app --reload
 ```
 
 ## Setup
@@ -51,15 +51,66 @@ docker compose ps
 # 7. Apply database migrations
 alembic upgrade head
 
-# 8. Load realistic starter data (3 sites, zones, equipment, 60 days of
+# 8. Load starter data (3 sites, zones, equipment, 60 days of synthetic
 #    production, risk events) so nothing in the app ever renders empty
 python -m app.seed_dev
+
+# 8b. Replace the synthetic equipment & production numbers from step 8 with
+#     P2's real datasets, and refresh reserve-zone stats from real deposit
+#     data. See "Real data import" below for what this does and doesn't touch.
+python -m scripts.import_p2_data
 
 # 9. Run the API with auto-reload
 uvicorn app.main:app --reload
 ```
 
 The API is now running at **http://localhost:8000**.
+
+### Real data import (`scripts/import_p2_data.py`)
+
+`app/seed_dev.py` (step 8) invents its own synthetic sites, equipment, and
+production numbers so the app never renders empty. `scripts/import_p2_data.py`
+(step 8b) replaces the equipment and production data with the real thing from
+P2's datasets, and upgrades reserve-zone stats with real numbers too:
+
+| Source | Goes to | How |
+|---|---|---|
+| `data/production_history.csv` | `production_records` | Full replace per site — every existing row for the 3 sites is deleted and reinserted from the CSV |
+| `data/equipment_downtime_log.csv` + `seed_graph.cypher` | `equipment` | Full replace. The roster (id/name/type/site) comes from `seed_graph.cypher` — the CSV alone has no type/name columns, only downtime events for units that went down. Status/`last_status_change` are derived from the CSV's real downtime windows |
+| `data/deposit_ground_truth.csv` | `reserve_zones` (attributes only) | Each point deposit is assigned to the nearest of `seed_dev.py`'s 4 zone boxes per site; `confidence_score`/`estimated_grade_pct`/`estimated_depth_m` are recomputed from the real, assigned deposits. Zone **geometry** still comes from `seed_dev.py` — none of P2's CSVs carry zone polygons |
+
+**Supplements, doesn't replace, `seed_dev.py`:** run `seed_dev.py` first, then
+`import_p2_data.py`. `import_p2_data.py` bootstraps sites/zones itself (reusing
+`seed_dev.py`'s helpers) so it *can* run standalone on a fresh DB, but it
+deliberately does not touch `risk_events` — that still only comes from
+`seed_dev.py`. Running `import_p2_data.py` after `seed_dev.py` means the two
+`risk_events` rows that reference a specific equipment id
+(`source_entity_id`) will point at a row that no longer exists, since
+`import_p2_data.py` deletes and reinserts all equipment with fresh ids. The
+risk events themselves still display fine (severity/description/etc. are
+unaffected) — only that dangling FK-ish reference goes stale. Not fixed here;
+reconciling `risk_events` seeding to the real equipment roster is a
+reasonable follow-up once `risk_events` itself moves off synthetic data.
+
+**Destructive by design:** unlike `seed_dev.py` (which skips rows that
+already exist, so it never clobbers manual edits), `import_p2_data.py` fully
+deletes and reinserts `equipment` and `production_records` for the 3 sites on
+every run. Any status change made via `POST /equipment/{id}/status` or record
+added via `POST /production` since the last import is discarded. Don't
+re-run it mid-demo expecting it to leave manual test data alone — that's
+exactly what it resets.
+
+**Equipment status will show all "up".** Every window in
+`equipment_downtime_log.csv` is closed as of the data's latest date
+(2026-08-30), so nothing imports as currently down — `seed_dev.py`'s 2
+hardcoded "down" units are gone. If a demo scenario needs a visibly-down
+unit, set one explicitly with `POST /equipment/{id}/status` after importing.
+
+Run it any time after `alembic upgrade head` with:
+
+```bash
+python -m scripts.import_p2_data
+```
 
 ### Verifying the stack
 
@@ -270,16 +321,16 @@ python -m app.agents.simulator
 python -m app.agents.planner
 ```
 
-**Known gap:** Neo4j's Equipment fleet (Day 1's `seed_graph.cypher`) and
-Postgres's (`app/seed_dev.py`) are two independently-seeded fleets with
-different names and partially different `type` vocabularies — there's no
-reliable 1:1 mapping between a specific Postgres equipment row and a
-specific Neo4j node. `app/agents/_bridge.py` documents this and does a
-best-effort match by (site, normalized type); callers correctly get `None`
-back (and log a warning) rather than a guessed match for the types that
-don't overlap (`haul_truck`, `crusher` have no Neo4j counterpart).
-Worth reconciling into one shared equipment seed before Day 4 if the demo
-needs `redeploy` to reliably fire for every equipment type.
+**Resolved:** the Postgres/Neo4j equipment taxonomy split described in
+earlier versions of this doc is fixed by `scripts/import_p2_data.py` (see
+"Real data import" below) — Postgres equipment is now sourced from the same
+`seed_graph.cypher` roster Neo4j uses, so `app/agents/_bridge.py`'s
+(site, normalized type) match succeeds for every row. `haul_truck`/`crusher`
+no longer exist in Postgres, because they never existed in Neo4j's fleet
+either — if MOIL's real equipment roster needs those types, that's a content
+gap in `seed_graph.cypher` to raise with P2, not a mapping bug here. This
+only applies once `import_p2_data.py` has been run — a DB seeded with only
+`app/seed_dev.py` still has the old invented fleet.
 
 **Known model limitation:** the trained shortfall model's response to
 `rolling_7day_downtime_pct` and `schedule_pressure` is weak or

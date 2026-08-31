@@ -40,8 +40,12 @@ def list_production_records(
     db: Session = Depends(get_db),
 ) -> list[ProductionRecordOut]:
     """Return production records from the last `days` days, ordered oldest to
-    newest.
+    newest. If fewer than `days` days of history exist (for the site, or at
+    all), returns whatever is available rather than erroring or padding.
     """
+    if site_id is not None:
+        get_site_or_404(db, site_id)
+
     since = date.today() - timedelta(days=days)
     stmt = (
         select(ProductionRecord)

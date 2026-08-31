@@ -70,11 +70,11 @@ ZONE_TEMPLATES = [
 ZONE_HALF_DEG = 0.025
 
 EQUIPMENT_TEMPLATES = [
-    {"prefix": "Excavator", "code": "EX", "equipment_type": "excavator"},
-    {"prefix": "Rock Drill", "code": "DR", "equipment_type": "drill"},
-    {"prefix": "Haul Truck", "code": "HT", "equipment_type": "haul_truck"},
-    {"prefix": "Jaw Crusher", "code": "CR", "equipment_type": "crusher"},
-    {"prefix": "Wheel Loader", "code": "LD", "equipment_type": "loader"},
+    {"prefix": "Excavator", "code": "EX", "equipment_type": "Excavator"},
+    {"prefix": "Rock Drill", "code": "DR", "equipment_type": "Drill"},
+    {"prefix": "Haul Truck", "code": "HT", "equipment_type": "Haul Truck"},
+    {"prefix": "Jaw Crusher", "code": "CR", "equipment_type": "Crusher"},
+    {"prefix": "Wheel Loader", "code": "LD", "equipment_type": "Loader"},
 ]
 
 DOWN_EQUIPMENT = {
@@ -226,11 +226,11 @@ def _seed_equipment(session: Session, site: Site) -> tuple[int, dict[str, Equipm
     for template in EQUIPMENT_TEMPLATES:
         # Deterministic, spec-matching numbering: EX-201/202/203, DR-101/102/103, etc.
         number = {
-            "excavator": 200,
-            "drill": 100,
-            "haul_truck": 300,
-            "crusher": 400,
-            "loader": 500,
+            "Excavator": 200,
+            "Drill": 100,
+            "Haul Truck": 300,
+            "Crusher": 400,
+            "Loader": 500,
         }[template["equipment_type"]] + SITE_SPECS.index(
             next(s for s in SITE_SPECS if s["name"] == site.name)
         ) + 1

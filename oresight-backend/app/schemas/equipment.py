@@ -11,11 +11,11 @@ class EquipmentOut(BaseModel):
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "id": 1,
+                "id": 16,
                 "site_id": 1,
                 "site_name": "Balaghat",
-                "name": "Excavator EX-201",
-                "equipment_type": "excavator",
+                "name": "Excavator BAL-1",
+                "equipment_type": "Excavator",
                 "status": "down",
                 "last_status_change": "2026-08-30T05:11:27.578760+00:00",
                 "status_reason": "Hydraulic pump failure - spare part on order, ETA 3 days",

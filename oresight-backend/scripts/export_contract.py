@@ -38,6 +38,7 @@ CORS_NOTE = "http://localhost:5173, http://localhost:3000, http://127.0.0.1:5173
 
 STATUS_TABLE = [
     ("GET", "/sites", "Live"),
+    ("GET", "/sites/geojson", "Live"),
     ("GET", "/sites/{site_id}", "Live"),
     ("GET", "/sites/{site_id}/geojson", "Live"),
     ("GET", "/equipment", "Live"),
@@ -156,6 +157,9 @@ def main() -> None:
 
         r = client.get(f"/sites/{site_id}/geojson")
         captured.append({"group": "Sites", "method": "GET", "path": "/sites/{site_id}/geojson", "concrete": f"/sites/{site_id}/geojson", "status": r.status_code, "body": r.json()})
+
+        r = client.get("/sites/geojson")
+        captured.append({"group": "Sites", "method": "GET", "path": "/sites/geojson", "concrete": "/sites/geojson", "status": r.status_code, "body": r.json()})
 
         # --- Equipment ---
         r = client.get("/equipment")

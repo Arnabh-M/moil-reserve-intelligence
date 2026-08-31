@@ -57,6 +57,30 @@
         }
       }
     },
+    "/sites/geojson": {
+      "get": {
+        "tags": [
+          "sites"
+        ],
+        "summary": "Get all sites' boundaries as GeoJSON",
+        "description": "Return every site's boundary polygon as a single GeoJSON\nFeatureCollection, ready for direct use as a MapLibre GeoJSON source.\n\nRegistered ahead of `/{site_id}` so the literal path `geojson` is never\nswallowed by the `site_id: int` path converter.",
+        "operationId": "list_sites_geojson_sites_geojson_get",
+        "responses": {
+          "200": {
+            "description": "A GeoJSON FeatureCollection with one Feature per site polygon",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response List Sites Geojson Sites Geojson Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sites/{site_id}": {
       "get": {
         "tags": [
@@ -207,7 +231,7 @@
           "equipment"
         ],
         "summary": "Update an equipment's status",
-        "description": "Update an equipment's status and reason. Marking it 'down' also opens a\nhigh-severity `equipment_failure` risk event for its site.",
+        "description": "Update an equipment's status and reason. Transitioning it from 'up' to\n'down' also opens a high-severity `equipment_failure` risk event for its\nsite \u2014 re-posting 'down' while it's already down (e.g. just to update the\nreason text) does not open a second one.",
         "operationId": "update_equipment_status_equipment__equipment_id__status_post",
         "parameters": [
           {
@@ -260,7 +284,7 @@
           "production"
         ],
         "summary": "List production records",
-        "description": "Return production records from the last `days` days, ordered oldest to\nnewest.",
+        "description": "Return production records from the last `days` days, ordered oldest to\nnewest. If fewer than `days` days of history exist (for the site, or at\nall), returns whatever is available rather than erroring or padding.",
         "operationId": "list_production_records_production_get",
         "parameters": [
           {
@@ -819,10 +843,10 @@
         ],
         "title": "EquipmentOut",
         "example": {
-          "equipment_type": "excavator",
-          "id": 1,
+          "equipment_type": "Excavator",
+          "id": 16,
           "last_status_change": "2026-08-30T05:11:27.578760+00:00",
-          "name": "Excavator EX-201",
+          "name": "Excavator BAL-1",
           "site_id": 1,
           "site_name": "Balaghat",
           "status": "down",
@@ -1043,11 +1067,15 @@
           },
           "actual_output": {
             "type": "number",
-            "title": "Actual Output"
+            "minimum": 0.0,
+            "title": "Actual Output",
+            "description": "Tonnes actually produced; must be non-negative"
           },
           "target_output": {
             "type": "number",
-            "title": "Target Output"
+            "exclusiveMinimum": 0.0,
+            "title": "Target Output",
+            "description": "Planned tonnes target; must be positive"
           }
         },
         "type": "object",

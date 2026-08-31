@@ -10,20 +10,27 @@ schemes that don't line up automatically:
   autoincrement int (see app/models/site.py), set by app/seed_dev.py.
   Fortunately Postgres Site.district happens to equal the Neo4j id when
   lowercased ("Balaghat" -> "balaghat"), so that's the bridge used here.
+  Unchanged by the equipment fix below.
 
-- Equipment: Neo4j Equipment nodes (Day 1 seed) and Postgres Equipment rows
-  (app/seed_dev.py) are TWO DIFFERENT SYNTHETIC FLEETS that were never
-  reconciled — different names ("Excavator BAL-1" vs "Excavator EX-201")
-  AND different type vocabularies (Neo4j: excavator/drill/conveyor/loader/
-  compressor; Postgres: excavator/drill/haul_truck/crusher/loader). There is
-  no reliable 1:1 mapping. `find_neo4j_equipment_id` does a best-effort
-  match by (site, normalized type) and returns None — not a guess — when no
-  Neo4j equipment of that type exists at the site. Callers MUST handle None
-  by omitting the graph edge rather than inventing one.
+- Equipment: RESOLVED as of scripts/import_p2_data.py. Postgres equipment
+  used to be an independently-invented fleet (app/seed_dev.py) with
+  different names ("Excavator EX-201") and a different type vocabulary
+  (excavator/drill/haul_truck/crusher/loader) than Neo4j's Day 1 seed
+  (excavator/drill/conveyor/loader/compressor). `find_neo4j_equipment_id`
+  below returned None for haul_truck/crusher because there was genuinely no
+  match — not a bug, just an unreconciled dataset.
 
-This gap is a real, pre-existing data-modeling issue, not something these
-agents can silently paper over. It's called out here (and again wherever it
-bites) so it doesn't get discovered the hard way during integration.
+  `scripts/import_p2_data.py` now sources Postgres equipment directly from
+  seed_graph.cypher's 15-unit roster (same ids, names, and Title-Case types
+  as Neo4j), so both sides describe the *same* fleet. haul_truck/crusher no
+  longer exist in Postgres at all — they never existed in Neo4j either.
+  `find_neo4j_equipment_id`'s (site, normalized-type) match below is now
+  exact for every equipment row by construction: each site has exactly one
+  of each of the 5 shared types on both sides. The function's logic didn't
+  need to change, only this docstring's claim that some types can't match —
+  if it ever returns None again after a fresh import, that indicates real
+  drift (e.g. someone re-seeding one side but not the other), not an
+  expected gap, and is worth investigating rather than shrugging off.
 """
 
 from __future__ import annotations
@@ -62,13 +69,13 @@ def find_neo4j_equipment_id(
     equipment_type: str,
     status: str | None = None,
 ) -> str | None:
-    """Best-effort match: find a Neo4j Equipment node at a site by type.
+    """Match a Postgres equipment row to its Neo4j Equipment node by (site, type).
 
-    Returns the node's `id` property, or None if no Neo4j equipment of
-    that (normalized) type exists at the site — see module docstring.
-    Excavator/Drill/Loader normalize the same way on both sides; Postgres's
-    haul_truck/crusher and Neo4j's conveyor/compressor have no counterpart
-    on the other side and will always return None here.
+    Returns the node's `id` property, or None if no Neo4j equipment of that
+    (normalized) type exists at the site. Since scripts/import_p2_data.py
+    sources both fleets from the same seed_graph.cypher roster (see module
+    docstring), this now succeeds for every equipment row — a None here is a
+    signal of real drift between the two databases, not an expected gap.
     """
     target = _normalize_type(equipment_type)
     query = "MATCH (e:Equipment {site_id: $site_id}) RETURN e.id AS id, e.type AS type, e.status AS status"

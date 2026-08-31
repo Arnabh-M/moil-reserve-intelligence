@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.db import get_db
 from app.models import Equipment, EquipmentStatus, RiskEvent, RiskSeverity
 from app.schemas import EquipmentOut, EquipmentStatusUpdate
-from app.services.lookups import get_equipment_or_404
+from app.services.lookups import get_equipment_or_404, get_site_or_404
 
 router = APIRouter(prefix="/equipment", tags=["equipment"])
 
@@ -33,6 +33,9 @@ def list_equipment(
     db: Session = Depends(get_db),
 ) -> list[EquipmentOut]:
     """Return equipment, optionally filtered to a single site."""
+    if site_id is not None:
+        get_site_or_404(db, site_id)
+
     stmt = (
         select(Equipment).options(joinedload(Equipment.site)).order_by(Equipment.name)
     )
@@ -52,16 +55,19 @@ def update_equipment_status(
     payload: EquipmentStatusUpdate,
     db: Session = Depends(get_db),
 ) -> EquipmentOut:
-    """Update an equipment's status and reason. Marking it 'down' also opens a
-    high-severity `equipment_failure` risk event for its site.
+    """Update an equipment's status and reason. Transitioning it from 'up' to
+    'down' also opens a high-severity `equipment_failure` risk event for its
+    site — re-posting 'down' while it's already down (e.g. just to update the
+    reason text) does not open a second one.
     """
     equipment = get_equipment_or_404(db, equipment_id)
+    was_down = equipment.status == EquipmentStatus.DOWN
 
     equipment.status = EquipmentStatus(payload.status)
     equipment.status_reason = payload.reason
     equipment.last_status_change = datetime.now(timezone.utc)
 
-    if equipment.status == EquipmentStatus.DOWN:
+    if equipment.status == EquipmentStatus.DOWN and not was_down:
         db.add(
             RiskEvent(
                 site_id=equipment.site_id,
