@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, Search, Calendar } from 'lucide-react';
+import { Bell, Search, Calendar, Server, Database } from 'lucide-react';
+import { isMockEnabled, setMockEnabled, subscribeMockState } from '../api/config';
+import { useToast } from '../context/ToastContext';
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -23,6 +25,25 @@ export default function TopBar() {
   const title = pageTitles[location.pathname]
     || (location.pathname.startsWith('/site/') ? 'Site Detail' : 'OreSight');
 
+  const [mockActive, setMockActive] = useState(isMockEnabled());
+  const { addToast } = useToast();
+
+  useEffect(() => {
+    return subscribeMockState(setMockActive);
+  }, []);
+
+  const toggleMock = () => {
+    const nextState = !mockActive;
+    setMockEnabled(nextState);
+    addToast({
+      type: nextState ? 'info' : 'success',
+      title: nextState ? 'Mock Mode Enabled' : 'Live API Mode Enabled',
+      message: nextState
+        ? 'Using realistic seeded in-memory responses for offline testing.'
+        : 'Connecting to live FastAPI backend at http://localhost:8000.',
+    });
+  };
+
   return (
     <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6">
       <div>
@@ -31,13 +52,28 @@ export default function TopBar() {
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Mock/Live API toggle button */}
+        <button
+          onClick={toggleMock}
+          title={`Click to switch between Mock and Live API (http://localhost:8000)`}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 cursor-pointer ${
+            mockActive
+              ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/15'
+              : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/15'
+          }`}
+        >
+          {mockActive ? <Database size={13} /> : <Server size={13} />}
+          <span>{mockActive ? 'MOCK MODE' : 'LIVE API :8000'}</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse ml-0.5" />
+        </button>
+
         {/* Search */}
         <div className="flex items-center gap-2 bg-bg rounded-lg px-3 py-1.5 border border-border">
           <Search size={14} className="text-text-muted" />
           <input
             type="text"
             placeholder="Search..."
-            className="bg-transparent text-sm text-text-primary outline-none w-40 placeholder:text-text-muted"
+            className="bg-transparent text-sm text-text-primary outline-none w-36 placeholder:text-text-muted"
           />
         </div>
 
