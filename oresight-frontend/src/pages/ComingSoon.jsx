@@ -3,9 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { Construction } from 'lucide-react';
 
 const pageTitles = {
+  '/map': 'Operational Map',
   '/blasting': 'Blast Planning',
   '/geology': 'Geology & Exploration',
-  '/reports': 'Reports',
   '/settings': 'Settings',
 };
 

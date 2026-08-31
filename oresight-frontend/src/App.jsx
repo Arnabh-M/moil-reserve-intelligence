@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Sidebar, TopBar } from './components';
 import { ToastProvider } from './context/ToastContext';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Production from './pages/Production';
 import Reserves from './pages/Reserves';
@@ -13,6 +14,7 @@ import Recommendations from './pages/Recommendations';
 import Timeline from './pages/Timeline';
 import SiteDetail from './pages/SiteDetail';
 import DataInput from './pages/DataInput';
+import Reports from './pages/Reports';
 import ComingSoon from './pages/ComingSoon';
 
 function Layout() {
@@ -73,6 +75,9 @@ export default function App() {
       />
       <BrowserRouter>
         <Routes>
+          {/* Pre-auth: no sidebar/topbar chrome */}
+          <Route path="/login" element={<Login />} />
+
           <Route element={<Layout />}>
             {/* Original 5 pages */}
             <Route path="/" element={<Dashboard />} />
@@ -86,10 +91,12 @@ export default function App() {
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/site/:id" element={<SiteDetail />} />
             <Route path="/data-input" element={<DataInput />} />
+            {/* Real */}
+            <Route path="/reports" element={<Reports />} />
             {/* Placeholder routes */}
+            <Route path="/map" element={<ComingSoon />} />
             <Route path="/blasting" element={<ComingSoon />} />
             <Route path="/geology" element={<ComingSoon />} />
-            <Route path="/reports" element={<ComingSoon />} />
             <Route path="/settings" element={<ComingSoon />} />
           </Route>
         </Routes>

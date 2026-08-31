@@ -17,6 +17,7 @@ import {
   Clock,
   MapPin,
   ClipboardEdit,
+  Map as MapIcon,
 } from 'lucide-react';
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { to: '/reserves', icon: Mountain, label: 'Reserves' },
   { to: '/equipment', icon: Wrench, label: 'Equipment' },
   { to: '/risks', icon: ShieldAlert, label: 'Risk & Alerts' },
+  { to: '/map', icon: MapIcon, label: 'Map' },
   { type: 'divider' },
   { to: '/simulator', icon: FlaskRound, label: 'Simulator' },
   { to: '/recommendations', icon: Lightbulb, label: 'Recommendations' },

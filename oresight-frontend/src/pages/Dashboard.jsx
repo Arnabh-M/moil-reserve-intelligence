@@ -1,14 +1,21 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import { Factory, Activity, ShieldAlert, Gem, AlertTriangle, ArrowRight } from 'lucide-react';
+import {
+  Factory, Activity, ShieldAlert, Gem, AlertTriangle, ArrowRight,
+  Gauge, Eye, RefreshCw, AlertCircle,
+} from 'lucide-react';
 import { Card, KPIStat, Badge } from '../components';
+import LiveEventFeed from '../components/LiveEventFeed';
 import {
   dailyTotals, siteProductionSummary, equipment, riskEvents,
   weatherEvents, blastPlans,
 } from '../data/mockData';
+import { getSites, getRiskEvents } from '../api/client';
+import { getEventTimestamp, formatRelativeTime } from '../lib/time';
+import { estimateReserveConfidence } from '../lib/metrics';
 
 // Chart color tokens
 const COLORS = {
@@ -81,6 +88,46 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
+  // Live twin-state KPIs (ported from the old CommandCenter page) — these
+  // hit the real API/mock-fallback client, independent of the static
+  // mockData.js the charts below use.
+  const [liveSites, setLiveSites] = useState([]);
+  const [liveRiskEvents, setLiveRiskEvents] = useState([]);
+  const [liveStatus, setLiveStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [sitesData, riskData] = await Promise.all([getSites(), getRiskEvents()]);
+        if (cancelled) return;
+        setLiveSites(sitesData);
+        setLiveRiskEvents(riskData);
+        setLiveStatus('ready');
+      } catch {
+        if (!cancelled) setLiveStatus('error');
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeRiskEvents = liveRiskEvents.filter((e) => e.resolved === false).length;
+  const avgReserveConfidence = liveSites.length
+    ? liveSites.reduce((sum, s) => sum + estimateReserveConfidence(s), 0) / liveSites.length
+    : 0;
+  const sitesUnderWatch = liveSites.length;
+  const latestUpdateDate = liveRiskEvents.reduce((latest, e) => {
+    const ts = getEventTimestamp(e);
+    if (!ts) return latest;
+    return !latest || ts > latest ? ts : latest;
+  }, null);
+  const liveKpiValue = (value) => (liveStatus === 'ready' ? value : '—');
+
   const latestTotal = dailyTotals[dailyTotals.length - 1];
   const prevTotal = dailyTotals[dailyTotals.length - 2];
   const outputDelta = prevTotal
@@ -94,7 +141,42 @@ export default function Dashboard() {
       <h2 className="page-title">Executive Overview</h2>
       <p className="page-subtitle">Real-time mine production intelligence across all MOIL sites</p>
 
-      {/* KPI Row */}
+      {/* Live Twin State Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+        <KPIStat
+          icon={ShieldAlert}
+          value={liveKpiValue(String(activeRiskEvents).padStart(2, '0'))}
+          label="Active Risk Events (Live)"
+          color="orange"
+        />
+        <KPIStat
+          icon={Gauge}
+          value={liveKpiValue(`${(avgReserveConfidence * 100).toFixed(1)}%`)}
+          label="Avg Reserve Confidence (Live)"
+          color="teal"
+        />
+        <KPIStat
+          icon={Eye}
+          value={liveKpiValue(String(sitesUnderWatch).padStart(2, '0'))}
+          label="Sites Under Watch (Live)"
+          color="navy"
+        />
+        <KPIStat
+          icon={RefreshCw}
+          value={liveKpiValue(latestUpdateDate ? formatRelativeTime(latestUpdateDate) : 'no data')}
+          label="Twin Last Updated (Live)"
+          color="teal"
+        />
+      </div>
+
+      {liveStatus === 'error' && (
+        <div className="flex items-center gap-2 rounded-sm border border-orange/30 bg-orange/5 px-4 py-3 text-xs text-orange mb-4">
+          <AlertCircle size={14} className="shrink-0" />
+          Unable to reach the backend at http://localhost:8000 — live KPI row above is showing unavailable data.
+        </div>
+      )}
+
+      {/* KPI Row (sample/demo data driving the charts below) */}
       <div className="grid-kpi stagger-children">
         <KPIStat
           label="Total Output (Today)"
@@ -117,7 +199,7 @@ export default function Dashboard() {
           value={riskEvents.filter(r => r.status === 'active').length}
           delta={null}
           deltaLabel="requires attention"
-          icon={ShieldAlert}
+          icon={AlertTriangle}
           color="danger"
         />
         <KPIStat
@@ -181,7 +263,7 @@ export default function Dashboard() {
       </div>
 
       {/* Bottom Row */}
-      <div className="grid-2">
+      <div className="grid-3">
         {/* Recent Alerts */}
         <Card title="Recent Alerts" subtitle="Active risk events and weather alerts">
           <div className="space-y-3">
@@ -212,6 +294,9 @@ export default function Dashboard() {
             ))}
           </div>
         </Card>
+
+        {/* Live Event Feed (real backend, polls every 15s) */}
+        <LiveEventFeed />
 
         {/* Equipment Status */}
         <Card title="Equipment Overview" subtitle="Fleet status across all sites">

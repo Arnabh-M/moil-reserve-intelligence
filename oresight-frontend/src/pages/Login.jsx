@@ -1,18 +1,18 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Mountain, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react'
-import Button from '../components/Button'
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Mountain, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Button } from '../components';
 
 export default function Login() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(true)
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(true);
 
   function handleSubmit(e) {
-    e.preventDefault()
-    // Authentication is mocked for this build.
-    navigate('/')
+    e.preventDefault();
+    // Authentication is mocked for this build — no backend auth endpoint exists yet.
+    navigate('/');
   }
 
   return (
@@ -34,7 +34,7 @@ export default function Login() {
         <rect width="100%" height="100%" fill="url(#contours)" />
       </svg>
 
-      <div className="relative z-10 w-full max-w-[920px] grid grid-cols-1 md:grid-cols-[1.1fr_1fr] overflow-hidden rounded-md border border-white/10 shadow-subtle">
+      <div className="relative z-10 w-full max-w-[920px] grid grid-cols-1 md:grid-cols-[1.1fr_1fr] overflow-hidden rounded-md border border-white/10 shadow-sm">
         <div className="hidden md:flex flex-col justify-between bg-navy2/60 p-10 border-r border-white/10">
           <div>
             <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export default function Login() {
           </div>
 
           <h1 className="font-heading text-xl font-semibold text-navy">Sign in to your console</h1>
-          <p className="mt-2 text-sm text-slate-500">Access the mine production planning dashboard.</p>
+          <p className="mt-2 text-sm text-text-secondary">Access the mine production planning dashboard.</p>
 
           <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -79,7 +79,7 @@ export default function Login() {
                 Work email
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   id="email"
                   type="email"
@@ -87,7 +87,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@moil.co.in"
-                  className="w-full rounded-sm border border-border bg-white py-3 pl-10 pr-3 text-sm text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
+                  className="w-full rounded-sm border border-border bg-white py-3 pl-10 pr-3 text-sm text-navy placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
                 />
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function Login() {
                 Password
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                 <input
                   id="password"
                   type="password"
@@ -105,13 +105,13 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-sm border border-border bg-white py-3 pl-10 pr-3 text-sm text-navy placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
+                  className="w-full rounded-sm border border-border bg-white py-3 pl-10 pr-3 text-sm text-navy placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-teal/40 focus:border-teal"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-xs font-medium text-slate-600 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-medium text-text-secondary cursor-pointer">
                 <input
                   type="checkbox"
                   checked={remember}
@@ -133,5 +133,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }
