@@ -14,6 +14,7 @@ const pageTitles = {
   '/recommendations': 'AI Recommendations',
   '/timeline': 'Event Timeline',
   '/data-input': 'Data Input',
+  '/map': 'Reserve Intelligence Map',
   '/blasting': 'Blast Planning',
   '/geology': 'Geology & Exploration',
   '/reports': 'Reports',

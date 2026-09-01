@@ -1,14 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────
 // OreSight API Client
 // Single constant USE_MOCK toggles between simulated responses and
-// real FastAPI calls at http://localhost:8000.
+// real FastAPI calls at http://localhost:8001.
 // ─────────────────────────────────────────────────────────────────────
 
 import { sites as mockSites } from '../data/mockData';
 
 export let USE_MOCK = false; // Default: attempt live backend, fallback seamlessly if offline
 
-const BASE_URL = 'http://localhost:8000';
+const BASE_URL = 'http://localhost:8001';
 
 // Global listeners for reactive UI mode toggling
 const mockListeners = new Set();
@@ -193,6 +193,40 @@ export async function getSites() {
 
   await delay(200);
   return [...mockSites];
+}
+
+export async function getReserveZones(siteId) {
+  const query = siteId != null ? `?site_id=${encodeURIComponent(siteId)}` : '';
+
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch(`/reserve-zones${query}`);
+    } catch (err) {
+      console.warn('[API] getReserveZones live call failed, using fallback:', err.message);
+    }
+  }
+
+  await delay(300);
+  try {
+    const res = await fetch('/reserve_zones.geojson');
+    if (res.ok) {
+      const geojson = await res.json();
+      if (siteId != null && geojson.features) {
+        const targetSiteId = String(siteId).toLowerCase();
+        const siteNameTarget = SITE_NAME_MAP[siteId] ? SITE_NAME_MAP[siteId].toLowerCase() : targetSiteId;
+        const filteredFeatures = geojson.features.filter(f => {
+          const fSite = String(f.properties?.site_id || '').toLowerCase();
+          return fSite === targetSiteId || fSite === siteNameTarget;
+        });
+        return { ...geojson, features: filteredFeatures };
+      }
+      return geojson;
+    }
+  } catch (err) {
+    console.warn('[API] Fallback fetch for reserve_zones.geojson failed:', err);
+  }
+
+  return { type: 'FeatureCollection', features: [] };
 }
 
 // ───────────────────────────────────────────────────────────────────────

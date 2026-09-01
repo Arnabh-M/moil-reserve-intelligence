@@ -16,6 +16,7 @@ import SiteDetail from './pages/SiteDetail';
 import DataInput from './pages/DataInput';
 import Reports from './pages/Reports';
 import ComingSoon from './pages/ComingSoon';
+import MapPage from './pages/MapPage';
 
 function Layout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -94,7 +95,7 @@ export default function App() {
             {/* Real */}
             <Route path="/reports" element={<Reports />} />
             {/* Placeholder routes */}
-            <Route path="/map" element={<ComingSoon />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/blasting" element={<ComingSoon />} />
             <Route path="/geology" element={<ComingSoon />} />
             <Route path="/settings" element={<ComingSoon />} />
