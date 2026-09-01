@@ -185,8 +185,16 @@ class SimulatorAgent:
             added_pct = min(1.0, duration_days / 7.0) * 0.2  # one more unit out of ~5 typical
             after["rolling_7day_downtime_pct"] = min(1.0, base["rolling_7day_downtime_pct"] + added_pct)
         elif scenario_type == "delay_blasting":
+            # +0.03/day of schedule_pressure: a hand-picked perturbation
+            # magnitude (like the 0.2 "one more unit" above), not model- or
+            # data-derived — there's no real blast-plan-delay signal in the
+            # training CSVs to calibrate this against (see
+            # finalize_shortfall_model.py's fit-quality note).
             after["schedule_pressure"] = min(1.0, base["schedule_pressure"] + 0.03 * duration_days)
         elif scenario_type == "rainfall_event":
+            # +0.05/day of rainfall_proxy: same status as the two constants
+            # above — a hand-picked perturbation magnitude, not derived from
+            # the model or training data.
             after["rainfall_proxy"] = min(1.0, base["rainfall_proxy"] + 0.05 * duration_days)
         return after
 

@@ -108,7 +108,13 @@ def main() -> None:
                 node_id=f"eq_{nagpur_neo4j_id}_06",
                 site_id=nagpur_neo4j_id,
                 name=down_equipment.name,
-                type="Haul Truck",
+                # Use Postgres's own equipment_type string verbatim (not a
+                # hand-picked "Haul Truck" literal) — planner.py's redeploy
+                # search matches case-insensitively but does NOT normalize
+                # word separators, so a Neo4j "Haul Truck" (space) vs
+                # Postgres "haul_truck" (underscore) silently fails to match.
+                # Bit us once already; keeping this verbatim avoids repeating it.
+                type=down_equipment.equipment_type,
                 status=down_equipment.status.value,
             )
 
@@ -125,7 +131,7 @@ def main() -> None:
                 node_id=f"eq_{bhandara_neo4j_id}_06",
                 site_id=bhandara_neo4j_id,
                 name=idle_candidate.name,
-                type="Haul Truck",
+                type=idle_candidate.equipment_type,
                 status=idle_candidate.status.value,
             )
 
