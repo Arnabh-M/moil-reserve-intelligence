@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertCircle, RefreshCw, Sparkles, Filter } from 'lucide-react';
-import { RecommendationCard, Card, Button } from '../components';
+import { Sparkles } from 'lucide-react';
+import { RecommendationCard, Card, EmptyState, ErrorState } from '../components';
 import { getAllRecommendations, USE_MOCK } from '../api/client';
 
 export default function Recommendations() {
@@ -77,24 +77,22 @@ export default function Recommendations() {
       {/* Error state */}
       {!loading && error && (
         <Card className="border-danger/30">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle size={28} className="text-danger mb-2" />
-            <h4 className="text-sm font-bold text-text-primary mb-1">Failed to Load Recommendations</h4>
-            <p className="text-xs text-text-muted max-w-sm mb-4">{error}</p>
-            <Button variant="ghost" size="sm" onClick={fetchRecommendations}>
-              <RefreshCw size={14} /> Retry API Request
-            </Button>
-          </div>
+          <ErrorState
+            title="Failed to Load Recommendations"
+            message={error}
+            onRetry={fetchRecommendations}
+          />
         </Card>
       )}
 
       {/* Recommendations List */}
       {!loading && !error && recommendations.length === 0 && (
         <Card>
-          <div className="flex flex-col items-center justify-center py-16 text-center text-text-muted text-xs">
-            <p className="text-sm font-semibold text-text-primary mb-1">No Active Recommendations</p>
-            <p>All mine operations are running within optimal parameters. No mitigation actions required.</p>
-          </div>
+          <EmptyState
+            title="No recommendations yet"
+            message="All mine operations are running within optimal parameters. No mitigation actions required."
+            tone="neutral"
+          />
         </Card>
       )}
 

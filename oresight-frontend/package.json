@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@xyflow/react": "^12.11.5",
-    "html2canvas": "^1.4.1",
+    "framer-motion": "^13.1.1",
+    "html2canvas-pro": "^2.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.37.0",
     "maplibre-gl": "^6.6.0",

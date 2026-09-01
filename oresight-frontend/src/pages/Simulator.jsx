@@ -24,7 +24,7 @@ function ComparisonCard({ title, before, after, unit = '', higherIsBetter = true
   const sign = diff > 0 ? '+' : diff < 0 ? '-' : '';
 
   return (
-    <Card className="hover:shadow-md transition-all duration-200">
+    <Card>
       <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">{title}</p>
       <div className="flex items-center justify-between gap-3">
         {/* Before */}
@@ -261,7 +261,7 @@ export default function Simulator() {
           {/* Loading Skeletons */}
           {loading && (
             <div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-6">
                 <LoadingCardSkeleton title="Reserve Confidence" />
                 <LoadingCardSkeleton title="Production Forecast" />
                 <LoadingCardSkeleton title="Risk Score" />
@@ -281,7 +281,7 @@ export default function Simulator() {
           {!loading && results && (
             <div className="space-y-6 animate-fade-in">
               {/* 3 Side-by-Side Comparison Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 <ComparisonCard
                   title="Reserve Confidence"
                   before={Math.round((results.before.reserve_confidence || 0) * 100)}

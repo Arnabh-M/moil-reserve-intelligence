@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import {
   Upload, ChevronDown, FileText, CheckCircle2, Loader2, X, AlertCircle, TrendingUp, TrendingDown,
 } from 'lucide-react';
-import { Card, Button, Badge } from '../components';
+import { Card, Button, Badge, InlineError } from '../components';
 import { postEquipmentStatus, postProduction, getEquipment, USE_MOCK } from '../api/client';
 import { sites } from '../data/mockData';
 
@@ -20,6 +20,7 @@ export default function DataInput() {
   // ── Equipment Form State ─────────────────────────────────────────────
   const [equipmentList, setEquipmentList] = useState([]);
   const [loadingEq, setLoadingEq] = useState(true);
+  const [equipmentError, setEquipmentError] = useState(null);
   const [eqId, setEqId] = useState('');
   const [eqStatus, setEqStatus] = useState('up');
   const [eqReason, setEqReason] = useState('');
@@ -41,24 +42,27 @@ export default function DataInput() {
   const [isUploading, setIsUploading] = useState(false);
 
   // Load equipment catalog
-  useEffect(() => {
-    async function loadEq() {
-      try {
-        setLoadingEq(true);
-        const data = await getEquipment();
-        setEquipmentList(data);
-        if (data.length > 0) {
-          setEqId(data[0].id);
-          setEqStatus(data[0].status);
-          setEqReason(data[0].status_reason || '');
-        }
-      } catch (err) {
-        console.error('Failed to load equipment catalog:', err);
-      } finally {
-        setLoadingEq(false);
+  const loadEquipmentCatalog = async () => {
+    try {
+      setLoadingEq(true);
+      setEquipmentError(null);
+      const data = await getEquipment();
+      setEquipmentList(data);
+      if (data.length > 0) {
+        setEqId(data[0].id);
+        setEqStatus(data[0].status);
+        setEqReason(data[0].status_reason || '');
       }
+    } catch (err) {
+      console.error('Failed to load equipment catalog:', err);
+      setEquipmentError(err.message || 'Unable to load equipment catalog.');
+    } finally {
+      setLoadingEq(false);
     }
-    loadEq();
+  };
+
+  useEffect(() => {
+    loadEquipmentCatalog();
   }, []);
 
   const handleEquipmentChange = (selectedId) => {
@@ -304,10 +308,10 @@ export default function DataInput() {
               <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Select Equipment
               </label>
-              <div className="relative">
+              <div className={`relative ${loadingEq ? 'animate-pulse' : ''}`}>
                 <select
                   value={eqId}
-                  disabled={loadingEq || isSubmittingEq}
+                  disabled={loadingEq || isSubmittingEq || !!equipmentError}
                   onChange={e => handleEquipmentChange(e.target.value)}
                   className={`w-full appearance-none bg-bg border rounded-lg px-3.5 py-2.5 text-sm text-text-primary outline-none transition-colors duration-150 ${
                     eqErrors.eqId
@@ -317,6 +321,8 @@ export default function DataInput() {
                 >
                   {loadingEq ? (
                     <option>Loading equipment catalog...</option>
+                  ) : equipmentError ? (
+                    <option>Equipment catalog unavailable</option>
                   ) : (
                     equipmentList.map(eq => (
                       <option key={eq.id} value={eq.id}>
@@ -331,6 +337,13 @@ export default function DataInput() {
                 <p className="text-[11px] text-danger mt-1 flex items-center gap-1 font-medium">
                   <AlertCircle size={12} /> {eqErrors.eqId}
                 </p>
+              )}
+              {equipmentError && (
+                <InlineError
+                  message="Unable to load equipment catalog."
+                  onRetry={loadEquipmentCatalog}
+                  className="mt-2"
+                />
               )}
             </div>
 
@@ -427,7 +440,7 @@ export default function DataInput() {
               type="submit"
               variant="primary"
               className="w-full"
-              disabled={isSubmittingEq || loadingEq}
+              disabled={isSubmittingEq || loadingEq || !!equipmentError}
             >
               {isSubmittingEq ? (
                 <span className="flex items-center gap-2">
@@ -595,7 +608,7 @@ export default function DataInput() {
           onDragLeave={() => setDragActive(false)}
           onDrop={handleDrop}
           onClick={() => document.getElementById('pdf-upload-input').click()}
-          className={`relative mt-1 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
+          className={`relative mt-1 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-150 ${
             dragActive
               ? 'border-orange bg-orange/5 scale-[1.005]'
               : uploadedFile
@@ -632,7 +645,7 @@ export default function DataInput() {
 
               <button
                 onClick={e => { e.stopPropagation(); setUploadedFile(null); }}
-                className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors"
+                className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors duration-150"
               >
                 <X size={12} /> Remove file
               </button>

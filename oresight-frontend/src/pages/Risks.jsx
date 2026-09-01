@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  BarChart, Bar,
+  BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
   ShieldAlert, AlertTriangle, CloudRain, Bomb,
-  ArrowRight, Zap, Link2,
+  ArrowRight, Zap, Link2, CheckCircle2,
 } from 'lucide-react';
-import { Card, KPIStat, Badge } from '../components';
+import { Card, KPIStat, Badge, EmptyState } from '../components';
 import {
   riskEvents, weatherEvents, blastPlans, oreZones, sites,
 } from '../data/mockData';
@@ -92,43 +92,52 @@ export default function Risks() {
       <div className="grid-2">
         {/* Risk Events */}
         <Card title="Risk Events" subtitle="Active and historical risk alerts">
-          <div className="space-y-3">
-            {riskEvents.map(risk => (
-              <div
-                key={risk.id}
-                className={`p-4 rounded-lg border transition-all duration-200 ${
-                  risk.status === 'active'
-                    ? 'bg-danger/5 border-danger/20 hover:border-danger/40'
-                    : 'bg-bg border-border hover:border-border'
-                }`}
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1.5 rounded-lg ${
-                      risk.severity === 'critical' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'
-                    }`}>
-                      <Zap size={14} />
+          {activeRisks === 0 ? (
+            <EmptyState
+              icon={CheckCircle2}
+              title="No active risks"
+              message="All sites operating normally"
+              tone="positive"
+            />
+          ) : (
+            <div className="space-y-3">
+              {riskEvents.map(risk => (
+                <div
+                  key={risk.id}
+                  className={`p-4 rounded-lg border transition-all duration-200 ${
+                    risk.status === 'active'
+                      ? 'bg-danger/5 border-danger/20 hover:border-danger/40'
+                      : 'bg-bg border-border hover:border-success/30'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-1.5 rounded-lg ${
+                        risk.severity === 'critical' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'
+                      }`}>
+                        <Zap size={14} />
+                      </div>
+                      <div>
+                        <span className="text-sm font-semibold text-text-primary">{risk.risk_type}</span>
+                        <span className="text-xs text-text-muted ml-2 capitalize">{risk.site_id}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-sm font-semibold text-text-primary">{risk.risk_type}</span>
-                      <span className="text-xs text-text-muted ml-2 capitalize">{risk.site_id}</span>
+                    <Badge variant={risk.severity} dot>{risk.severity}</Badge>
+                  </div>
+                  <p className="text-xs text-text-secondary mb-2 leading-relaxed">{risk.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] text-text-muted">Score: <strong className="text-text-primary">{risk.score}</strong></span>
+                      <span className="text-[10px] text-text-muted">Detected: {risk.detected_at}</span>
                     </div>
+                    <Badge variant={risk.status === 'active' ? 'down' : 'operational'} dot>
+                      {risk.status}
+                    </Badge>
                   </div>
-                  <Badge variant={risk.severity} dot>{risk.severity}</Badge>
                 </div>
-                <p className="text-xs text-text-secondary mb-2 leading-relaxed">{risk.description}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] text-text-muted">Score: <strong className="text-text-primary">{risk.score}</strong></span>
-                    <span className="text-[10px] text-text-muted">Detected: {risk.detected_at}</span>
-                  </div>
-                  <Badge variant={risk.status === 'active' ? 'down' : 'operational'} dot>
-                    {risk.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         {/* Weather Events */}
@@ -145,12 +154,8 @@ export default function Risks() {
                 />
                 <Bar dataKey="severity" radius={[0, 6, 6, 0]} barSize={18}>
                   {weatherChartData.map((entry, idx) => (
-                    <Bar key={idx} />
+                    <Cell key={idx} fill={SEVERITY_COLORS[entry.severity - 1] || COLORS.muted} />
                   ))}
-                  {weatherChartData.map((entry, idx) => {
-                    const color = SEVERITY_COLORS[entry.severity - 1] || COLORS.muted;
-                    return <rect key={idx} fill={color} />;
-                  })}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -270,7 +275,7 @@ export default function Risks() {
                     bp.status === 'delayed'
                       ? 'bg-warning/5 border-warning/20 hover:border-warning/40'
                       : bp.status === 'completed'
-                        ? 'bg-success/5 border-success/20'
+                        ? 'bg-success/5 border-success/20 hover:border-success/40'
                         : 'bg-bg border-border hover:border-teal/30'
                   }`}
                 >

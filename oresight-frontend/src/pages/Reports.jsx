@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Download, FileBarChart, AlertCircle, Gauge, ShieldAlert, ClipboardCheck } from 'lucide-react';
+import { Download, FileBarChart, Gauge, ShieldAlert, ClipboardCheck, FileQuestion } from 'lucide-react';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import { Card, KPIStat, Badge, Button } from '../components';
-import { getSites, getRiskEvents, getAllRecommendations } from '../api/client';
+// html2canvas 1.4.x can't parse the oklab()/oklch() colors Tailwind v4
+// emits, and throws instead of rendering — html2canvas-pro is a drop-in
+// fork that adds support for the modern CSS color syntax.
+import html2canvas from 'html2canvas-pro';
+import { Card, KPIStat, Badge, Button, SkeletonKPIRow, SkeletonCard, EmptyState, InlineError } from '../components';
+import { getSites, getRiskEvents, getAllRecommendations, SITE_MAP } from '../api/client';
+
+// Mock getSites() returns string site ids ('balaghat'); mock getRiskEvents()
+// returns numeric ones (1). Compare through SITE_MAP's numeric ids so both
+// shapes match — a strict === here always misses and reports 0 risks.
+function toNumericSiteId(id) {
+  return SITE_MAP[id] ?? Number(id);
+}
 import { estimateReserveConfidence } from '../lib/metrics';
 
 const ENDPOINT_LABELS = {
@@ -70,7 +80,8 @@ export default function Reports() {
   const siteSummaries = useMemo(() => {
     return sites.map((site) => {
       const siteId = site.id ?? site.site_id;
-      const siteRiskEvents = riskEvents.filter((e) => e.site_id === siteId);
+      const numericSiteId = toNumericSiteId(siteId);
+      const siteRiskEvents = riskEvents.filter((e) => toNumericSiteId(e.site_id) === numericSiteId);
       const activeRisks = siteRiskEvents.filter((e) => e.resolved === false);
       const siteRiskIds = new Set(siteRiskEvents.map((e) => e.id));
       const siteRecommendations = recommendations.filter((r) => siteRiskIds.has(r.risk_event_id));
@@ -156,10 +167,9 @@ export default function Reports() {
       </div>
 
       {failedEndpoints.length > 0 && (
-        <div className="flex items-center gap-2 rounded-sm border border-orange/30 bg-orange/5 px-4 py-3 text-xs text-orange">
-          <AlertCircle size={14} className="shrink-0" />
-          Unable to reach {failedEndpoints.join(', ')} at http://localhost:8000 — this report may be incomplete.
-        </div>
+        <InlineError
+          message={`Unable to reach ${failedEndpoints.join(', ')} at http://localhost:8000 — this report may be incomplete.`}
+        />
       )}
 
       <div ref={reportRef} className="flex flex-col gap-6 bg-white p-8">
@@ -185,39 +195,56 @@ export default function Reports() {
         </div>
 
         {/* Totals row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <KPIStat
-            icon={Gauge}
-            value={kpiValue(`${(totals.avgConfidence * 100).toFixed(1)}%`)}
-            label="Avg Reserve Confidence"
-            color="teal"
-          />
-          <KPIStat
-            icon={ShieldAlert}
-            value={kpiValue(String(totals.activeRiskCount).padStart(2, '0'))}
-            label="Active Risk Events"
-            color="orange"
-          />
-          <KPIStat
-            icon={ClipboardCheck}
-            value={kpiValue(String(totals.resolvedCount).padStart(2, '0'))}
-            label="Recommendations on Resolved Risks"
-            color="navy"
-          />
-          <KPIStat
-            icon={FileBarChart}
-            value={kpiValue(String(totals.siteCount).padStart(2, '0'))}
-            label="Sites Covered"
-            color="teal"
-          />
-        </div>
+        {status === 'loading' ? (
+          <SkeletonKPIRow count={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <KPIStat
+              icon={Gauge}
+              value={kpiValue(`${(totals.avgConfidence * 100).toFixed(1)}%`)}
+              label="Avg Reserve Confidence"
+              color="teal"
+            />
+            <KPIStat
+              icon={ShieldAlert}
+              value={kpiValue(String(totals.activeRiskCount).padStart(2, '0'))}
+              label="Active Risk Events"
+              color="orange"
+            />
+            <KPIStat
+              icon={ClipboardCheck}
+              value={kpiValue(String(totals.resolvedCount).padStart(2, '0'))}
+              label="Recommendations on Resolved Risks"
+              color="navy"
+            />
+            <KPIStat
+              icon={FileBarChart}
+              value={kpiValue(String(totals.siteCount).padStart(2, '0'))}
+              label="Sites Covered"
+              color="teal"
+            />
+          </div>
+        )}
 
         {/* Per-site sections */}
         <div className="flex flex-col gap-4">
-          {status === 'loading' && <Card className="text-sm text-text-secondary">Loading site summaries…</Card>}
+          {status === 'loading' && (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          )}
 
           {status !== 'loading' && siteSummaries.length === 0 && (
-            <Card className="text-sm text-text-secondary">No sites reported.</Card>
+            <Card>
+              <EmptyState
+                icon={FileQuestion}
+                title="No sites reported"
+                message="No site data is available for this report yet."
+                tone="neutral"
+              />
+            </Card>
           )}
 
           {siteSummaries.map((site) => (

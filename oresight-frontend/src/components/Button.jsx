@@ -1,7 +1,7 @@
 import React from 'react';
 
 const base =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-200 cursor-pointer text-sm';
+  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-200 cursor-pointer text-sm hover:scale-[1.01] active:scale-[0.99] disabled:hover:scale-100';
 
 const variantClasses = {
   primary:

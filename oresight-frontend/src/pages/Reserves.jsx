@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis,
 } from 'recharts';
 import { Mountain, Gem, CheckCircle, Layers } from 'lucide-react';
-import { Card, KPIStat, Badge } from '../components';
+import { Card, KPIStat, Badge, EmptyState } from '../components';
 import { deposits, gradeDistribution, sites } from '../data/mockData';
 
 const COLORS = {
@@ -232,7 +232,7 @@ export default function Reserves() {
               <button
                 key={s}
                 onClick={() => setFilterSite(s)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
                   filterSite === s ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
                 }`}
               >
@@ -243,44 +243,52 @@ export default function Reserves() {
         }
       >
         <div className="max-h-80 overflow-y-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th className="cursor-pointer hover:text-text-primary" onClick={() => handleSort('site_id')}>
-                  Site {sortBy === 'site_id' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-                <th>Lat / Lon</th>
-                <th className="cursor-pointer hover:text-text-primary" onClick={() => handleSort('depth_m')}>
-                  Depth {sortBy === 'depth_m' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-                <th className="cursor-pointer hover:text-text-primary" onClick={() => handleSort('grade_percent')}>
-                  Mn Grade {sortBy === 'grade_percent' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
-                </th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDeposits.map(d => (
-                <tr key={d.id}>
-                  <td className="font-mono text-xs">{d.id}</td>
-                  <td className="capitalize">{d.site_id}</td>
-                  <td className="text-xs text-text-muted">{d.lat.toFixed(4)}, {d.lon.toFixed(4)}</td>
-                  <td>{d.depth_m}m</td>
-                  <td>
-                    <span className={`font-semibold ${d.grade_percent >= 30 ? 'text-orange' : d.grade_percent >= 15 ? 'text-teal' : 'text-text-secondary'}`}>
-                      {d.grade_percent}%
-                    </span>
-                  </td>
-                  <td>
-                    <Badge variant={d.confirmed ? 'confirmed' : 'unconfirmed'}>
-                      {d.confirmed ? 'Confirmed' : 'Unconfirmed'}
-                    </Badge>
-                  </td>
+          {deposits.length === 0 ? (
+            <EmptyState
+              title="No reserve deposits recorded"
+              message="Deposit data will appear here once available."
+              tone="neutral"
+            />
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th className="cursor-pointer hover:text-text-primary transition-colors duration-150" onClick={() => handleSort('site_id')}>
+                    Site {sortBy === 'site_id' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                  </th>
+                  <th>Lat / Lon</th>
+                  <th className="cursor-pointer hover:text-text-primary transition-colors duration-150" onClick={() => handleSort('depth_m')}>
+                    Depth {sortBy === 'depth_m' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                  </th>
+                  <th className="cursor-pointer hover:text-text-primary transition-colors duration-150" onClick={() => handleSort('grade_percent')}>
+                    Mn Grade {sortBy === 'grade_percent' ? (sortDir === 'asc' ? '↑' : '↓') : ''}
+                  </th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredDeposits.map(d => (
+                  <tr key={d.id}>
+                    <td className="font-mono text-xs">{d.id}</td>
+                    <td className="capitalize">{d.site_id}</td>
+                    <td className="text-xs text-text-muted">{d.lat.toFixed(4)}, {d.lon.toFixed(4)}</td>
+                    <td>{d.depth_m}m</td>
+                    <td>
+                      <span className={`font-semibold ${d.grade_percent >= 30 ? 'text-orange' : d.grade_percent >= 15 ? 'text-teal' : 'text-text-secondary'}`}>
+                        {d.grade_percent}%
+                      </span>
+                    </td>
+                    <td>
+                      <Badge variant={d.confirmed ? 'confirmed' : 'unconfirmed'}>
+                        {d.confirmed ? 'Confirmed' : 'Unconfirmed'}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </Card>
     </div>

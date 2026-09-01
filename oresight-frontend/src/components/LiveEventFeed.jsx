@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import Card from './Card';
 import Badge from './Badge';
+import { SkeletonRow } from './Skeleton';
+import EmptyState from './EmptyState';
+import ErrorState from './ErrorState';
 import { getRiskEvents } from '../api/client';
 import { getEventTimestamp, formatRelativeTime } from '../lib/time';
 
@@ -96,18 +99,29 @@ export default function LiveEventFeed() {
 
       <div className="flex-1 px-3 py-2">
         {status === 'loading' && (
-          <p className="px-2 py-4 text-xs text-text-muted">Loading recent events…</p>
+          <>
+            <SkeletonRow />
+            <SkeletonRow />
+            <SkeletonRow />
+          </>
         )}
 
         {status === 'error' && (
-          <div className="flex items-start gap-2 px-2 py-4 text-xs text-orange">
-            <AlertCircle size={14} className="mt-1 shrink-0" />
-            <span>Unable to reach the risk-events service. Retrying every 15s.</span>
-          </div>
+          <ErrorState
+            compact
+            title="Connection lost"
+            message="Unable to reach the risk-events service. Retrying every 15s."
+          />
         )}
 
         {status === 'ready' && events.length === 0 && (
-          <p className="px-2 py-4 text-xs text-text-muted">No risk events reported.</p>
+          <EmptyState
+            icon={CheckCircle2}
+            title="No active risks"
+            message="All sites operating normally"
+            tone="positive"
+            compact
+          />
         )}
 
         {status === 'ready' &&

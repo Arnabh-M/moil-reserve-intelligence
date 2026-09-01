@@ -12,3 +12,6 @@ dist/
 # Environment files
 .env
 .env.local
+
+# Claude Code temporary worktrees
+.claude/worktrees/

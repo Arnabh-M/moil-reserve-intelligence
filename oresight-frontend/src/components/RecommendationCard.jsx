@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-  Zap, ArrowRight, ArrowUp, ArrowDown, Loader2, ChevronUp, ChevronDown, CheckCircle2, AlertCircle, X,
+  Zap, ArrowRight, ArrowUp, ArrowDown, Loader2, ChevronUp, ChevronDown, CheckCircle2, X,
 } from 'lucide-react';
 import Badge from './Badge';
 import Button from './Button';
 import CausalGraph from './CausalGraph';
+import { InlineError } from './ErrorState';
 import { postSimulate, SITE_MAP } from '../api/client';
 
 export default function RecommendationCard({
@@ -200,10 +201,10 @@ export default function RecommendationCard({
 
           {/* Error state */}
           {simError && (
-            <div className="p-3 rounded-lg bg-danger/10 text-danger text-xs flex items-center gap-2">
-              <AlertCircle size={14} />
-              <span>{simError}</span>
-            </div>
+            <InlineError
+              message={simError}
+              onRetry={() => handleSimulate(options[activeSimIdx], activeSimIdx)}
+            />
           )}
 
           {/* Result content */}
