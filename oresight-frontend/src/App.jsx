@@ -11,7 +11,7 @@ import Equipment from './pages/Equipment';
 import Risks from './pages/Risks';
 import Simulator from './pages/Simulator';
 import Recommendations from './pages/Recommendations';
-import Timeline from './pages/Timeline';
+import EventTimeline from './pages/EventTimeline';
 import SiteDetail from './pages/SiteDetail';
 import DataInput from './pages/DataInput';
 import Reports from './pages/Reports';
@@ -89,7 +89,7 @@ export default function App() {
             {/* New 5 pages (Day 1 assignment) */}
             <Route path="/simulator" element={<Simulator />} />
             <Route path="/recommendations" element={<Recommendations />} />
-            <Route path="/timeline" element={<Timeline />} />
+            <Route path="/timeline" element={<EventTimeline />} />
             <Route path="/site/:id" element={<SiteDetail />} />
             <Route path="/data-input" element={<DataInput />} />
             {/* Real */}

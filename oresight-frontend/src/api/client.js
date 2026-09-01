@@ -1,14 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────
 // OreSight API Client
 // Single constant USE_MOCK toggles between simulated responses and
-// real FastAPI calls at http://localhost:8001.
+// real FastAPI calls at http://localhost:8002.
 // ─────────────────────────────────────────────────────────────────────
 
 import { sites as mockSites } from '../data/mockData';
 
 export let USE_MOCK = false; // Default: attempt live backend, fallback seamlessly if offline
 
-const BASE_URL = 'http://localhost:8001';
+const BASE_URL = 'http://localhost:8002';
 
 // Global listeners for reactive UI mode toggling
 const mockListeners = new Set();
