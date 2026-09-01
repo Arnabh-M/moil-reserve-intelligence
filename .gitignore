@@ -4,3 +4,11 @@ venv/
 .venv/
 .ipynb_checkpoints/
 *.log
+
+# Frontend
+node_modules/
+dist/
+
+# Environment files
+.env
+.env.local
