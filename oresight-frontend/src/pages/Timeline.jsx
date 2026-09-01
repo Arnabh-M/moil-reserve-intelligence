@@ -1,6 +1,7 @@
 import React from 'react';
-import { ExternalLink } from 'lucide-react';
-import { Badge } from '../components';
+import { useNavigate } from 'react-router-dom';
+import { ExternalLink, Clock } from 'lucide-react';
+import { Badge, EmptyState } from '../components';
 
 const events = [
   {
@@ -66,6 +67,25 @@ const events = [
 ];
 
 export default function Timeline() {
+  const navigate = useNavigate();
+
+  if (events.length === 0) {
+    return (
+      <div className="page-container">
+        <h2 className="page-title">Event Timeline</h2>
+        <p className="page-subtitle">
+          Chronological record of disruptions, resolutions, and milestones across all mine sites
+        </p>
+        <EmptyState
+          icon={Clock}
+          title="No events recorded"
+          message="Disruptions, resolutions, and milestones will appear here as they happen."
+          tone="neutral"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="page-container">
       <h2 className="page-title">Event Timeline</h2>
@@ -113,7 +133,11 @@ export default function Timeline() {
                   <span className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
                     {event.site}
                   </span>
-                  <button className="flex items-center gap-1 text-xs text-teal font-medium hover:text-teal/80 transition-colors duration-150">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/site/${event.site.toLowerCase()}`)}
+                    className="flex items-center gap-1 text-xs text-teal font-medium hover:text-teal/80 transition-colors duration-150 cursor-pointer"
+                  >
                     View Details
                     <ExternalLink size={11} />
                   </button>

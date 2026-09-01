@@ -120,7 +120,7 @@ export default function Login() {
                 />
                 Remember me
               </label>
-              <a href="#" className="text-xs font-semibold text-teal hover:text-teal/80">
+              <a href="#" className="text-xs font-semibold text-teal hover:text-teal/80 transition-colors duration-150">
                 Forgot password?
               </a>
             </div>

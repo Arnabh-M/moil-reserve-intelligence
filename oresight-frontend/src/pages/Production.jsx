@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine,
 } from 'recharts';
 import { Factory, Target, Trophy, TrendingDown } from 'lucide-react';
-import { Card, KPIStat, Badge } from '../components';
+import { Card, KPIStat, Badge, EmptyState } from '../components';
 import { productionHistory, siteProductionSummary, dailyTotals } from '../data/mockData';
 
 const COLORS = {
@@ -91,11 +91,21 @@ export default function Production() {
     return Object.values(dateMap);
   }, [selectedSite]);
 
+  const isEmpty = productionHistory.length === 0 || siteProductionSummary.length === 0;
+
   return (
     <div className="page-container">
       <h2 className="page-title">Production Analytics</h2>
       <p className="page-subtitle">Output trends, target tracking, and deviation analysis across mine sites</p>
 
+      {isEmpty ? (
+        <EmptyState
+          title="No production data yet"
+          message="Daily production entries will appear here once recorded."
+          tone="neutral"
+        />
+      ) : (
+      <>
       {/* KPI Row */}
       <div className="grid-kpi stagger-children">
         <KPIStat
@@ -286,6 +296,8 @@ export default function Production() {
             </table>
           </div>
         </Card>
+      )}
+      </>
       )}
     </div>
   );

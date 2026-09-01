@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { Wrench, CheckCircle, XCircle, Clock, ArrowRightLeft, AlertTriangle } from 'lucide-react';
-import { Card, KPIStat, Badge, Button } from '../components';
+import { Card, KPIStat, Badge, Button, EmptyState } from '../components';
 import {
   equipment, downtimeLog, downtimeByReason, monthlyDowntime,
   redeploySuggestions, sites,
@@ -120,7 +120,7 @@ export default function Equipment() {
                 <button
                   key={s}
                   onClick={() => setFilterSite(s)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
                     filterSite === s ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
@@ -131,37 +131,45 @@ export default function Equipment() {
           }
         >
           <div className="max-h-96 overflow-y-auto">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Site</th>
-                  <th>Status</th>
-                  <th>Last Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredEquipment.map(eq => (
-                  <tr key={eq.id}>
-                    <td>
-                      <div>
-                        <p className="font-medium text-text-primary">{eq.name}</p>
-                        <p className="text-[10px] text-text-muted font-mono">{eq.id}</p>
-                      </div>
-                    </td>
-                    <td>{eq.type}</td>
-                    <td className="capitalize">{eq.site_id}</td>
-                    <td>
-                      <Badge variant={eq.status} dot>{eq.status === 'up' ? 'Operational' : 'Down'}</Badge>
-                    </td>
-                    <td className="text-xs text-text-muted">
-                      {new Date(eq.lastChange).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                    </td>
+            {equipment.length === 0 ? (
+              <EmptyState
+                title="No equipment on record"
+                message="Equipment status will appear here once added."
+                tone="neutral"
+              />
+            ) : (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Site</th>
+                    <th>Status</th>
+                    <th>Last Change</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredEquipment.map(eq => (
+                    <tr key={eq.id}>
+                      <td>
+                        <div>
+                          <p className="font-medium text-text-primary">{eq.name}</p>
+                          <p className="text-[10px] text-text-muted font-mono">{eq.id}</p>
+                        </div>
+                      </td>
+                      <td>{eq.type}</td>
+                      <td className="capitalize">{eq.site_id}</td>
+                      <td>
+                        <Badge variant={eq.status} dot>{eq.status === 'up' ? 'Operational' : 'Down'}</Badge>
+                      </td>
+                      <td className="text-xs text-text-muted">
+                        {new Date(eq.lastChange).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </Card>
 

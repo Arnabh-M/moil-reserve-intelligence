@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  MapPin, ShieldAlert, Clock, Network, BarChart3,
+  MapPin, ShieldAlert, Clock, Network, BarChart3, SearchX,
 } from 'lucide-react';
-import { Card, KPIStat, Badge, RecommendationCard, ProductionChart } from '../components';
+import { Card, KPIStat, Badge, RecommendationCard, ProductionChart, EmptyState } from '../components';
 import { sites, oreZones, equipment } from '../data/mockData';
 import { SITE_MAP } from '../api/client';
 
@@ -123,9 +123,13 @@ export default function SiteDetail() {
   if (!site) {
     return (
       <div className="page-container">
-        <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-          <p className="text-lg font-semibold text-text-primary mb-2">Site Not Found</p>
-          <p className="text-sm text-text-secondary">No site found with ID "{id}". Available sites: balaghat, nagpur, bhandara.</p>
+        <div className="animate-fade-in">
+          <EmptyState
+            icon={SearchX}
+            title="Site Not Found"
+            message={`No site found with ID "${id}". Available sites: balaghat, nagpur, bhandara.`}
+            tone="neutral"
+          />
         </div>
       </div>
     );

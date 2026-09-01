@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import {
   Factory, Activity, ShieldAlert, Gem, AlertTriangle, ArrowRight,
-  Gauge, Eye, RefreshCw, AlertCircle,
+  Gauge, Eye, RefreshCw,
 } from 'lucide-react';
-import { Card, KPIStat, Badge } from '../components';
+import { Card, KPIStat, Badge, SkeletonKPIRow, InlineError } from '../components';
 import LiveEventFeed from '../components/LiveEventFeed';
 import {
   dailyTotals, siteProductionSummary, equipment, riskEvents,
@@ -94,11 +95,14 @@ export default function Dashboard() {
   const [liveSites, setLiveSites] = useState([]);
   const [liveRiskEvents, setLiveRiskEvents] = useState([]);
   const [liveStatus, setLiveStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [retryToken, setRetryToken] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
+      setLiveStatus('loading');
       try {
         const [sitesData, riskData] = await Promise.all([getSites(), getRiskEvents()]);
         if (cancelled) return;
@@ -114,7 +118,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryToken]);
 
   const activeRiskEvents = liveRiskEvents.filter((e) => e.resolved === false).length;
   const avgReserveConfidence = liveSites.length
@@ -142,38 +146,43 @@ export default function Dashboard() {
       <p className="page-subtitle">Real-time mine production intelligence across all MOIL sites</p>
 
       {/* Live Twin State Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
-        <KPIStat
-          icon={ShieldAlert}
-          value={liveKpiValue(String(activeRiskEvents).padStart(2, '0'))}
-          label="Active Risk Events (Live)"
-          color="orange"
-        />
-        <KPIStat
-          icon={Gauge}
-          value={liveKpiValue(`${(avgReserveConfidence * 100).toFixed(1)}%`)}
-          label="Avg Reserve Confidence (Live)"
-          color="teal"
-        />
-        <KPIStat
-          icon={Eye}
-          value={liveKpiValue(String(sitesUnderWatch).padStart(2, '0'))}
-          label="Sites Under Watch (Live)"
-          color="navy"
-        />
-        <KPIStat
-          icon={RefreshCw}
-          value={liveKpiValue(latestUpdateDate ? formatRelativeTime(latestUpdateDate) : 'no data')}
-          label="Twin Last Updated (Live)"
-          color="teal"
-        />
-      </div>
+      {liveStatus === 'loading' ? (
+        <SkeletonKPIRow count={4} className="mb-4" />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+          <KPIStat
+            icon={ShieldAlert}
+            value={liveKpiValue(String(activeRiskEvents).padStart(2, '0'))}
+            label="Active Risk Events (Live)"
+            color="orange"
+          />
+          <KPIStat
+            icon={Gauge}
+            value={liveKpiValue(`${(avgReserveConfidence * 100).toFixed(1)}%`)}
+            label="Avg Reserve Confidence (Live)"
+            color="teal"
+          />
+          <KPIStat
+            icon={Eye}
+            value={liveKpiValue(String(sitesUnderWatch).padStart(2, '0'))}
+            label="Sites Under Watch (Live)"
+            color="navy"
+          />
+          <KPIStat
+            icon={RefreshCw}
+            value={liveKpiValue(latestUpdateDate ? formatRelativeTime(latestUpdateDate) : 'no data')}
+            label="Twin Last Updated (Live)"
+            color="teal"
+          />
+        </div>
+      )}
 
       {liveStatus === 'error' && (
-        <div className="flex items-center gap-2 rounded-sm border border-orange/30 bg-orange/5 px-4 py-3 text-xs text-orange mb-4">
-          <AlertCircle size={14} className="shrink-0" />
-          Unable to reach the backend at http://localhost:8000 — live KPI row above is showing unavailable data.
-        </div>
+        <InlineError
+          className="mb-4"
+          message="Unable to reach the backend at http://localhost:8000 — live KPI row above is showing unavailable data."
+          onRetry={() => setRetryToken((t) => t + 1)}
+        />
       )}
 
       {/* KPI Row (sample/demo data driving the charts below) */}
@@ -270,7 +279,10 @@ export default function Dashboard() {
             {recentAlerts.map(alert => (
               <div
                 key={alert.id}
-                className="flex items-start gap-3 p-3 rounded-lg bg-bg border border-border transition-all duration-200 hover:border-orange/30"
+                onClick={alert.site ? () => navigate(`/site/${alert.site}`) : undefined}
+                className={`flex items-start gap-3 p-3 rounded-lg bg-bg border border-border transition-all duration-200 hover:border-orange/30 ${
+                  alert.site ? 'cursor-pointer' : ''
+                }`}
               >
                 <div className={`mt-0.5 p-1.5 rounded-lg ${
                   alert.severity === 'critical' ? 'bg-danger/10 text-danger' : 'bg-warning/10 text-warning'

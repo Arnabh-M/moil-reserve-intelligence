@@ -122,7 +122,10 @@ body {
   margin-bottom: 1.5rem;
 }
 
-@media (max-width: 1024px) {
+/* Threshold is wider than the 1024px tablet breakpoint on purpose: the
+   fixed-width sidebar (240px expanded) eats into the viewport before the
+   grid itself notices it's cramped, so this needs headroom past 1024px. */
+@media (max-width: 1180px) {
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;

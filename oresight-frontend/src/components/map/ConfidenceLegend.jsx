@@ -5,7 +5,7 @@ export default function ConfidenceLegend({ visible }) {
   if (!visible) return null;
 
   return (
-    <div className="absolute bottom-6 right-6 z-10 w-64 rounded-xl border border-border bg-white/95 p-4 shadow-lg backdrop-blur-md transition-all">
+    <div className="absolute bottom-6 right-6 z-10 w-64 rounded-xl border border-border bg-white/95 p-4 shadow-lg backdrop-blur-md">
       <div className="flex items-center justify-between mb-2">
         <h4 className="font-heading text-xs font-bold text-navy uppercase tracking-wider">
           Reserve Confidence

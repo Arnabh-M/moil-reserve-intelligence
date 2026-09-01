@@ -21,7 +21,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
           <div>
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-teal" />
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                 GeoJSON Feature Detail
               </span>
             </div>
@@ -30,7 +30,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
           <button
             onClick={onClose}
             type="button"
-            className="rounded-lg p-1 text-slate-400 hover:bg-bg hover:text-slate-700 transition-colors"
+            className="rounded-lg p-1 text-text-muted hover:bg-bg hover:text-text-primary transition-colors duration-150"
             aria-label="Close detail panel"
           >
             <X size={18} />
@@ -42,7 +42,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
           <div className="flex items-center gap-2 mb-4 bg-bg px-3 py-2 rounded-xl border border-border">
             <MapPin size={15} className="text-orange shrink-0" />
             <div>
-              <p className="text-[10px] text-slate-400 font-medium">Mine Site</p>
+              <p className="text-[10px] text-text-muted font-medium">Mine Site</p>
               <p className="text-xs font-semibold text-navy">{siteName}</p>
             </div>
           </div>
@@ -52,10 +52,10 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-bg/50 p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-600">Confidence Score</span>
+              <span className="text-xs font-medium text-text-secondary">Confidence Score</span>
               <Badge variant={confidenceVariant}>{confidencePct}%</Badge>
             </div>
-            <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+            <div className="h-2 w-full rounded-full bg-border overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-300 ${
                   confidenceScore >= 0.7
@@ -67,7 +67,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
                 style={{ width: `${Math.min(Math.max(confidencePct, 5), 100)}%` }}
               />
             </div>
-            <p className="mt-2 text-[11px] text-slate-500">
+            <p className="mt-2 text-[11px] text-text-secondary">
               Score: <span className="font-semibold text-navy">{Number(confidenceScore).toFixed(4)}</span>
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
               <div className="rounded-xl border border-border p-3">
                 <div className="flex items-center gap-1.5 text-teal mb-1">
                   <Award size={14} />
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-text-secondary">
                     Est. Grade
                   </span>
                 </div>
@@ -89,7 +89,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
             <div className="rounded-xl border border-border p-3">
               <div className="flex items-center gap-1.5 text-orange mb-1">
                 <ShieldAlert size={14} />
-                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-text-secondary">
                   Status
                 </span>
               </div>
@@ -100,17 +100,17 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
           </div>
 
           {/* Causal Reasoning Placeholder */}
-          <div className="mt-4 rounded-xl border border-dashed border-border bg-slate-50 p-3">
+          <div className="mt-4 rounded-xl border border-dashed border-border bg-bg p-3">
             <span className="text-xs font-semibold text-text-muted">Causal reasoning coming soon</span>
           </div>
 
           {/* Raw GeoJSON Properties */}
           <div className="mt-4">
             <h4 className="text-xs font-semibold text-navy mb-2">All Feature Attributes</h4>
-            <div className="rounded-xl border border-border bg-slate-50 p-3 space-y-1.5 text-xs">
+            <div className="rounded-xl border border-border bg-bg p-3 space-y-1.5 text-xs">
               {Object.entries(zone).map(([key, val]) => (
-                <div key={key} className="flex justify-between items-center py-0.5 border-b border-slate-200/60 last:border-0">
-                  <span className="text-slate-500 font-mono text-[11px]">{key}:</span>
+                <div key={key} className="flex justify-between items-center py-0.5 border-b border-border/60 last:border-0">
+                  <span className="text-text-secondary font-mono text-[11px]">{key}:</span>
                   <span className="font-medium text-navy text-[11px]">
                     {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                   </span>
@@ -125,7 +125,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
         <button
           onClick={onClose}
           type="button"
-          className="w-full py-2 px-4 rounded-xl border border-border bg-bg hover:bg-slate-100 text-xs font-semibold text-navy transition-colors"
+          className="w-full py-2 px-4 rounded-xl border border-border bg-bg hover:bg-border/60 text-xs font-semibold text-navy transition-colors duration-150"
         >
           Deselect Zone
         </button>
