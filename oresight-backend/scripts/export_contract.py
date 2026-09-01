@@ -23,11 +23,78 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from datetime import timedelta  # noqa: E402
+
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.agents.watcher import WatcherAgent  # noqa: E402
 from app.db import SessionLocal  # noqa: E402
+from app.graph_db import close_graph_driver, init_graph_driver  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import ProductionRecord, RiskEvent  # noqa: E402
+from app.models import Equipment, EquipmentStatus, ProductionRecord, RiskEvent  # noqa: E402
+
+
+def _seed_linked_risk_event() -> tuple[int, int, str]:
+    """Create ONE risk event that has a real Neo4j causal graph, so the
+    contract's causal-graph / recommendations examples show a live traversal
+    rather than the Postgres-only fallback.
+
+    Marks an 'up' unit down directly via the ORM (not POST /equipment/{id}/
+    status, which would create its own graph-less Postgres risk row), then
+    runs the Watcher once so the risk is mirrored into Neo4j with a
+    `CAUSES` edge. Returns (risk_event_id, equipment_id, original_reason)
+    for `_cleanup_linked_risk_event` to undo.
+    """
+    db = SessionLocal()
+    driver = init_graph_driver()
+    try:
+        equipment = (
+            db.query(Equipment)
+            .filter(Equipment.status == EquipmentStatus.UP)
+            .order_by(Equipment.id)
+            .first()
+        )
+        original_reason = equipment.status_reason
+        original_change = equipment.last_status_change
+        equipment.status = EquipmentStatus.DOWN
+        equipment.last_status_change = datetime.now(timezone.utc)
+        equipment.status_reason = "Contract capture — transient, cleaned up"
+        db.commit()
+
+        created = WatcherAgent(db, driver).check_for_changes(
+            since=datetime.now(timezone.utc) - timedelta(minutes=10)
+        )
+        risk_event_id = next(
+            c["id"]
+            for c in created
+            if c["site_id"] == equipment.site_id
+            and c["risk_type"] == "equipment_failure"
+        )
+
+        # Restore the equipment row immediately; the risk event + its Neo4j
+        # node stay until _cleanup runs after all captures.
+        equipment.status = EquipmentStatus.UP
+        equipment.last_status_change = original_change
+        equipment.status_reason = original_reason
+        db.commit()
+        return risk_event_id, equipment.id, original_reason
+    finally:
+        db.close()
+
+
+def _cleanup_linked_risk_event(risk_event_id: int) -> None:
+    db = SessionLocal()
+    driver = init_graph_driver()
+    try:
+        db.query(RiskEvent).filter(RiskEvent.id == risk_event_id).delete()
+        db.commit()
+        with driver.session() as session:
+            session.run(
+                "MATCH (r:RiskEvent {external_ref: $ref}) DETACH DELETE r",
+                ref=str(risk_event_id),
+            )
+    finally:
+        db.close()
 
 DOCS_DIR = PROJECT_ROOT / "docs"
 OPENAPI_PATH = DOCS_DIR / "openapi.json"
@@ -48,9 +115,9 @@ STATUS_TABLE = [
     ("GET", "/risk-events", "Live"),
     ("GET", "/reserve-zones", "Live (real DB query, not a mock)"),
     ("GET", "/kpi/summary", "Live"),
-    ("GET", "/risk-events/{risk_event_id}/causal-graph", "STUB - hardcoded 5-node graph, replaced Day 3 with a live Neo4j traversal"),
-    ("GET", "/recommendations", "STUB - hand-authored options, replaced Day 4 with the real recommendation engine"),
-    ("POST", "/simulate", "STUB - deterministic formula, replaced Day 4-5 with the real simulation engine"),
+    ("GET", "/risk-events/{risk_event_id}/causal-graph", "Live - Neo4j traversal (up to 3 hops from the RiskEvent node); falls back to a single-node graph with graph_source='postgres_fallback' when the risk event has no Neo4j node yet"),
+    ("GET", "/recommendations", "Live - PlannerAgent (candidate search + simulation-backed scoring)"),
+    ("POST", "/simulate", "Live - SimulatorAgent (trained shortfall forecaster + Neo4j causal-chain traversal)"),
     ("GET", "/admin/jobs", "Live (scheduler introspection)"),
     ("GET", "/health", "Live"),
 ]
@@ -145,6 +212,10 @@ def main() -> None:
     components = openapi_schema.get("components", {})
     captured: list[dict[str, Any]] = []
 
+    # Seed one Watcher-linked risk event so the causal-graph / recommendations
+    # examples below capture a live Neo4j traversal. Removed in cleanup.
+    linked_risk_event_id, _, _ = _seed_linked_risk_event()
+
     with TestClient(app) as client:
         # --- Sites ---
         r = client.get("/sites")
@@ -215,13 +286,17 @@ def main() -> None:
         risk_events_all = r.json()
         captured.append({"group": "Risk & Graph", "method": "GET", "path": "/risk-events", "concrete": "/risk-events", "status": r.status_code, "body": risk_events_all})
 
-        risk_event_id = risk_events_all[0]["id"]
+        # `linked_risk_event_id` (seeded above via the Watcher) has a real
+        # Neo4j causal graph; use it for the causal-graph + recommendations
+        # examples so they show a live traversal, not the fallback.
+        risk_event_id = linked_risk_event_id
 
         r = client.get(f"/reserve-zones?site_id={site_id}")
         captured.append({"group": "Risk & Graph", "method": "GET", "path": "/reserve-zones", "concrete": f"/reserve-zones?site_id={site_id}", "status": r.status_code, "body": r.json()})
 
         r = client.get(f"/risk-events/{risk_event_id}/causal-graph")
-        captured.append({"group": "Risk & Graph", "method": "GET", "path": "/risk-events/{risk_event_id}/causal-graph", "concrete": f"/risk-events/{risk_event_id}/causal-graph", "status": r.status_code, "body": r.json()})
+        captured.append({"group": "Risk & Graph", "method": "GET", "path": "/risk-events/{risk_event_id}/causal-graph", "concrete": f"/risk-events/{risk_event_id}/causal-graph", "status": r.status_code, "body": r.json(),
+            "note": "graph_source='neo4j' is a live traversal. When a risk event has no Neo4j node yet (predates the Watcher sync, or Neo4j is down), the same endpoint returns HTTP 200 with a single-node graph and graph_source='postgres_fallback' plus an explanatory note - render a banner, not an empty canvas."})
 
         # --- Recommendations & Simulation ---
         r = client.get(f"/recommendations?risk_event_id={risk_event_id}")
@@ -241,7 +316,7 @@ def main() -> None:
         r = client.get("/admin/jobs")
         captured.append({"group": "Meta & Ops", "method": "GET", "path": "/admin/jobs", "concrete": "/admin/jobs", "status": r.status_code, "body": r.json()})
 
-    # Clean up the two write side effects so the seeded dev DB is untouched.
+    # Clean up the write side effects so the seeded dev DB is untouched.
     cleanup_db = SessionLocal()
     try:
         cleanup_db.query(RiskEvent).filter(RiskEvent.id == created_risk_event_id).delete()
@@ -250,6 +325,10 @@ def main() -> None:
         print(f"Cleaned up captured test rows (risk_event {created_risk_event_id}, production {created_production['id']})")
     finally:
         cleanup_db.close()
+
+    _cleanup_linked_risk_event(linked_risk_event_id)
+    print(f"Cleaned up Watcher-linked risk_event {linked_risk_event_id} (Postgres + Neo4j)")
+    close_graph_driver()
 
     # --- Render markdown ---
     groups_order = ["Sites", "Equipment", "Production", "Risk & Graph", "Recommendations & Simulation", "KPI", "Meta & Ops"]

@@ -10,11 +10,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from neo4j import GraphDatabase
 from sqlalchemy import text
 
 from app.config import get_settings
 from app.db import engine
+from app.graph_db import close_graph_driver, graph_health, init_graph_driver
 from app.routers import (
     admin,
     equipment,
@@ -73,20 +73,8 @@ def check_database() -> bool:
 
 
 def check_neo4j() -> bool:
-    """Attempt a lightweight connection to Neo4j. Never raises."""
-    try:
-        driver = GraphDatabase.driver(
-            settings.NEO4J_URI,
-            auth=(settings.NEO4J_USER, settings.NEO4J_PASSWORD),
-        )
-        try:
-            driver.verify_connectivity()
-        finally:
-            driver.close()
-        return True
-    except Exception:  # noqa: BLE001 - health check must never raise
-        logger.warning("Neo4j health check failed", exc_info=True)
-        return False
+    """Lightweight Neo4j connectivity check via the shared driver. Never raises."""
+    return graph_health()["status"] == "connected"
 
 
 @asynccontextmanager
@@ -94,9 +82,11 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     logger.info("OreSight API starting (env=%s)", settings.APP_ENV)
     logger.info("Database URL: %s", mask_db_url(settings.DATABASE_URL))
     logger.info("Neo4j URI: %s", settings.NEO4J_URI)
+    init_graph_driver()
     start_scheduler()
     yield
     stop_scheduler()
+    close_graph_driver()
 
 
 def create_app() -> FastAPI:

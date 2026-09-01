@@ -468,7 +468,7 @@
           "risk-events"
         ],
         "summary": "Get the causal graph behind a risk event",
-        "description": "Return the causal chain that led to this risk event.\n\nSTUB: replaced on Day 3 with a live Neo4j traversal. For now returns a\nfixed, realistically-shaped 5-node chain so the frontend can build the\nReact Flow graph view today.",
+        "description": "Return the causal chain that led to this risk event, as a React\nFlow-ready `{nodes, edges}` payload.\n\nTraverses up to 3 hops (in either direction) out from the Neo4j\n`RiskEvent` node whose `external_ref` equals this Postgres id \u2014 the link\nthe Watcher agent writes when it mirrors a risk into the graph.\n\n- Risk event not in Postgres -> 404.\n- Risk event in Postgres but no Neo4j node (predates the graph sync, or\n  Neo4j is down) -> 200 with a single-node fallback graph and\n  `graph_source=\"postgres_fallback\"` plus an explanatory `note`.",
         "operationId": "get_causal_graph_risk_events__risk_event_id__causal_graph_get",
         "parameters": [
           {
@@ -565,7 +565,7 @@
           "recommendations"
         ],
         "summary": "Get mitigation recommendations for a risk event",
-        "description": "Return mitigation options for a risk event.\n\nSTUB: replaced on Day 4 with real recommendation-engine output. For now\nreturns 2 hand-authored recommendations referencing the actual\nsite/equipment behind the given risk event, so the frontend can build the\nrecommendations UI today.",
+        "description": "Return ranked mitigation options for a risk event.\n\nPass-through to `PlannerAgent.get_recommendations()`, which returns one\n`RecommendationOut`-shaped dict (trigger + options sorted by projected\nimpact). It is wrapped in a list to match the response model; extend the\nagent if multiple recommendation angles are ever needed.\n\n- Risk event not found -> 404 (raised by the agent via the shared\n  `get_risk_event_or_404` lookup).\n- Anything else that goes wrong inside the engine -> 502, so the caller\n  gets a clear \"upstream failed\" rather than an opaque 500.",
         "operationId": "get_recommendations_recommendations_get",
         "parameters": [
           {
@@ -614,7 +614,7 @@
           "simulation"
         ],
         "summary": "Run a what-if scenario simulation",
-        "description": "Simulate the impact of a disruption scenario on one site's twin state.\n\nSTUB: replaced on Day 4-5 with the real simulation engine. For now applies\na small deterministic model: the 'before' snapshot is grounded in today's\nreal data for the site, then perturbed by `scenario_type` and\n`duration_days` for 'after' - so the numbers are plausible, move in the\ncorrect direction, and scale with duration rather than being random or\nconstant.",
+        "description": "Project a disruption scenario's before/after impact on one site.\n\nPass-through to `SimulatorAgent.run_scenario()`. `scenario_type` is\nconstrained to `equipment_down | delay_blasting | rainfall_event` by the\nrequest schema (FastAPI returns 422 for anything else); it is\nre-checked here against the agent's own supported set so a drift between\nthe two is a clean 422, never a 500.\n\n- Unknown `site_id` -> 404 (from the agent's `get_site_or_404`).\n- `duration_days` outside 1..90 -> 422 (request schema).\n- Engine failure -> 502.",
         "operationId": "simulate_simulate_post",
         "requestBody": {
           "content": {
@@ -716,6 +716,27 @@
             },
             "type": "array",
             "title": "Edges"
+          },
+          "graph_source": {
+            "type": "string",
+            "enum": [
+              "neo4j",
+              "postgres_fallback",
+              "simulated"
+            ],
+            "title": "Graph Source",
+            "default": "neo4j"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
           }
         },
         "type": "object",

@@ -1,176 +1,89 @@
-"""Route for what-if scenario simulation (stubbed with deterministic math)."""
+"""Route for what-if scenario simulation.
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import func, select
+Thin orchestration layer over `app.agents.simulator.SimulatorAgent` (P2's
+module): request validation, error mapping, and response shaping only. The
+forecasting model, feature perturbation, and graph traversal all live in the
+agent and are not reimplemented here.
+"""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
+from neo4j import Driver
 from sqlalchemy.orm import Session
 
+from app.agents.simulator import SCENARIO_TYPES, SimulatorAgent
 from app.db import get_db
-from app.models import Equipment, ProductionRecord, ReserveZone, RiskEvent
-from app.schemas import (
-    CausalGraphOut,
-    GraphEdge,
-    GraphNode,
-    SimStateSnapshot,
-    SimulateRequest,
-    SimulateResponse,
-)
-from app.services.lookups import get_site_or_404
+from app.graph_db import get_graph_driver
+from app.schemas import CausalGraphOut, SimStateSnapshot, SimulateRequest, SimulateResponse
+
+logger = logging.getLogger("oresight.simulate")
 
 router = APIRouter(prefix="/simulate", tags=["simulation"])
-
-# STUB: replaced on Day 4-5 with the real simulation engine. Rates are
-# fraction-per-day, capped so long durations don't run away to nonsense.
-_SCENARIO_RATES = {
-    "equipment_down": {"production": 0.045, "risk": 0.05, "confidence": 0.002},
-    "delay_blasting": {"production": 0.03, "risk": 0.035, "confidence": 0.015},
-    "rainfall_event": {"production": 0.05, "risk": 0.04, "confidence": 0.003},
-}
-
-_SCENARIO_LABELS = {
-    "equipment_down": "Equipment Down",
-    "delay_blasting": "Blast Plan Delay",
-    "rainfall_event": "Rainfall Event",
-}
 
 
 @router.post(
     "", response_model=SimulateResponse, summary="Run a what-if scenario simulation"
 )
-def simulate(payload: SimulateRequest, db: Session = Depends(get_db)) -> SimulateResponse:
-    """Simulate the impact of a disruption scenario on one site's twin state.
+def simulate(
+    payload: SimulateRequest,
+    db: Session = Depends(get_db),
+    driver: Driver = Depends(get_graph_driver),
+) -> SimulateResponse:
+    """Project a disruption scenario's before/after impact on one site.
 
-    STUB: replaced on Day 4-5 with the real simulation engine. For now applies
-    a small deterministic model: the 'before' snapshot is grounded in today's
-    real data for the site, then perturbed by `scenario_type` and
-    `duration_days` for 'after' - so the numbers are plausible, move in the
-    correct direction, and scale with duration rather than being random or
-    constant.
+    Pass-through to `SimulatorAgent.run_scenario()`. `scenario_type` is
+    constrained to `equipment_down | delay_blasting | rainfall_event` by the
+    request schema (FastAPI returns 422 for anything else); it is
+    re-checked here against the agent's own supported set so a drift between
+    the two is a clean 422, never a 500.
+
+    - Unknown `site_id` -> 404 (from the agent's `get_site_or_404`).
+    - `duration_days` outside 1..90 -> 422 (request schema).
+    - Engine failure -> 502.
     """
-    site = get_site_or_404(db, payload.site_id)
-
-    avg_confidence = (
-        db.scalar(
-            select(func.avg(ReserveZone.confidence_score)).where(
-                ReserveZone.site_id == site.id
-            )
+    if payload.scenario_type not in SCENARIO_TYPES:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                f"Unsupported scenario_type {payload.scenario_type!r}; "
+                f"must be one of {sorted(SCENARIO_TYPES)}."
+            ),
         )
-        or 0.6
+
+    agent = SimulatorAgent(db, driver)
+    try:
+        result = agent.run_scenario(
+            payload.scenario_type,
+            site_id=payload.site_id,
+            duration_days=payload.duration_days,
+        )
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        # Defensive: agent rejects an unknown scenario_type this way.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001 - map any engine failure to 502
+        logger.exception(
+            "SimulatorAgent failed for scenario=%s site=%s",
+            payload.scenario_type,
+            payload.site_id,
+        )
+        raise HTTPException(
+            status_code=502, detail="Simulation engine failed to produce a result."
+        ) from exc
+
+    updated_graph = CausalGraphOut(
+        nodes=result["updated_graph"]["nodes"],
+        edges=result["updated_graph"]["edges"],
+        graph_source="simulated",
     )
-
-    recent_output_subq = (
-        select(ProductionRecord.actual_output)
-        .where(ProductionRecord.site_id == site.id)
-        .order_by(ProductionRecord.date.desc())
-        .limit(14)
-        .subquery()
-    )
-    avg_recent_output = db.scalar(
-        select(func.avg(recent_output_subq.c.actual_output))
-    )
-
-    baseline_risk = db.scalar(
-        select(func.avg(RiskEvent.score)).where(
-            RiskEvent.site_id == site.id, RiskEvent.resolved.is_(False)
-        )
-    )
-
-    before = SimStateSnapshot(
-        reserve_confidence=round(avg_confidence, 3),
-        production_forecast_tonnes=round(avg_recent_output or 900.0, 1),
-        risk_score=round(baseline_risk if baseline_risk is not None else 0.3, 3),
-    )
-
-    rates = _SCENARIO_RATES[payload.scenario_type]
-    duration = payload.duration_days
-
-    production_drop = min(rates["production"] * duration, 0.6)
-    risk_increase = min(rates["risk"] * duration, 0.65)
-    confidence_drop = min(rates["confidence"] * duration, 0.25)
-
-    after = SimStateSnapshot(
-        reserve_confidence=round(
-            max(before.reserve_confidence * (1 - confidence_drop), 0.05), 3
-        ),
-        production_forecast_tonnes=round(
-            before.production_forecast_tonnes * (1 - production_drop), 1
-        ),
-        risk_score=round(min(before.risk_score + risk_increase, 0.97), 3),
-    )
-
-    scenario_label = _SCENARIO_LABELS[payload.scenario_type]
-
-    equipment_row = None
-    if payload.scenario_type == "equipment_down":
-        equipment_row = db.scalar(
-            select(Equipment).where(Equipment.site_id == site.id).order_by(Equipment.name)
-        )
-
-    trigger_node_id = f"sim_{payload.scenario_type}"
-    production_node_id = "production_forecast"
-    risk_node_id = "risk_event_sim"
-
-    nodes = [
-        GraphNode(
-            id=trigger_node_id,
-            label=f"Simulated: {scenario_label} at {site.name}",
-            type="SimulatedEvent",
-        )
-    ]
-    edges = []
-    affected_path = [trigger_node_id]
-
-    if equipment_row is not None:
-        equipment_node_id = f"equipment_{equipment_row.id}"
-        nodes.append(
-            GraphNode(id=equipment_node_id, label=equipment_row.name, type="Equipment")
-        )
-        edges.append(
-            GraphEdge(
-                source=trigger_node_id, target=equipment_node_id, relationship="TRIGGERS"
-            )
-        )
-        edges.append(
-            GraphEdge(
-                source=equipment_node_id,
-                target=production_node_id,
-                relationship="REDUCES",
-            )
-        )
-        affected_path.append(equipment_node_id)
-    else:
-        edges.append(
-            GraphEdge(
-                source=trigger_node_id,
-                target=production_node_id,
-                relationship="REDUCES",
-            )
-        )
-
-    nodes.append(
-        GraphNode(
-            id=production_node_id, label="Production Forecast", type="ProductionForecast"
-        )
-    )
-    nodes.append(
-        GraphNode(
-            id=risk_node_id,
-            label=f"Simulated {scenario_label} Risk",
-            type="RiskEvent",
-        )
-    )
-    edges.append(
-        GraphEdge(
-            source=production_node_id, target=risk_node_id, relationship="TRIGGERS"
-        )
-    )
-    affected_path.append(production_node_id)
-    affected_path.append(risk_node_id)
-
-    updated_graph = CausalGraphOut(nodes=nodes, edges=edges)
 
     return SimulateResponse(
-        before=before,
-        after=after,
-        affected_graph_path=affected_path,
+        before=SimStateSnapshot(**result["before"]),
+        after=SimStateSnapshot(**result["after"]),
+        affected_graph_path=result["affected_graph_path"],
         updated_graph=updated_graph,
     )

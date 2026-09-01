@@ -1,5 +1,7 @@
 """Pydantic schemas for the causal graph visualisation (React Flow shaped)."""
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -75,3 +77,15 @@ class CausalGraphOut(BaseModel):
 
     nodes: list[GraphNode]
     edges: list[GraphEdge]
+
+    # Where this graph came from, so the frontend can tell a real traversal
+    # apart from a degraded fallback and render an explicit banner instead of
+    # what looks like an empty-graph rendering bug:
+    #   "neo4j"            - live traversal of the causal graph
+    #   "postgres_fallback"- the risk event exists in Postgres but has no
+    #                        node in Neo4j yet (predates the graph sync);
+    #                        `nodes` holds just the risk event itself
+    #   "simulated"        - a what-if graph from POST /simulate, anchored on
+    #                        real Neo4j nodes plus a synthetic trigger node
+    graph_source: Literal["neo4j", "postgres_fallback", "simulated"] = "neo4j"
+    note: str | None = None

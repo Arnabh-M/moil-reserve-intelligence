@@ -1,13 +1,26 @@
-"""Route for AI-generated mitigation recommendations (stubbed)."""
+"""Route for AI-generated mitigation recommendations.
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+Thin orchestration layer: this endpoint does auth-free request handling and
+error mapping only. All candidate search, simulation-backed scoring, and
+ranking lives in `app.agents.planner.PlannerAgent` (P2's module) and is not
+duplicated or second-guessed here.
+"""
+
+from __future__ import annotations
+
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from neo4j import Driver
 from sqlalchemy.orm import Session
 
+from app.agents.planner import PlannerAgent
 from app.db import get_db
-from app.models import Equipment
-from app.schemas import RecommendationOption, RecommendationOut
+from app.graph_db import get_graph_driver
+from app.schemas import RecommendationOut
 from app.services.lookups import get_risk_event_or_404
+
+logger = logging.getLogger("oresight.recommendations")
 
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
 
@@ -22,93 +35,35 @@ def get_recommendations(
         ..., description="The risk event to generate recommendations for"
     ),
     db: Session = Depends(get_db),
+    driver: Driver = Depends(get_graph_driver),
 ) -> list[RecommendationOut]:
-    """Return mitigation options for a risk event.
+    """Return ranked mitigation options for a risk event.
 
-    STUB: replaced on Day 4 with real recommendation-engine output. For now
-    returns 2 hand-authored recommendations referencing the actual
-    site/equipment behind the given risk event, so the frontend can build the
-    recommendations UI today.
+    Pass-through to `PlannerAgent.get_recommendations()`, which returns one
+    `RecommendationOut`-shaped dict (trigger + options sorted by projected
+    impact). It is wrapped in a list to match the response model; extend the
+    agent if multiple recommendation angles are ever needed.
+
+    - Risk event not found -> 404 (raised by the agent via the shared
+      `get_risk_event_or_404` lookup).
+    - Anything else that goes wrong inside the engine -> 502, so the caller
+      gets a clear "upstream failed" rather than an opaque 500.
     """
-    risk_event = get_risk_event_or_404(db, risk_event_id)
-    site = risk_event.site
+    # Fail fast with a clean 404 before constructing the agent.
+    get_risk_event_or_404(db, risk_event_id)
 
-    site_equipment = db.scalars(
-        select(Equipment).where(Equipment.site_id == site.id).order_by(Equipment.name)
-    ).all()
-    primary_equipment_name = (
-        site_equipment[0].name if site_equipment else "site equipment"
-    )
-    secondary_equipment_name = (
-        site_equipment[1].name if len(site_equipment) > 1 else primary_equipment_name
-    )
+    agent = PlannerAgent(db, driver)
+    try:
+        result = agent.get_recommendations(risk_event_id)
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001 - map any engine failure to 502
+        logger.exception(
+            "PlannerAgent failed for risk_event_id=%s", risk_event_id
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="Recommendation engine failed to produce a result.",
+        ) from exc
 
-    return [
-        RecommendationOut(
-            trigger=risk_event.description or f"{risk_event.risk_type} at {site.name}",
-            risk_event_id=risk_event.id,
-            options=[
-                RecommendationOption(
-                    type="reschedule",
-                    description=(
-                        f"Delay the next blast at {site.name} by 2 days to let "
-                        f"{primary_equipment_name} return to service."
-                    ),
-                    projected_impact=62.5,
-                    confidence=0.78,
-                ),
-                RecommendationOption(
-                    type="redeploy",
-                    description=(
-                        f"Redeploy {secondary_equipment_name} to cover "
-                        f"{primary_equipment_name}'s workload at {site.name} "
-                        "for the outage."
-                    ),
-                    projected_impact=71.0,
-                    confidence=0.82,
-                ),
-                RecommendationOption(
-                    type="adjust_plan",
-                    description=(
-                        f"Lower {site.name}'s daily target output by 15% until "
-                        f"{primary_equipment_name} is repaired."
-                    ),
-                    projected_impact=45.0,
-                    confidence=0.9,
-                ),
-            ],
-        ),
-        RecommendationOut(
-            trigger=f"Elevated {risk_event.risk_type} trend at {site.name}",
-            risk_event_id=risk_event.id,
-            options=[
-                RecommendationOption(
-                    type="reschedule",
-                    description=(
-                        f"Shift {site.name}'s next 2 haul cycles to the morning "
-                        "shift to reduce exposure."
-                    ),
-                    projected_impact=54.0,
-                    confidence=0.66,
-                ),
-                RecommendationOption(
-                    type="redeploy",
-                    description=(
-                        f"Temporarily reassign a loader from a neighbouring "
-                        f"site to {site.name}."
-                    ),
-                    projected_impact=68.5,
-                    confidence=0.71,
-                ),
-                RecommendationOption(
-                    type="adjust_plan",
-                    description=(
-                        f"Revise {site.name}'s weekly production target "
-                        "downward by 10% for this week."
-                    ),
-                    projected_impact=40.0,
-                    confidence=0.85,
-                ),
-            ],
-        ),
-    ]
+    return [RecommendationOut(**result)]
