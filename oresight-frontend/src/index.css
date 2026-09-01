@@ -34,6 +34,10 @@
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Ported from frontend/'s tailwind.config.js — used by pages ported from
+     there (Login, Reports, the merged Dashboard's CommandCenter section). */
+  --font-heading: 'Roboto Slab', serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* ── Base Styles ───────────────────────────────────────────────────── */

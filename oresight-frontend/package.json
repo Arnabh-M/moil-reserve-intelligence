@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@xyflow/react": "^12.11.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.37.0",
     "plotly.js-dist-min": "^4.0.0",
     "react": "^19.2.8",

@@ -4,6 +4,8 @@
 // real FastAPI calls at http://localhost:8000.
 // ─────────────────────────────────────────────────────────────────────
 
+import { sites as mockSites } from '../data/mockData';
+
 export let USE_MOCK = false; // Default: attempt live backend, fallback seamlessly if offline
 
 const BASE_URL = 'http://localhost:8000';
@@ -174,6 +176,23 @@ async function apiFetch(endpoint, options = {}) {
     }
     throw err;
   }
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// 0. SITES (GET /sites)
+// ───────────────────────────────────────────────────────────────────────
+
+export async function getSites() {
+  if (!USE_MOCK) {
+    try {
+      return await apiFetch('/sites');
+    } catch (err) {
+      console.warn('[API] getSites live failed, using mock:', err.message);
+    }
+  }
+
+  await delay(200);
+  return [...mockSites];
 }
 
 // ───────────────────────────────────────────────────────────────────────

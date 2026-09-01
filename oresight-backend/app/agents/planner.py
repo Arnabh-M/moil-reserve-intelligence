@@ -47,7 +47,7 @@ from neo4j import Driver
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.agents._bridge import find_neo4j_equipment_id, logger, neo4j_id_to_pg_site, pg_site_to_neo4j_id
+from app.agents._bridge import logger, neo4j_id_to_pg_site, pg_site_to_neo4j_id
 from app.agents.simulator import SimulatorAgent
 from app.models import Equipment, EquipmentStatus, ProductionRecord, RiskEvent, Site
 from app.services.lookups import get_risk_event_or_404
@@ -158,28 +158,27 @@ class PlannerAgent:
 
         with self.neo4j_driver.session() as session:
             if down_equipment is not None:
-                # down_equipment.equipment_type is Postgres vocabulary
-                # ("haul_truck"); Neo4j's `type` property uses a different
-                # vocabulary ("Excavator"/"Drill"/...) — see
-                # app/agents/_bridge.py. Normalize through the same
-                # best-effort type map used everywhere else rather than
-                # matching the raw string, which would silently match
-                # nothing for half the fleet.
-                candidate_type = self._neo4j_type_for(down_equipment.equipment_type)
-                row = None
-                if candidate_type is not None:
-                    row = session.run(
-                        """
-                        MATCH (e:Equipment {status: 'up', type: $eq_type})
-                        WHERE e.site_id <> $site_id
-                        AND NOT EXISTS {
-                            MATCH (e)-[:DEPENDS_ON]->(b:BlastPlan)
-                            WHERE date(b.scheduled_date) <= date($cutoff)
-                        }
-                        RETURN e.id AS id, e.name AS name, e.site_id AS site_id LIMIT 1
-                        """,
-                        eq_type=candidate_type, site_id=neo4j_site_id, cutoff=cutoff_date,
-                    ).single()
+                # Postgres and Neo4j now share the same equipment type
+                # vocabulary by construction (scripts/import_p2_data.py —
+                # see app/agents/_bridge.py's module docstring), but compare
+                # case-insensitively rather than assuming either side's
+                # casing convention holds forever (this bit us once already:
+                # Postgres started storing Title Case after a data
+                # reconciliation while this query still did an exact-match
+                # against a hardcoded-lowercase translation table).
+                row = session.run(
+                    """
+                    MATCH (e:Equipment {status: 'up'})
+                    WHERE toLower(e.type) = toLower($eq_type)
+                    AND e.site_id <> $site_id
+                    AND NOT EXISTS {
+                        MATCH (e)-[:DEPENDS_ON]->(b:BlastPlan)
+                        WHERE date(b.scheduled_date) <= date($cutoff)
+                    }
+                    RETURN e.id AS id, e.name AS name, e.site_id AS site_id LIMIT 1
+                    """,
+                    eq_type=down_equipment.equipment_type, site_id=neo4j_site_id, cutoff=cutoff_date,
+                ).single()
             else:
                 row = session.run(
                     """
@@ -276,12 +275,6 @@ class PlannerAgent:
                 }
         return None
 
-    def _neo4j_type_for(self, pg_equipment_type: str) -> str | None:
-        # Direct-overlap types only (see app/agents/_bridge.py) — haul_truck
-        # and crusher have no Neo4j counterpart and correctly return None.
-        mapping = {"excavator": "Excavator", "drill": "Drill", "loader": "Loader"}
-        return mapping.get(pg_equipment_type)
-
     # -- impact scoring -----------------------------------------------------
 
     def _projected_impact(self, candidate: dict, site: Site) -> float:
@@ -324,7 +317,11 @@ if __name__ == "__main__":
 
     try:
         agent = PlannerAgent(db_session, driver)
-        for risk_id in [1, 3, 5, 7]:
+        # risk_id 9: Scenario B regression check — Nagpur's Drill down,
+        # matched case-insensitively against Bhandara's idle Drill despite
+        # Postgres storing equipment_type as Title Case (see the case-
+        # sensitivity fix in _find_redeploy_candidate).
+        for risk_id in [1, 3, 5, 7, 9]:
             result = agent.get_recommendations(risk_id)
             print(f"\n=== risk_event_id={risk_id} ===")
             print("trigger:", result["trigger"])
