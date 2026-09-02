@@ -25,6 +25,7 @@ from app.routers import (
     reserve_zones,
     risk_events,
     simulate,
+    site_notes,
     sites,
 )
 from app.services.scheduler import start_scheduler, stop_scheduler
@@ -163,6 +164,7 @@ def create_app() -> FastAPI:
     app.include_router(reports.router)
     app.include_router(simulate.router)
     app.include_router(kpi.router)
+    app.include_router(site_notes.router)
     app.include_router(admin.router)
 
     return app

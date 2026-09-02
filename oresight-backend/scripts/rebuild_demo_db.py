@@ -42,6 +42,8 @@ them — the same way a human would run them one at a time):
                                  (Haul Truck HT-302) for its redeploy
                                  scenario. Skips gracefully if step 4 was
                                  removed and HT-302 is absent.
+  9. scripts.seed_site_notes    ~5 field notes per site + embeddings, so
+                                 GET /site-notes/search returns real hits.
 
 After this, both of these return a "redeploy" option:
   GET /recommendations?risk_event_id=<Drill NAG-1 "is down" event>   -> Drill BHD-1
@@ -67,6 +69,7 @@ STEPS: list[tuple[str, list[str]]] = [
     ("scripts.seed_scenario_a  (Balaghat rainfall causal chain)", ["-m", "scripts.seed_scenario_a"]),
     ("scripts.seed_scenario_b  (Nagpur Drill-down realignment + FK repair)", ["-m", "scripts.seed_scenario_b"]),
     ("scripts.enrich_risk_event_5  (Haul Truck HT-302 redeploy graph)", ["-m", "scripts.enrich_risk_event_5"]),
+    ("scripts.seed_site_notes  (field notes + embeddings for RAG search)", ["-m", "scripts.seed_site_notes"]),
 ]
 
 
