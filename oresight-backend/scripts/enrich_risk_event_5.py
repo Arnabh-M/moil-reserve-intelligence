@@ -43,9 +43,11 @@ def main() -> None:
     try:
         risk_event = db.get(RiskEvent, RISK_EVENT_PG_ID)
         if risk_event is None:
-            raise SystemExit(
-                f"Postgres risk_events.id={RISK_EVENT_PG_ID} not found — nothing to enrich."
+            print(
+                f"SKIP: Postgres risk_events.id={RISK_EVENT_PG_ID} not found — nothing to enrich. "
+                "(Expected only if app.seed_dev wasn't run.)"
             )
+            return
 
         nagpur_site = db.scalar(select(Site).where(Site.id == risk_event.site_id))
         down_equipment = db.scalar(
@@ -55,9 +57,16 @@ def main() -> None:
             )
         )
         if down_equipment is None:
-            raise SystemExit(
-                f"No Postgres equipment row named {TARGET_EQUIPMENT_NAME!r} at {nagpur_site.name}."
+            # Not fatal: scripts/import_p2_data.py replaces the equipment roster
+            # with seed_graph.cypher's 15 units, which has no Haul Truck. If
+            # seed_dev.py isn't re-run afterwards this row genuinely doesn't
+            # exist — warn and skip rather than abort a full rebuild mid-chain.
+            print(
+                f"SKIP: no Postgres equipment row named {TARGET_EQUIPMENT_NAME!r} at "
+                f"{nagpur_site.name} — the Haul Truck redeploy scenario is unavailable. "
+                "(Re-run app.seed_dev after scripts.import_p2_data to restore it.)"
             )
+            return
 
         bhandara_site = db.scalar(select(Site).where(Site.district.ilike("bhandara")))
         idle_candidate = db.scalar(
@@ -67,10 +76,11 @@ def main() -> None:
             .where(Equipment.equipment_type.ilike(down_equipment.equipment_type))
         )
         if idle_candidate is None:
-            raise SystemExit(
-                f"No idle (status='up') {down_equipment.equipment_type!r}-type equipment "
+            print(
+                f"SKIP: no idle (status='up') {down_equipment.equipment_type!r}-type equipment "
                 "found at Bhandara — cannot seed a redeploy candidate."
             )
+            return
 
         nagpur_neo4j_id = pg_site_to_neo4j_id(nagpur_site)
         bhandara_neo4j_id = pg_site_to_neo4j_id(bhandara_site)

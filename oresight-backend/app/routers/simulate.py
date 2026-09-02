@@ -12,6 +12,8 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from neo4j import Driver
+from neo4j.exceptions import ServiceUnavailable
+from sqlalchemy.exc import InterfaceError, OperationalError
 from sqlalchemy.orm import Session
 
 from app.agents.simulator import SCENARIO_TYPES, SimulatorAgent
@@ -53,7 +55,16 @@ def simulate(
             ),
         )
 
-    agent = SimulatorAgent(db, driver)
+    try:
+        agent = SimulatorAgent(db, driver)
+    except (FileNotFoundError, OSError) as exc:
+        # The trained shortfall model / feature-columns file isn't on disk.
+        logger.error("SimulatorAgent could not load its model: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="Forecasting model is unavailable on the server. Run train_shortfall_model.py.",
+        ) from exc
+
     try:
         result = agent.run_scenario(
             payload.scenario_type,
@@ -62,10 +73,14 @@ def simulate(
         )
     except HTTPException:
         raise
+    except (ServiceUnavailable, OperationalError, InterfaceError):
+        # Neo4j or Postgres is down — let the app-level handlers turn these
+        # into a clean 503 rather than masking them as a 502 engine failure.
+        raise
     except ValueError as exc:
         # Defensive: agent rejects an unknown scenario_type this way.
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except Exception as exc:  # noqa: BLE001 - map any engine failure to 502
+    except Exception as exc:  # noqa: BLE001 - map any other engine failure to 502
         logger.exception(
             "SimulatorAgent failed for scenario=%s site=%s",
             payload.scenario_type,

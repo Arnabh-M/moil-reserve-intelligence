@@ -10,20 +10,25 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from neo4j.exceptions import ServiceUnavailable
 from sqlalchemy import text
+from sqlalchemy.exc import InterfaceError, OperationalError
 
 from app.config import get_settings
 from app.db import engine
 from app.graph_db import close_graph_driver, graph_health, init_graph_driver
 from app.routers import (
     admin,
+    demo,
     equipment,
     kpi,
     production,
     recommendations,
+    reports,
     reserve_zones,
     risk_events,
     simulate,
+    site_notes,
     sites,
 )
 from app.services.scheduler import start_scheduler, stop_scheduler
@@ -37,8 +42,12 @@ _ERROR_CODES_BY_STATUS = {
     400: "BAD_REQUEST",
     404: "NOT_FOUND",
     409: "CONFLICT",
+    413: "PAYLOAD_TOO_LARGE",
+    415: "UNSUPPORTED_MEDIA_TYPE",
     422: "VALIDATION_ERROR",
     500: "INTERNAL_ERROR",
+    502: "UPSTREAM_ERROR",
+    503: "SERVICE_UNAVAILABLE",
 }
 
 
@@ -132,6 +141,41 @@ def create_app() -> FastAPI:
             },
         )
 
+    @app.exception_handler(OperationalError)
+    @app.exception_handler(InterfaceError)
+    async def handle_db_unavailable(request: Request, exc: Exception) -> JSONResponse:
+        """Postgres unreachable / connection dropped mid-request. This is a
+        transient infra condition, not a bug — 503, not 500, and no traceback.
+        """
+        logger.warning(
+            "Database unavailable processing %s %s: %s",
+            request.method, request.url.path, exc.__class__.__name__,
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "Database is temporarily unavailable. Please retry shortly.",
+                "error_code": "SERVICE_UNAVAILABLE",
+            },
+        )
+
+    @app.exception_handler(ServiceUnavailable)
+    async def handle_graph_unavailable(request: Request, exc: Exception) -> JSONResponse:
+        """Neo4j unreachable. Endpoints that can degrade (causal-graph,
+        reports) handle it themselves and never reach here; this covers the
+        ones that genuinely need the graph (recommendations, simulate).
+        """
+        logger.warning(
+            "Graph service unavailable processing %s %s", request.method, request.url.path
+        )
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "Graph service (Neo4j) is temporarily unavailable. Please retry shortly.",
+                "error_code": "SERVICE_UNAVAILABLE",
+            },
+        )
+
     @app.exception_handler(Exception)
     async def handle_unexpected_error(request: Request, exc: Exception) -> JSONResponse:
         logger.exception(
@@ -159,8 +203,11 @@ def create_app() -> FastAPI:
     app.include_router(risk_events.router)
     app.include_router(reserve_zones.router)
     app.include_router(recommendations.router)
+    app.include_router(reports.router)
     app.include_router(simulate.router)
     app.include_router(kpi.router)
+    app.include_router(site_notes.router)
+    app.include_router(demo.router)
     app.include_router(admin.router)
 
     return app

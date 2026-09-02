@@ -1,6 +1,11 @@
 services:
   postgres:
-    image: postgis/postgis:16-3.4
+    # PostGIS base + pgvector (see Dockerfile.postgres). Rebuild after
+    # pulling a change to that file: `docker compose up -d --build`.
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    image: oresight-postgres:16-3.4-pgvector
     container_name: oresight-postgres
     restart: unless-stopped
     environment:

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.production_record import ProductionRecord
     from app.models.reserve_zone import ReserveZone
     from app.models.risk_event import RiskEvent
+    from app.models.site_note import SiteNote
 
 
 class Site(Base):
@@ -42,3 +43,6 @@ class Site(Base):
         back_populates="site"
     )
     risk_events: Mapped[list["RiskEvent"]] = relationship(back_populates="site")
+    site_notes: Mapped[list["SiteNote"]] = relationship(
+        back_populates="site", cascade="all, delete-orphan"
+    )
