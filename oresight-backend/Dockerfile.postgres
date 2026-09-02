@@ -1,0 +1,15 @@
+# PostGIS + pgvector in one image.
+#
+# The stock postgis/postgis:16-3.4 image does NOT ship pgvector (only
+# `postgis` shows up in pg_available_extensions), so `CREATE EXTENSION
+# vector` — which the Alembic migration for site_notes runs — fails against
+# it. This adds the pgvector extension binary from the same pgdg apt repo
+# the base image already trusts. PostGIS is unaffected.
+#
+# After pulling a change that touches this file, teammates must rebuild:
+#     docker compose up -d --build
+FROM postgis/postgis:16-3.4
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-16-pgvector \
+    && rm -rf /var/lib/apt/lists/*
