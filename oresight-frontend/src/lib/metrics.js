@@ -2,7 +2,7 @@
 // so this derives a stable mock value per site when one is missing —
 // the same site always yields the same value.
 export function estimateReserveConfidence(site) {
-  const provided = site.reserve_confidence ?? site.reserveConfidence ?? site.confidence;
+  const provided = site.avg_reserve_confidence ?? site.reserve_confidence ?? site.reserveConfidence ?? site.confidence;
   if (typeof provided === 'number') return provided > 1 ? provided / 100 : provided;
 
   const seed = String(site.id ?? site.name ?? '');

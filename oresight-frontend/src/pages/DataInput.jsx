@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   Upload, ChevronDown, FileText, CheckCircle2, Loader2, X, AlertCircle, TrendingUp, TrendingDown,
+  Network, Eye,
 } from 'lucide-react';
 import { Card, Button, Badge, InlineError } from '../components';
-import { postEquipmentStatus, postProduction, getEquipment, USE_MOCK } from '../api/client';
+import { postEquipmentStatus, postProduction, getEquipment, uploadReport, USE_MOCK } from '../api/client';
 import { sites } from '../data/mockData';
 
 const DEFAULT_TARGETS = {
@@ -17,6 +19,8 @@ const DEFAULT_TARGETS = {
 };
 
 export default function DataInput() {
+  const navigate = useNavigate();
+
   // ── Equipment Form State ─────────────────────────────────────────────
   const [equipmentList, setEquipmentList] = useState([]);
   const [loadingEq, setLoadingEq] = useState(true);
@@ -38,8 +42,9 @@ export default function DataInput() {
   // ── PDF Upload State ─────────────────────────────────────────────────
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
 
   // Load equipment catalog
   const loadEquipmentCatalog = async () => {
@@ -224,8 +229,8 @@ export default function DataInput() {
     }
   };
 
-  // PDF processing
-  const processFile = (file) => {
+  // ── PDF Upload Handler (real API) ────────────────────────────────────
+  const processFile = async (file) => {
     if (!file) return;
     if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
       toast.error('Only PDF geological reports are accepted.');
@@ -234,19 +239,32 @@ export default function DataInput() {
 
     setUploadedFile(file);
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadResult(null);
+    setUploadError(null);
 
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          toast.success('Geological report parsed successfully');
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 160);
+    try {
+      const result = await uploadReport(file);
+      setUploadResult(result);
+      toast.success('Geological report parsed successfully');
+    } catch (err) {
+      console.error('[DataInput] PDF upload failed:', err);
+      setUploadError(err.message || 'Failed to upload and parse the report.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRetryUpload = () => {
+    if (uploadedFile) {
+      processFile(uploadedFile);
+    }
+  };
+
+  const handleClearUpload = () => {
+    setUploadedFile(null);
+    setUploadResult(null);
+    setUploadError(null);
+    setIsUploading(false);
   };
 
   const handleDrop = (e) => {
@@ -267,6 +285,9 @@ export default function DataInput() {
   const liveVariance = (!isNaN(currentActual) && !isNaN(currentTarget) && currentTarget > 0)
     ? Math.round(((currentActual - currentTarget) / currentTarget) * 1000) / 10
     : null;
+
+  // Helper to safely display a field value or "—"
+  const displayField = (value) => (value != null && value !== '' ? String(value) : '—');
 
   return (
     <div className="page-container">
@@ -326,7 +347,7 @@ export default function DataInput() {
                   ) : (
                     equipmentList.map(eq => (
                       <option key={eq.id} value={eq.id}>
-                        {eq.name} — {eq.site_name} ({eq.status.toUpperCase()})
+                        {eq.name} — {eq.site_name || 'Unknown Site'} ({(eq.status || 'unknown').toUpperCase()})
                       </option>
                     ))
                   )}
@@ -607,13 +628,22 @@ export default function DataInput() {
           onDragOver={e => { e.preventDefault(); setDragActive(true); }}
           onDragLeave={() => setDragActive(false)}
           onDrop={handleDrop}
-          onClick={() => document.getElementById('pdf-upload-input').click()}
-          className={`relative mt-1 border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-150 ${
+          onClick={() => {
+            // Don't reopen file picker when result/error is showing
+            if (!uploadResult && !uploadError && !isUploading) {
+              document.getElementById('pdf-upload-input').click();
+            }
+          }}
+          className={`relative mt-1 border-2 border-dashed rounded-xl p-8 text-center transition-all duration-150 ${
             dragActive
-              ? 'border-orange bg-orange/5 scale-[1.005]'
-              : uploadedFile
+              ? 'border-orange bg-orange/5 scale-[1.005] cursor-pointer'
+              : uploadResult
                 ? 'border-success/40 bg-success/5'
-                : 'border-border hover:border-teal/40 hover:bg-teal/5'
+                : uploadError
+                  ? 'border-danger/40 bg-danger/5'
+                  : isUploading
+                    ? 'border-orange/40 bg-orange/5'
+                    : 'border-border hover:border-teal/40 hover:bg-teal/5 cursor-pointer'
           }`}
         >
           <input
@@ -624,33 +654,107 @@ export default function DataInput() {
             className="sr-only"
           />
 
-          {uploadedFile ? (
+          {/* === Uploading state (spinner) === */}
+          {isUploading && uploadedFile && (
             <div className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-3 text-success">
-                {isUploading ? <Loader2 size={24} className="animate-spin" /> : <CheckCircle2 size={24} />}
+              <div className="w-12 h-12 rounded-xl bg-orange/10 flex items-center justify-center mb-3 text-orange">
+                <Loader2 size={24} className="animate-spin" />
               </div>
               <p className="text-sm font-semibold text-text-primary mb-0.5">{uploadedFile.name}</p>
               <p className="text-xs text-text-muted mb-2">
-                {(uploadedFile.size / 1024).toFixed(1)} KB — {isUploading ? 'Extracting lithology tables...' : 'Ready for reserve model sync'}
+                {(uploadedFile.size / 1024).toFixed(1)} KB — Extracting lithology tables…
+              </p>
+              <div className="w-48 bg-border rounded-full h-1.5 overflow-hidden">
+                <div className="h-full bg-orange rounded-full animate-pulse" style={{ width: '60%' }} />
+              </div>
+            </div>
+          )}
+
+          {/* === Success state (confirmation card) === */}
+          {!isUploading && uploadResult && uploadedFile && (
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-3 text-success">
+                <CheckCircle2 size={24} />
+              </div>
+              <p className="text-sm font-semibold text-text-primary mb-1">{uploadedFile.name}</p>
+              <p className="text-xs text-text-muted mb-4">
+                {(uploadedFile.size / 1024).toFixed(1)} KB — Parsed successfully
               </p>
 
-              {isUploading && (
-                <div className="w-48 bg-border rounded-full h-1.5 overflow-hidden mb-3">
-                  <div
-                    className="h-full bg-success transition-all duration-200"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
+              {/* Extracted entities grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-4" onClick={e => e.stopPropagation()}>
+                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Deposit ID</p>
+                  <p className="text-sm font-bold text-navy truncate" title={displayField(uploadResult.deposit_id)}>
+                    {displayField(uploadResult.deposit_id)}
+                  </p>
                 </div>
-              )}
+                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Depth</p>
+                  <p className="text-sm font-bold text-navy">
+                    {uploadResult.depth != null ? `${uploadResult.depth}m` : '—'}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Grade</p>
+                  <p className="text-sm font-bold text-orange">
+                    {uploadResult.grade != null ? `${uploadResult.grade}%` : '—'}
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Structure</p>
+                  <p className="text-sm font-bold text-teal truncate" title={displayField(uploadResult.structure_type)}>
+                    {displayField(uploadResult.structure_type)}
+                  </p>
+                </div>
+              </div>
 
-              <button
-                onClick={e => { e.stopPropagation(); setUploadedFile(null); }}
-                className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors duration-150"
-              >
-                <X size={12} /> Remove file
-              </button>
+              {/* Action buttons */}
+              <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                {uploadResult.site_id && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => navigate(`/site/${uploadResult.site_id}`)}
+                  >
+                    <Eye size={14} />
+                    View in graph
+                  </Button>
+                )}
+                <button
+                  onClick={handleClearUpload}
+                  className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors duration-150"
+                >
+                  <X size={12} /> Upload another
+                </button>
+              </div>
             </div>
-          ) : (
+          )}
+
+          {/* === Error state === */}
+          {!isUploading && uploadError && uploadedFile && (
+            <div className="flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-xl bg-danger/10 flex items-center justify-center mb-3 text-danger">
+                <AlertCircle size={24} />
+              </div>
+              <p className="text-sm font-semibold text-text-primary mb-0.5">{uploadedFile.name}</p>
+              <p className="text-xs text-danger mb-3 max-w-sm">{uploadError}</p>
+              <div className="flex items-center gap-3">
+                <Button variant="primary" size="sm" onClick={handleRetryUpload}>
+                  Retry Upload
+                </Button>
+                <button
+                  onClick={handleClearUpload}
+                  className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors duration-150"
+                >
+                  <X size={12} /> Remove file
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* === Empty / initial state === */}
+          {!uploadedFile && !isUploading && (
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 rounded-xl bg-bg flex items-center justify-center mb-3 border border-border text-text-muted">
                 <Upload size={22} />

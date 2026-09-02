@@ -5,7 +5,7 @@ import Badge from './Badge';
 import { SkeletonRow } from './Skeleton';
 import EmptyState from './EmptyState';
 import ErrorState from './ErrorState';
-import { getRiskEvents } from '../api/client';
+import { getRiskEvents, SITE_NAME_MAP } from '../api/client';
 import { getEventTimestamp, formatRelativeTime } from '../lib/time';
 
 const POLL_INTERVAL_MS = 15000;
@@ -141,8 +141,8 @@ export default function LiveEventFeed() {
                   <p className="mt-1 text-xs text-text-muted">{event.description}</p>
                 )}
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-text-muted">
-                  {event.site_id && <span className="font-medium text-text-secondary">{event.site_id}</span>}
-                  {event.site_id && <span>&middot;</span>}
+                  {(event.site_name || event.site_id) && <span className="font-medium text-text-secondary">{event.site_name || SITE_NAME_MAP[event.site_id] || event.site_id}</span>}
+                  {(event.site_name || event.site_id) && <span>&middot;</span>}
                   <span>{formatRelativeTime(getEventTimestamp(event))}</span>
                 </div>
               </div>

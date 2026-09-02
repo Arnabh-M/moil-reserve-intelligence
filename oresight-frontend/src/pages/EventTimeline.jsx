@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Badge } from '../components';
+import { ChevronDown, ChevronUp, SearchX } from 'lucide-react';
+import { Badge, EmptyState, ErrorState, SkeletonCard } from '../components';
 import CausalGraph from '../components/CausalGraph';
 import { getRiskEvents, getCausalGraph } from '../api/client';
 
@@ -65,6 +65,24 @@ export default function EventTimeline() {
     };
   }, []);
 
+  const retryLoad = () => {
+    setLoading(true);
+    setError(null);
+    getRiskEvents()
+      .then((rows) => {
+        const sorted = [...rows].sort(
+          (a, b) => new Date(b.detected_at).getTime() - new Date(a.detected_at).getTime()
+        );
+        setEvents(sorted);
+      })
+      .catch((err) => {
+        setError(err.message || 'Failed to load risk events.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
   const filteredEvents = useMemo(() => {
     if (filter === 'critical') return events.filter((e) => e.severity === 'critical');
     if (filter === 'resolved') return events.filter((e) => e.resolved);
@@ -118,17 +136,32 @@ export default function EventTimeline() {
       </div>
 
       {loading && (
-        <div className="mt-8 text-sm text-text-muted">Loading risk events…</div>
+        <div className="mt-6 space-y-4">
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+          <SkeletonCard lines={2} />
+        </div>
       )}
 
       {!loading && error && (
-        <div className="mt-8 p-4 rounded-lg border border-danger/20 bg-danger/5 text-sm text-danger">
-          {error}
+        <div className="mt-6">
+          <ErrorState
+            title="Failed to load events"
+            message={error}
+            onRetry={retryLoad}
+          />
         </div>
       )}
 
       {!loading && !error && filteredEvents.length === 0 && (
-        <div className="mt-8 text-sm text-text-muted">No events match this filter.</div>
+        <div className="mt-6">
+          <EmptyState
+            icon={SearchX}
+            title="No events match this filter"
+            message="Try adjusting the filter above, or check back later for new events."
+            tone="neutral"
+          />
+        </div>
       )}
 
       {!loading && !error && filteredEvents.length > 0 && (

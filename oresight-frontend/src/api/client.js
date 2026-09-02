@@ -676,3 +676,64 @@ export async function getRiskEvents({ site_id = null, resolved = null } = {}) {
   }
   return res;
 }
+
+// ───────────────────────────────────────────────────────────────────────
+// 5. PDF REPORT UPLOAD (POST /reports/upload)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Upload a geological report PDF for entity extraction.
+ * POST /reports/upload (multipart/form-data, field: "file")
+ * Returns { deposit_id, depth, grade, structure_type, site_id }
+ */
+export async function uploadReport(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const url = `${BASE_URL}/reports/upload`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!res.ok) {
+      let detail = `HTTP Error ${res.status}`;
+      try {
+        const json = await res.json();
+        if (json.detail) detail = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail);
+      } catch { /* not json */ }
+      const err = new Error(detail);
+      err.status = res.status;
+      throw err;
+    }
+    return await res.json();
+  } catch (err) {
+    if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+      const netErr = new Error(`Cannot connect to API at ${BASE_URL}. Ensure FastAPI backend is running.`);
+      netErr.isNetworkError = true;
+      throw netErr;
+    }
+    throw err;
+  }
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// 6. RAG SITE NOTES SEARCH (GET /site-notes/search)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Search site notes via RAG.
+ * GET /site-notes/search?q={query}&site_id={siteId}
+ * Returns { results: [{ note_id, text, score, site_id }] }
+ */
+export async function searchSiteNotes(query, siteId) {
+  const q = new URLSearchParams();
+  q.set('q', query);
+  if (siteId != null) q.set('site_id', siteId);
+
+  const data = await apiFetch(`/site-notes/search?${q.toString()}`);
+  // Handle both { results: [...] } wrapper and bare array
+  return Array.isArray(data) ? data : (data?.results || []);
+}
