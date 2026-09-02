@@ -1,0 +1,259 @@
+{
+  "title": "MOIL Reserve Intelligence - MapLibre Raster Tiles Manifest",
+  "description": "Pre-rendered georeferenced raster PNG tiles and time-series layers for browser rendering in MapLibre GL.",
+  "crs": "EPSG:4326 (WGS84)",
+  "tiles_directory": "gis/tiles",
+  "layers": {
+    "ndvi_latest": {
+      "id": "ndvi-latest",
+      "name": "Sentinel-2 NDVI (Latest)",
+      "file": "ndvi_latest.png",
+      "date": "2026-08-31",
+      "bbox": [
+        78.5,
+        20.9,
+        80.8,
+        22.25
+      ],
+      "maplibre_coordinates": [
+        [
+          78.5,
+          22.25
+        ],
+        [
+          80.8,
+          22.25
+        ],
+        [
+          80.8,
+          20.9
+        ],
+        [
+          78.5,
+          20.9
+        ]
+      ],
+      "type": "raster",
+      "palette_legend": [
+        "#d73027",
+        "#f46d43",
+        "#fdae61",
+        "#fee08b",
+        "#d9ef8b",
+        "#a6d96a",
+        "#66bd63",
+        "#1a9850"
+      ],
+      "description": "Vegetation index for environmental baseline and overburden monitoring."
+    },
+    "iron_oxide_latest": {
+      "id": "iron-oxide-latest",
+      "name": "Sentinel-2 Iron-Oxide Alteration Index",
+      "file": "iron_oxide_latest.png",
+      "date": "2026-08-31",
+      "bbox": [
+        78.5,
+        20.9,
+        80.8,
+        22.25
+      ],
+      "maplibre_coordinates": [
+        [
+          78.5,
+          22.25
+        ],
+        [
+          80.8,
+          22.25
+        ],
+        [
+          80.8,
+          20.9
+        ],
+        [
+          78.5,
+          20.9
+        ]
+      ],
+      "type": "raster",
+      "palette_legend": [
+        "#2c7bb6",
+        "#abd9e9",
+        "#ffffbf",
+        "#fdae61",
+        "#d7191c"
+      ],
+      "description": "Red/Blue spectral alteration ratio highlighting manganese and iron gossan signatures."
+    },
+    "drone_orthophoto": {
+      "id": "odm-drone-orthophoto",
+      "name": "UAV High-Resolution Mine Orthomosaic",
+      "file": "odm_orthophoto.png",
+      "date": "2026-08-30",
+      "bbox": [
+        80.215,
+        21.865,
+        80.235,
+        21.885
+      ],
+      "maplibre_coordinates": [
+        [
+          80.215,
+          21.885
+        ],
+        [
+          80.235,
+          21.885
+        ],
+        [
+          80.235,
+          21.865
+        ],
+        [
+          80.215,
+          21.865
+        ]
+      ],
+      "type": "raster",
+      "description": "High-resolution OpenDroneMap photogrammetry for Bharweli open-cast pit."
+    }
+  },
+  "timeseries_ndvi": [
+    {
+      "week_index": 1,
+      "id": "ndvi-week-1",
+      "name": "NDVI Week 1 (2026-08-10)",
+      "file": "ndvi_week_1.png",
+      "date": "2026-08-10",
+      "window_start": "2026-08-03",
+      "window_end": "2026-08-10",
+      "bbox": [
+        78.5,
+        20.9,
+        80.8,
+        22.25
+      ],
+      "maplibre_coordinates": [
+        [
+          78.5,
+          22.25
+        ],
+        [
+          80.8,
+          22.25
+        ],
+        [
+          80.8,
+          20.9
+        ],
+        [
+          78.5,
+          20.9
+        ]
+      ],
+      "type": "raster"
+    },
+    {
+      "week_index": 2,
+      "id": "ndvi-week-2",
+      "name": "NDVI Week 2 (2026-08-17)",
+      "file": "ndvi_week_2.png",
+      "date": "2026-08-17",
+      "window_start": "2026-08-10",
+      "window_end": "2026-08-17",
+      "bbox": [
+        78.5,
+        20.9,
+        80.8,
+        22.25
+      ],
+      "maplibre_coordinates": [
+        [
+          78.5,
+          22.25
+        ],
+        [
+          80.8,
+          22.25
+        ],
+        [
+          80.8,
+          20.9
+        ],
+        [
+          78.5,
+          20.9
+        ]
+      ],
+      "type": "raster"
+    },
+    {
+      "week_index": 3,
+      "id": "ndvi-week-3",
+      "name": "NDVI Week 3 (2026-08-24)",
+      "file": "ndvi_week_3.png",
+      "date": "2026-08-24",
+      "window_start": "2026-08-17",
+      "window_end": "2026-08-24",
+      "bbox": [
+        78.5,
+        20.9,
+        80.8,
+        22.25
+      ],
+      "maplibre_coordinates": [
+        [
+          78.5,
+          22.25
+        ],
+        [
+          80.8,
+          22.25
+        ],
+        [
+          80.8,
+          20.9
+        ],
+        [
+          78.5,
+          20.9
+        ]
+      ],
+      "type": "raster"
+    },
+    {
+      "week_index": 4,
+      "id": "ndvi-week-4",
+      "name": "NDVI Week 4 (2026-08-31)",
+      "file": "ndvi_week_4.png",
+      "date": "2026-08-31",
+      "window_start": "2026-08-24",
+      "window_end": "2026-08-31",
+      "bbox": [
+        78.5,
+        20.9,
+        80.8,
+        22.25
+      ],
+      "maplibre_coordinates": [
+        [
+          78.5,
+          22.25
+        ],
+        [
+          80.8,
+          22.25
+        ],
+        [
+          80.8,
+          20.9
+        ],
+        [
+          78.5,
+          20.9
+        ]
+      ],
+      "type": "raster"
+    }
+  ]
+}

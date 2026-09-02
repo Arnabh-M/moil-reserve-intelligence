@@ -6,6 +6,10 @@ import ZoneDetailPanel from '../components/map/ZoneDetailPanel'
 
 export default function MapPage() {
   const [prospectivityVisible, setProspectivityVisible] = useState(false)
+  const [spectralVisible, setSpectralVisible] = useState(false)
+  const [droneVisible, setDroneVisible] = useState(false)
+  const [ndviVisible, setNdviVisible] = useState(false)
+  const [selectedWeek, setSelectedWeek] = useState(4)
   const [selectedZone, setSelectedZone] = useState(null)
   const [sites, setSites] = useState([])
 
@@ -47,9 +51,23 @@ export default function MapPage() {
       <LayerToggle
         prospectivityVisible={prospectivityVisible}
         onProspectivityChange={setProspectivityVisible}
+        spectralVisible={spectralVisible}
+        onSpectralChange={setSpectralVisible}
+        droneVisible={droneVisible}
+        onDroneChange={setDroneVisible}
+        ndviVisible={ndviVisible}
+        onNdviChange={setNdviVisible}
       />
       <div className="relative min-h-0 flex-1 h-full">
-        <MineMap prospectivityVisible={prospectivityVisible} onZoneSelect={setSelectedZone} />
+        <MineMap
+          prospectivityVisible={prospectivityVisible}
+          spectralVisible={spectralVisible}
+          droneVisible={droneVisible}
+          ndviVisible={ndviVisible}
+          selectedWeek={selectedWeek}
+          onWeekChange={setSelectedWeek}
+          onZoneSelect={setSelectedZone}
+        />
         <ZoneDetailPanel
           zone={selectedZone}
           siteName={selectedSiteName}

@@ -11,10 +11,22 @@ import {
   RESERVE_ZONES_SOURCE_ID,
   RESERVE_ZONE_FILL_PAINT,
   SAMPLE_SITES,
+  SPECTRAL_LAYER_CONFIG,
+  DRONE_LAYER_CONFIG,
+  NDVI_TIMESERIES_CONFIG,
 } from '../../lib/map'
 import ConfidenceLegend from './ConfidenceLegend'
+import NdviTimeSlider from './NdviTimeSlider'
 
-export default function MineMap({ prospectivityVisible, onZoneSelect }) {
+export default function MineMap({
+  prospectivityVisible,
+  spectralVisible = false,
+  droneVisible = false,
+  ndviVisible = false,
+  selectedWeek = 4,
+  onWeekChange,
+  onZoneSelect,
+}) {
   const [selectedSiteId, setSelectedSiteId] = useState(null)
   const [reserveZones, setReserveZones] = useState(null)
   const [zonesStatus, setZonesStatus] = useState('loading')
@@ -81,6 +93,64 @@ export default function MineMap({ prospectivityVisible, onZoneSelect }) {
         onClick={handleMapClick}
         onMouseMove={handleMouseMove}
       >
+        {/* Spectral Alteration ImageSource + Raster Layer */}
+        <Source
+          id={SPECTRAL_LAYER_CONFIG.sourceId}
+          type="image"
+          url={SPECTRAL_LAYER_CONFIG.url}
+          coordinates={SPECTRAL_LAYER_CONFIG.coordinates}
+        >
+          <Layer
+            id={SPECTRAL_LAYER_CONFIG.layerId}
+            type="raster"
+            paint={{ 'raster-opacity': 0.75 }}
+            layout={{
+              visibility: spectralVisible ? 'visible' : 'none',
+            }}
+          />
+        </Source>
+
+        {/* Drone DSM / UAV Orthomosaic ImageSource + Raster Layer */}
+        <Source
+          id={DRONE_LAYER_CONFIG.sourceId}
+          type="image"
+          url={DRONE_LAYER_CONFIG.url}
+          coordinates={DRONE_LAYER_CONFIG.coordinates}
+        >
+          <Layer
+            id={DRONE_LAYER_CONFIG.layerId}
+            type="raster"
+            paint={{ 'raster-opacity': 0.85 }}
+            layout={{
+              visibility: droneVisible ? 'visible' : 'none',
+            }}
+          />
+        </Source>
+
+        {/* 4 Weekly NDVI ImageSource + Raster Layers */}
+        {NDVI_TIMESERIES_CONFIG.map((week) => (
+          <Source
+            key={week.id}
+            id={`source-${week.id}`}
+            type="image"
+            url={week.url}
+            coordinates={week.coordinates}
+          >
+            <Layer
+              id={`layer-${week.id}`}
+              type="raster"
+              paint={{ 'raster-opacity': 0.75 }}
+              layout={{
+                visibility:
+                  ndviVisible && selectedWeek === week.week_index
+                    ? 'visible'
+                    : 'none',
+              }}
+            />
+          </Source>
+        ))}
+
+        {/* Reserve Zones GeoJSON Heatmap Fill Layer */}
         {reserveZones && (
           <Source id={RESERVE_ZONES_SOURCE_ID} type="geojson" data={reserveZones}>
             <Layer
@@ -94,6 +164,7 @@ export default function MineMap({ prospectivityVisible, onZoneSelect }) {
           </Source>
         )}
 
+        {/* Site Markers */}
         {SAMPLE_SITES.map((site) => (
           <Marker
             key={site.id}
@@ -131,7 +202,15 @@ export default function MineMap({ prospectivityVisible, onZoneSelect }) {
         )}
       </Map>
 
+      {/* Confidence Legend for Reserve Zones */}
       <ConfidenceLegend visible={prospectivityVisible} />
+
+      {/* 4-Week NDVI Time Slider */}
+      <NdviTimeSlider
+        visible={ndviVisible}
+        selectedWeek={selectedWeek}
+        onWeekChange={onWeekChange}
+      />
 
       {zonesStatus === 'loading' && (
         <div className="absolute left-4 top-4 z-10 flex items-center gap-2 rounded-sm border border-border bg-white px-3 py-2 text-xs text-text-secondary shadow-lg">

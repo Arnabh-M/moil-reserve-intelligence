@@ -3,10 +3,21 @@ import { Layers } from 'lucide-react'
 import Card from '../Card'
 import { MAP_LAYERS } from '../../lib/map'
 
-export default function LayerToggle({ prospectivityVisible, onProspectivityChange }) {
+export default function LayerToggle({
+  prospectivityVisible,
+  onProspectivityChange,
+  spectralVisible = false,
+  onSpectralChange,
+  droneVisible = false,
+  onDroneChange,
+  ndviVisible = false,
+  onNdviChange,
+}) {
   const [enabled, setEnabled] = useState(() =>
     Object.fromEntries(
-      MAP_LAYERS.filter((layer) => layer.id !== 'prospectivity').map((layer) => [layer.id, false])
+      MAP_LAYERS.filter(
+        (layer) => !['prospectivity', 'spectral', 'dsm', 'ndvi'].includes(layer.id)
+      ).map((layer) => [layer.id, false])
     )
   )
 
@@ -15,13 +26,28 @@ export default function LayerToggle({ prospectivityVisible, onProspectivityChang
   }
 
   function isLayerChecked(id) {
-    if (id === 'prospectivity') return prospectivityVisible
-    return enabled[id]
+    if (id === 'prospectivity') return Boolean(prospectivityVisible)
+    if (id === 'spectral') return Boolean(spectralVisible)
+    if (id === 'dsm') return Boolean(droneVisible)
+    if (id === 'ndvi') return Boolean(ndviVisible)
+    return Boolean(enabled[id])
   }
 
   function handleToggle(id) {
-    if (id === 'prospectivity') {
+    if (id === 'prospectivity' && onProspectivityChange) {
       onProspectivityChange(!prospectivityVisible)
+      return
+    }
+    if (id === 'spectral' && onSpectralChange) {
+      onSpectralChange(!spectralVisible)
+      return
+    }
+    if (id === 'dsm' && onDroneChange) {
+      onDroneChange(!droneVisible)
+      return
+    }
+    if (id === 'ndvi' && onNdviChange) {
+      onNdviChange(!ndviVisible)
       return
     }
     toggleLayer(id)

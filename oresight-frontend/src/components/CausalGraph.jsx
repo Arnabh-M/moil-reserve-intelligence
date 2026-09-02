@@ -10,7 +10,7 @@ const TYPE_STYLES = {
   Equipment: { bg: '#2a7f8c', border: '#226771' }, // teal
   BlastPlan: { bg: '#16233a', border: '#0e1726' }, // navy2
   OreZone: { bg: '#22c55e', border: '#16a34a' }, // success
-  RiskEvent: { bg: '#ef4444', border: '#dc2626' }, // danger
+  RiskEvent: { bg: '#e0793a', border: '#c9662c' }, // orange (roadmap)
   WeatherEvent: { bg: '#f59e0b', border: '#d97706' }, // warning
   ProductionForecast: { bg: '#5a6577', border: '#454e5d' }, // text-secondary
   MineSite: { bg: '#8896a8', border: '#6b7889' }, // text-muted

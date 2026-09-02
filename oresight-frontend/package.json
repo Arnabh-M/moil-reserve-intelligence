@@ -17,6 +17,7 @@
     "lucide-react": "^1.37.0",
     "maplibre-gl": "^6.6.0",
     "plotly.js-dist-min": "^4.0.0",
+    "rc-slider": "^11.1.9",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hot-toast": "^2.6.0",

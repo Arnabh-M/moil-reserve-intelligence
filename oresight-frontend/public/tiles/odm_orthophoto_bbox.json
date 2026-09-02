@@ -1,0 +1,30 @@
+{
+  "file": "odm_orthophoto.png",
+  "source": "OpenDroneMap (UAV High-Resolution Orthomosaic)",
+  "bbox": [
+    80.215,
+    21.865,
+    80.235,
+    21.885
+  ],
+  "maplibre_coordinates": [
+    [
+      80.215,
+      21.885
+    ],
+    [
+      80.235,
+      21.885
+    ],
+    [
+      80.235,
+      21.865
+    ],
+    [
+      80.215,
+      21.865
+    ]
+  ],
+  "width_px": 1024,
+  "height_px": 1024
+}
