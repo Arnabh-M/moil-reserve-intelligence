@@ -104,7 +104,7 @@ export default function RecommendationCard({
 
       {/* 3 Option Sub-Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 p-4">
-        {options.map((opt, idx) => {
+        {(options || []).map((opt, idx) => {
           const isCurrentSimulating = activeSimIdx === idx;
           const isActioned = actioned[idx];
 
