@@ -2,6 +2,7 @@
 
 from app.schemas.admin import JobStatusOut
 from app.schemas.causal_graph import CausalGraphOut, GraphEdge, GraphNode
+from app.schemas.demo import DemoScenarioOut
 from app.schemas.equipment import EquipmentOut, EquipmentStatusUpdate
 from app.schemas.kpi import KPISummaryOut
 from app.schemas.production import ProductionRecordCreate, ProductionRecordOut
@@ -17,6 +18,7 @@ __all__ = [
     "CausalGraphOut",
     "GraphEdge",
     "GraphNode",
+    "DemoScenarioOut",
     "EquipmentOut",
     "EquipmentStatusUpdate",
     "KPISummaryOut",

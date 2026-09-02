@@ -19,6 +19,7 @@ from app.db import engine
 from app.graph_db import close_graph_driver, graph_health, init_graph_driver
 from app.routers import (
     admin,
+    demo,
     equipment,
     kpi,
     production,
@@ -206,6 +207,7 @@ def create_app() -> FastAPI:
     app.include_router(simulate.router)
     app.include_router(kpi.router)
     app.include_router(site_notes.router)
+    app.include_router(demo.router)
     app.include_router(admin.router)
 
     return app
