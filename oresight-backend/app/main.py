@@ -21,6 +21,7 @@ from app.routers import (
     kpi,
     production,
     recommendations,
+    reports,
     reserve_zones,
     risk_events,
     simulate,
@@ -159,6 +160,7 @@ def create_app() -> FastAPI:
     app.include_router(risk_events.router)
     app.include_router(reserve_zones.router)
     app.include_router(recommendations.router)
+    app.include_router(reports.router)
     app.include_router(simulate.router)
     app.include_router(kpi.router)
     app.include_router(admin.router)
