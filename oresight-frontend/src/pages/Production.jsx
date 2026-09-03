@@ -143,7 +143,7 @@ export default function Production() {
       </div>
 
       {/* Tab Selector */}
-      <div className="flex gap-1 mb-4 p-1 bg-white rounded-lg border border-border w-fit">
+      <div className="flex gap-1 mb-4 p-1 bg-bg-surface rounded-lg border border-border w-fit">
         {tabs.map(tab => (
           <button
             key={tab.id}

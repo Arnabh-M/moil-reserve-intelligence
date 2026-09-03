@@ -391,7 +391,7 @@ export default function MineMap({
           className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition-all duration-150 border backdrop-blur-md cursor-pointer ${
             crossSectionActive
               ? 'bg-teal text-white border-teal ring-2 ring-teal/30 shadow-teal/20'
-              : 'bg-white/95 text-navy border-border hover:bg-bg hover:text-teal'
+              : 'bg-bg-surface/95 text-navy border-border hover:bg-bg hover:text-teal'
           }`}
         >
           <Activity size={15} className={crossSectionActive ? 'text-white' : 'text-teal'} />
@@ -416,14 +416,14 @@ export default function MineMap({
       />
 
       {zonesStatus === 'loading' && (
-        <div className="absolute left-4 top-16 z-10 flex items-center gap-2 rounded-xl border border-border bg-white/95 px-3 py-2 text-xs text-text-secondary shadow-lg backdrop-blur-md">
+        <div className="absolute left-4 top-16 z-10 flex items-center gap-2 rounded-xl border border-border bg-bg-surface/95 px-3 py-2 text-xs text-text-secondary shadow-lg backdrop-blur-md">
           <Loader2 size={14} className="shrink-0 animate-spin text-teal" />
           Loading reserve zones…
         </div>
       )}
 
       {zonesStatus === 'error' && (
-        <div className="absolute left-4 top-16 z-10 rounded-xl border border-danger/30 bg-white/95 px-3 py-2 text-xs text-danger shadow-lg backdrop-blur-md">
+        <div className="absolute left-4 top-16 z-10 rounded-xl border border-danger/30 bg-bg-surface/95 px-3 py-2 text-xs text-danger shadow-lg backdrop-blur-md">
           Unable to load reserve zones from the backend.
         </div>
       )}

@@ -33,7 +33,7 @@ export default function Recommendations() {
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="page-title flex items-center gap-2">
-            <span>AI Recommendations</span>
+            <span>Corrective Actions</span>
             <span className="p-1 rounded-md bg-orange/10 text-orange text-xs flex items-center gap-1 font-semibold">
               <Sparkles size={12} /> GET /recommendations
             </span>

@@ -135,7 +135,7 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
         animated: isAffected,
         style: { stroke: isAffected ? '#e0793a' : '#8896a8', strokeWidth: isAffected ? 2 : 1.5 },
         labelStyle: { fontSize: 10, fill: '#5a6577', fontWeight: 600 },
-        labelBgStyle: { fill: '#ffffff', fillOpacity: 0.9 },
+        labelBgStyle: { fill: 'transparent' },
         markerEnd: { type: MarkerType.ArrowClosed, color: isAffected ? '#e0793a' : '#8896a8' },
       };
     });
@@ -168,7 +168,7 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
         fitViewOptions={{ padding: 0.2 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={16} size={1} color="#e2e7ee" />
+        <Background gap={16} size={1} color="var(--border)" />
         <Controls showInteractive={false} position="bottom-right" />
       </ReactFlow>
     </div>

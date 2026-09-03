@@ -1,43 +1,92 @@
 @import "tailwindcss";
 
-/* ── Design Tokens (CSS Custom Properties) ─────────────────────────── */
+/* ── Design Tokens & Themes ─────────────────────────────────────────── */
+
+/* Light Mode Palette (Default) */
 :root {
-  --navy: #101a2b;
-  --navy2: #16233a;
-  --orange: #e0793a;
-  --orange-soft: #f2a768;
-  --teal: #2a7f8c;
-  --bg: #f4f6f9;
-  --border: #e2e7ee;
-  --white: #ffffff;
-  --text-primary: #1a2332;
-  --text-secondary: #5a6577;
-  --text-muted: #8896a8;
-  --success: #22c55e;
-  --danger: #ef4444;
-  --warning: #f59e0b;
+  --bg-primary: #FAF8F3;       /* ivory background */
+  --bg-surface: #FFFFFF;       /* card / panel backgrounds */
+  --text-primary: #1A1815;     /* near-black ink */
+  --text-muted: #6E695E;       /* warm grey secondary text */
+  --charcoal: #1A1815;         /* dark headers / topbar */
+  --nav-bg: #1A1815;           /* top navigation bar background */
+  --accent-primary: #6B2737;   /* oxblood / burgundy — primary buttons, active state */
+  --accent-secondary: #2C3E50; /* slate navy — secondary elements, links */
+  --border: #DDD6C8;           /* warm parchment grey hairline borders */
+  --success: #3E5C3A;          /* deep pine green */
+  --warning: #8C3B24;          /* rust red */
+  --danger: #8C3B24;           /* alert red */
+
+  /* Legacy aliases for backwards compatibility */
+  --bg: #FAF8F3;
+  --navy: #1A1815;
+  --navy2: #211F1D;
+  --orange: #6B2737;
+  --orange-soft: #9C4A57;
+  --teal: #2C3E50;
+  --text-secondary: #6E695E;
+  --white: #FFFFFF;
+
+  /* Typography Stacks (Classic Institutional Serif) */
+  --font-heading: 'Libre Baskerville', Georgia, serif;
+  --font-body: 'PT Serif', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+/* Dark Mode Palette */
+[data-theme="dark"],
+html.dark {
+  --bg-primary: #161514;       /* near-black charcoal */
+  --bg-surface: #211F1D;       /* elevated charcoal for cards */
+  --text-primary: #EDE8DD;     /* warm ivory text */
+  --text-muted: #A39C8D;       /* warm grey secondary text */
+  --charcoal: #161514;         /* dark charcoal */
+  --nav-bg: #161514;           /* top navigation bar */
+  --accent-primary: #9C4A57;   /* lighter oxblood, readable on dark bg */
+  --accent-secondary: #5B7A99; /* muted slate blue */
+  --border: #38352F;           /* charcoal grey hairline borders */
+  --success: #6B8A63;          /* muted sage green */
+  --warning: #B0583C;          /* warm terracotta */
+  --danger: #B0583C;           /* alert terracotta */
+
+  /* Legacy aliases for backwards compatibility */
+  --bg: #161514;
+  --navy: #161514;
+  --navy2: #211F1D;
+  --orange: #9C4A57;
+  --orange-soft: #B0583C;
+  --teal: #5B7A99;
+  --text-secondary: #A39C8D;
+  --white: #211F1D;
 }
 
 /* ── TailwindCSS v4 theme extension ────────────────────────────────── */
 @theme {
-  --color-navy: #101a2b;
-  --color-navy2: #16233a;
-  --color-orange: #e0793a;
-  --color-orange-soft: #f2a768;
-  --color-teal: #2a7f8c;
-  --color-bg: #f4f6f9;
-  --color-border: #e2e7ee;
-  --color-text-primary: #1a2332;
-  --color-text-secondary: #5a6577;
-  --color-text-muted: #8896a8;
-  --color-success: #22c55e;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  /* Ported from frontend/'s tailwind.config.js — used by pages ported from
-     there (Login, Reports, the merged Dashboard's CommandCenter section). */
-  --font-heading: 'Roboto Slab', serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-surface: var(--bg-surface);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-charcoal: var(--charcoal);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+
+  /* Legacy utility color aliases mapped directly to CSS variables */
+  --color-bg: var(--bg-primary);
+  --color-navy: var(--charcoal);
+  --color-navy2: var(--bg-surface);
+  --color-orange: var(--accent-primary);
+  --color-orange-soft: var(--warning);
+  --color-teal: var(--accent-secondary);
+  --color-danger: var(--danger);
+  --color-text-secondary: var(--text-muted);
+
+  --font-heading: 'Libre Baskerville', Georgia, serif;
+  --font-body: 'PT Serif', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'PT Serif', Georgia, serif;
 }
 
 /* ── Base Styles ───────────────────────────────────────────────────── */
@@ -53,19 +102,67 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg);
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.6;
+  line-height: 1.65;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading, .page-title {
+  font-family: var(--font-heading);
+  letter-spacing: -0.015em;
+}
+
+/* Tabular and numeric data ONLY use monospace */
+code, kbd, samp, pre, .font-mono, td.font-mono, th.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ── Topographic Contour SVG Pattern ──────────────────────────────── */
+.contour-bg {
+  background-color: var(--bg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cpath d='M -20 100 Q 40 60 100 100 T 260 100 M -20 140 Q 40 100 100 140 T 260 140 M -20 60 Q 40 20 100 60 T 260 60 M -20 180 Q 40 140 100 180 T 260 180 M -20 20 Q 40 -20 100 20 T 260 20' fill='none' stroke='%23DDD6C8' stroke-width='0.75' stroke-opacity='0.5'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .contour-bg,
+html.dark .contour-bg {
+  background-color: var(--bg-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cpath d='M -20 100 Q 40 60 100 100 T 260 100 M -20 140 Q 40 100 100 140 T 260 140 M -20 60 Q 40 20 100 60 T 260 60 M -20 180 Q 40 140 100 180 T 260 180 M -20 20 Q 40 -20 100 20 T 260 20' fill='none' stroke='%2338352F' stroke-width='0.75' stroke-opacity='0.6'/%3E%3C/svg%3E");
+}
+
+/* ── Section Divider Glyph ─────────────────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-divider-glyph {
+  padding: 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
 /* ── Scrollbar Styling ─────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -74,7 +171,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -83,21 +180,21 @@ body {
 
 /* ── Utility Classes ───────────────────────────────────────────────── */
 .page-container {
-  padding: 1.5rem;
-  max-width: 1440px;
+  padding: 2rem 2.5rem;
+  max-width: 1560px;
   margin: 0 auto;
 }
 
 .page-title {
-  font-size: 1.5rem;
+  font-size: 1.625rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
 }
 
 .page-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  color: var(--text-muted);
   margin-bottom: 1.5rem;
 }
 
@@ -122,10 +219,10 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* Threshold is wider than the 1024px tablet breakpoint on purpose: the
-   fixed-width sidebar (240px expanded) eats into the viewport before the
-   grid itself notices it's cramped, so this needs headroom past 1024px. */
-@media (max-width: 1180px) {
+@media (max-width: 1024px) {
+  .page-container {
+    padding: 1.25rem;
+  }
   .grid-2,
   .grid-3 {
     grid-template-columns: 1fr;
@@ -137,30 +234,35 @@ body {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 .data-table thead th {
   padding: 0.75rem 1rem;
   text-align: left;
-  font-weight: 600;
-  font-size: 0.6875rem;
+  font-weight: 700;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--bg-surface);
   position: sticky;
   top: 0;
   z-index: 1;
 }
 
 .data-table tbody tr {
-  transition: background 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .data-table tbody tr:hover {
-  background: rgba(42, 127, 140, 0.04);
+  background: rgba(107, 39, 55, 0.05);
+}
+
+[data-theme="dark"] .data-table tbody tr:hover,
+html.dark .data-table tbody tr:hover {
+  background: rgba(156, 74, 87, 0.12);
 }
 
 .data-table tbody td {
@@ -171,36 +273,30 @@ body {
 
 /* ── Animations ────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(-12px); }
+  from { opacity: 0; transform: translateX(-8px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.25s ease-out forwards;
 }
 
 .animate-slide-in {
-  animation: slideIn 0.3s ease-out forwards;
+  animation: slideIn 0.2s ease-out forwards;
 }
 
-/* Staggered children animation */
 .stagger-children > * {
   opacity: 0;
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.3s ease-out forwards;
 }
-.stagger-children > *:nth-child(1) { animation-delay: 0.05s; }
-.stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.15s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.2s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.25s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(1) { animation-delay: 0.03s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.09s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.12s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.15s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.18s; }

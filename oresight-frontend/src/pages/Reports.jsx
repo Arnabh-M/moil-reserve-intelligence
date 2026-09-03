@@ -5,7 +5,7 @@ import jsPDF from 'jspdf';
 // emits, and throws instead of rendering — html2canvas-pro is a drop-in
 // fork that adds support for the modern CSS color syntax.
 import html2canvas from 'html2canvas-pro';
-import { Card, KPIStat, Badge, Button, SkeletonKPIRow, SkeletonCard, EmptyState, InlineError } from '../components';
+import { Card, KPIStat, Badge, Button, SkeletonKPIRow, SkeletonCard, EmptyState, InlineError, SectionDivider } from '../components';
 import { getSites, getRiskEvents, getAllRecommendations, SITE_MAP } from '../api/client';
 
 // Mock getSites() returns string site ids ('balaghat'); mock getRiskEvents()
@@ -60,7 +60,7 @@ export default function Reports() {
       else failed.push(ENDPOINT_LABELS.recommendations);
 
       setFailedEndpoints(failed);
-      setStatus(sitesResult.status === 'fulfilled' ? 'ready' : 'error');
+      setStatus(failed.length === 3 ? 'error' : 'ready');
     }
 
     load();
@@ -69,54 +69,43 @@ export default function Reports() {
     };
   }, []);
 
-  // Recommendations from the real API (RecommendationOut: {trigger,
-  // risk_event_id, options: [{type, description, projected_impact,
-  // confidence}]}) carry no site_id or actioned/status field directly —
-  // there's no persisted "recommendation" row in the backend at all, the
-  // Planner computes these on the fly. Site grouping goes through the risk
-  // event they're attached to, and "actioned" is reinterpreted as "the
-  // underlying risk this recommended has since been resolved" — the
-  // closest real signal to what the original mock-shaped report wanted.
+  const totals = useMemo(() => {
+    const activeRiskCount = riskEvents.filter((e) => e.resolved === false).length;
+    const avgConfidence = sites.length
+      ? sites.reduce((sum, s) => sum + estimateReserveConfidence(s), 0) / sites.length
+      : 0;
+
+    return {
+      siteCount: sites.length,
+      activeRiskCount,
+      avgConfidence,
+    };
+  }, [sites, riskEvents]);
+
   const siteSummaries = useMemo(() => {
     return sites.map((site) => {
-      const siteId = site.id ?? site.site_id;
-      const numericSiteId = toNumericSiteId(siteId);
-      const siteRiskEvents = riskEvents.filter((e) => toNumericSiteId(e.site_id) === numericSiteId);
-      const activeRisks = siteRiskEvents.filter((e) => e.resolved === false);
-      const siteRiskIds = new Set(siteRiskEvents.map((e) => e.id));
-      const siteRecommendations = recommendations.filter((r) => siteRiskIds.has(r.risk_event_id));
-      const resolvedCount = siteRecommendations.filter((r) => {
-        const risk = riskEvents.find((e) => e.id === r.risk_event_id);
-        return risk?.resolved === true;
-      }).length;
+      const numericId = toNumericSiteId(site.id);
+      const siteRisks = riskEvents.filter((e) => toNumericSiteId(e.site_id) === numericId);
+      const activeRiskCount = siteRisks.filter((e) => e.resolved === false).length;
+      const resolvedRiskIds = new Set(siteRisks.filter((e) => e.resolved === true).map((e) => e.id));
+      const recCount = recommendations.filter((r) => resolvedRiskIds.has(r.risk_event_id)).length;
+      const confidence = estimateReserveConfidence(site);
 
       return {
-        id: siteId,
-        name: site.name || siteId || 'Unnamed Site',
-        confidence: estimateReserveConfidence(site),
-        activeRiskCount: activeRisks.length,
-        recommendations: siteRecommendations,
-        resolvedCount,
+        id: site.id,
+        name: site.name,
+        confidence,
+        activeRiskCount,
+        recCount,
       };
     });
   }, [sites, riskEvents, recommendations]);
-
-  const totals = useMemo(() => {
-    return {
-      siteCount: siteSummaries.length,
-      activeRiskCount: siteSummaries.reduce((sum, s) => sum + s.activeRiskCount, 0),
-      resolvedCount: siteSummaries.reduce((sum, s) => sum + s.resolvedCount, 0),
-      avgConfidence: siteSummaries.length
-        ? siteSummaries.reduce((sum, s) => sum + s.confidence, 0) / siteSummaries.length
-        : 0,
-    };
-  }, [siteSummaries]);
 
   const kpiValue = (value) => (status === 'ready' ? value : '—');
 
   async function handleExportPdf() {
     const node = reportRef.current;
-    if (!node) return;
+    if (!node || exporting) return;
 
     setExporting(true);
     try {
@@ -157,8 +146,8 @@ export default function Reports() {
     <div className="page-container flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-lg font-semibold text-navy">Reserve &amp; Risk Summary</h2>
-          <p className="mt-1 text-sm text-text-secondary">Aggregated across all sites, generated on demand.</p>
+          <h2 className="page-title">Reports &amp; Export</h2>
+          <p className="page-subtitle mb-0">Aggregated reserve intelligence and audit sheets across all sites, generated on demand.</p>
         </div>
         <Button variant="primary" onClick={handleExportPdf} disabled={exporting || status === 'loading'}>
           <Download size={16} />
@@ -172,7 +161,7 @@ export default function Reports() {
         />
       )}
 
-      <div ref={reportRef} className="flex flex-col gap-6 bg-white p-8">
+      <div ref={reportRef} className="flex flex-col gap-6 bg-bg-surface p-8">
         {/* Report header */}
         <div className="flex items-center justify-between border-b border-border pb-6">
           <div className="flex items-center gap-3">
@@ -227,6 +216,7 @@ export default function Reports() {
         )}
 
         {/* Per-site sections */}
+        <SectionDivider label="SITE-BY-SITE AUDIT" />
         <div className="flex flex-col gap-4">
           {status === 'loading' && (
             <>

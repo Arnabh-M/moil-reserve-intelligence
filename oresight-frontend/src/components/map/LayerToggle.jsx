@@ -61,7 +61,7 @@ export default function LayerToggle({
   }
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col border-r border-border bg-white">
+    <aside className="flex w-72 shrink-0 flex-col border-r border-border bg-bg-surface">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2">
           <Layers size={17} className="text-teal" strokeWidth={2} />

@@ -72,7 +72,7 @@ export default function Timeline() {
   if (events.length === 0) {
     return (
       <div className="page-container">
-        <h2 className="page-title">Event Timeline</h2>
+        <h2 className="page-title">Risk Timeline</h2>
         <p className="page-subtitle">
           Chronological record of disruptions, resolutions, and milestones across all mine sites
         </p>
@@ -88,7 +88,7 @@ export default function Timeline() {
 
   return (
     <div className="page-container">
-      <h2 className="page-title">Event Timeline</h2>
+      <h2 className="page-title">Risk Timeline</h2>
       <p className="page-subtitle">
         Chronological record of disruptions, resolutions, and milestones across all mine sites
       </p>
@@ -116,7 +116,7 @@ export default function Timeline() {
               </div>
 
               {/* Event content */}
-              <div className="flex-1 bg-white rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-teal/20 -mt-1">
+              <div className="flex-1 bg-bg-surface rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-teal/20 -mt-1">
                 <div className="flex items-start justify-between gap-3 mb-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-sm font-semibold text-text-primary">{event.title}</h4>

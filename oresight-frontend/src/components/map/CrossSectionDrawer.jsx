@@ -148,9 +148,9 @@ export default function CrossSectionDrawer({ isOpen, onClose, point }) {
   };
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col border-t border-border bg-white shadow-2xl transition-transform duration-300 max-h-[460px]">
+    <div className="absolute inset-x-0 bottom-0 z-30 flex flex-col border-t border-border bg-bg-surface shadow-2xl transition-transform duration-300 max-h-[460px]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border bg-white/95 px-5 py-3 backdrop-blur-md">
+      <div className="flex items-center justify-between border-b border-border bg-bg-surface/95 px-5 py-3 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal/10 text-teal">
             <Activity size={18} />
@@ -213,7 +213,7 @@ export default function CrossSectionDrawer({ isOpen, onClose, point }) {
         </div>
 
         {/* Plotly Depth Chart */}
-        <div className="rounded-xl border border-border bg-white p-2 lg:col-span-3">
+        <div className="rounded-xl border border-border bg-bg-surface p-2 lg:col-span-3">
           <Plot
             data={plotData}
             layout={plotLayout}

@@ -294,7 +294,7 @@ export default function DataInput() {
       {/* Page Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="page-title">Data Input</h2>
+          <h2 className="page-title">Field Data Entry</h2>
           <p className="page-subtitle mb-0">
             Submit field observations, equipment updates, and geological reports
           </p>
@@ -683,25 +683,25 @@ export default function DataInput() {
 
               {/* Extracted entities grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-4" onClick={e => e.stopPropagation()}>
-                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Deposit ID</p>
                   <p className="text-sm font-bold text-navy truncate" title={displayField(uploadResult.deposit_id)}>
                     {displayField(uploadResult.deposit_id)}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Depth</p>
                   <p className="text-sm font-bold text-navy">
                     {uploadResult.depth != null ? `${uploadResult.depth}m` : '—'}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Grade</p>
                   <p className="text-sm font-bold text-orange">
                     {uploadResult.grade != null ? `${uploadResult.grade}%` : '—'}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg border border-border p-3 text-center shadow-xs">
+                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Structure</p>
                   <p className="text-sm font-bold text-teal truncate" title={displayField(uploadResult.structure_type)}>
                     {displayField(uploadResult.structure_type)}

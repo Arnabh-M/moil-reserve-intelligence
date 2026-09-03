@@ -86,9 +86,9 @@ export default function RecommendationCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-border shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden">
+    <div className="bg-bg-surface rounded-xl border border-border shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden">
       {/* Trigger Description */}
-      <div className="flex items-start gap-3 px-5 pt-4 pb-3 border-b border-border bg-gradient-to-r from-white via-bg/40 to-white">
+      <div className="flex items-start gap-3 px-5 pt-4 pb-3 border-b border-border bg-bg-surface">
         <div className="p-2 rounded-lg bg-orange/10 text-orange shrink-0 mt-0.5 shadow-xs">
           <Zap size={16} />
         </div>
@@ -128,7 +128,7 @@ export default function RecommendationCard({
                 <div className="flex items-center justify-between mb-1.5">
                   <h4 className="text-sm font-bold text-text-primary capitalize">{title}</h4>
                   {opt.confidence !== undefined && (
-                    <span className="text-[10px] font-semibold text-text-muted bg-white px-1.5 py-0.5 rounded border border-border">
+                    <span className="text-[10px] font-semibold text-text-muted bg-bg-surface px-1.5 py-0.5 rounded border border-border">
                       {Math.round(opt.confidence * 100)}% conf
                     </span>
                   )}
@@ -212,7 +212,7 @@ export default function RecommendationCard({
             <div className="space-y-4">
               {/* 3 Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-white p-3 rounded-lg border border-border text-center shadow-xs">
+                <div className="bg-bg-surface p-3 rounded-lg border border-border text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-bold uppercase">Reserve Confidence</p>
                   <div className="flex items-center justify-center gap-2 mt-1">
                     <span className="text-sm font-bold text-text-primary">
@@ -225,7 +225,7 @@ export default function RecommendationCard({
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-lg border border-border text-center shadow-xs">
+                <div className="bg-bg-surface p-3 rounded-lg border border-border text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-bold uppercase">Production Forecast</p>
                   <div className="flex items-center justify-center gap-2 mt-1">
                     <span className="text-sm font-bold text-text-primary">
@@ -238,7 +238,7 @@ export default function RecommendationCard({
                   </div>
                 </div>
 
-                <div className="bg-white p-3 rounded-lg border border-border text-center shadow-xs">
+                <div className="bg-bg-surface p-3 rounded-lg border border-border text-center shadow-xs">
                   <p className="text-[10px] text-text-muted font-bold uppercase">Risk Score</p>
                   <div className="flex items-center justify-center gap-2 mt-1">
                     <span className="text-sm font-bold text-text-primary">

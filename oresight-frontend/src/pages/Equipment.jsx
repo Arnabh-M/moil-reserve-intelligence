@@ -121,7 +121,7 @@ export default function Equipment() {
                   key={s}
                   onClick={() => setFilterSite(s)}
                   className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
-                    filterSite === s ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
+                    filterSite === s ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
                   }`}
                 >
                   {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}

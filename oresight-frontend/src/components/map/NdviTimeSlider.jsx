@@ -47,7 +47,7 @@ export default function NdviTimeSlider({
   }
 
   return (
-    <div className="absolute bottom-6 left-6 z-10 w-84 rounded-xl border border-border bg-white/95 p-4 shadow-lg backdrop-blur-md">
+    <div className="absolute bottom-6 left-6 z-10 w-84 rounded-xl border border-border bg-bg-surface/95 p-4 shadow-lg backdrop-blur-md">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function NdviTimeSlider({
             onClick={handlePrev}
             disabled={selectedWeek <= 1}
             aria-label="Previous week"
-            className="rounded p-1 text-navy hover:bg-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="rounded p-1 text-navy hover:bg-bg-surface disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
@@ -90,7 +90,7 @@ export default function NdviTimeSlider({
             onClick={handleNext}
             disabled={selectedWeek >= 4}
             aria-label="Next week"
-            className="rounded p-1 text-navy hover:bg-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="rounded p-1 text-navy hover:bg-bg-surface disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
             <ChevronRight size={16} />
           </button>

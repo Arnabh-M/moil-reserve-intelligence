@@ -85,7 +85,7 @@ export default function Reserves() {
 
   return (
     <div className="page-container">
-      <h2 className="page-title">Reserves & Deposits</h2>
+      <h2 className="page-title">Geological Structure &amp; Cross-Section</h2>
       <p className="page-subtitle">Geological deposit inventory, grade analysis, and confirmation status</p>
 
       {/* KPI Row */}
@@ -233,7 +233,7 @@ export default function Reserves() {
                 key={s}
                 onClick={() => setFilterSite(s)}
                 className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
-                  filterSite === s ? 'bg-white text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
+                  filterSite === s ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
                 }`}
               >
                 {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}

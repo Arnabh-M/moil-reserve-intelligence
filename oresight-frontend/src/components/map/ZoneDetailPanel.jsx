@@ -96,7 +96,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
   if (!zone) return null;
 
   return (
-    <div className="absolute top-4 right-4 bottom-4 z-20 w-96 rounded-2xl border border-border bg-white p-5 shadow-xl transition-all flex flex-col justify-between overflow-y-auto">
+    <div className="absolute top-4 right-4 bottom-4 z-20 w-96 rounded-2xl border border-border bg-bg-surface p-5 shadow-xl transition-all flex flex-col justify-between overflow-y-auto">
       <div>
         {/* Header */}
         <div className="flex items-start justify-between border-b border-border pb-3 mb-4">
@@ -220,7 +220,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
                 <CausalGraph
                   graph={graphState.graph}
                   height={240}
-                  className="border border-border rounded-xl bg-white"
+                  className="border border-border rounded-xl bg-bg-surface"
                 />
                 {graphState.graph?.note && (
                   <p className="mt-1.5 text-[10px] text-text-muted italic">

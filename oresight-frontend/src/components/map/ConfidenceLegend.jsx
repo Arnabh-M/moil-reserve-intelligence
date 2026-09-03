@@ -29,7 +29,7 @@ export default function ConfidenceLegend({
   return (
     <aside
       aria-label="Map Legend"
-      className="absolute bottom-6 right-6 z-10 w-72 rounded-xl border border-border bg-white/95 shadow-lg backdrop-blur-md transition-all duration-200"
+      className="absolute bottom-6 right-6 z-10 w-72 rounded-xl border border-border bg-bg-surface/95 shadow-lg backdrop-blur-md transition-all duration-200"
     >
       {/* Legend Header */}
       <div

@@ -5,25 +5,25 @@ const ToastContext = createContext(null);
 
 const toastVariants = {
   success: {
-    bg: 'bg-white border-success/30 text-text-primary',
+    bg: 'bg-bg-surface border-success/30 text-text-primary',
     icon: CheckCircle2,
     iconColor: 'text-success',
     bar: 'bg-success',
   },
   error: {
-    bg: 'bg-white border-danger/30 text-text-primary',
+    bg: 'bg-bg-surface border-danger/30 text-text-primary',
     icon: AlertCircle,
     iconColor: 'text-danger',
     bar: 'bg-danger',
   },
   warning: {
-    bg: 'bg-white border-warning/30 text-text-primary',
+    bg: 'bg-bg-surface border-warning/30 text-text-primary',
     icon: AlertTriangle,
     iconColor: 'text-warning',
     bar: 'bg-warning',
   },
   info: {
-    bg: 'bg-white border-teal/30 text-text-primary',
+    bg: 'bg-bg-surface border-teal/30 text-text-primary',
     icon: Info,
     iconColor: 'text-teal',
     bar: 'bg-teal',

@@ -12,7 +12,7 @@ export function SkeletonCircle({ size = 'h-9 w-9', className = '' }) {
 // swaps in for a real Card with no layout jump once data arrives.
 export function SkeletonCard({ lines = 3, showIcon = true, className = '' }) {
   return (
-    <div className={`bg-white rounded-xl border border-border shadow-sm p-4 ${className}`}>
+    <div className={`bg-bg-surface rounded-xl border border-border shadow-sm p-4 ${className}`}>
       {showIcon && (
         <div className="flex items-center gap-3 mb-3">
           <SkeletonCircle />
@@ -31,7 +31,7 @@ export function SkeletonKPIRow({ count = 4 }) {
   return (
     <div className="grid-kpi">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-white rounded-xl border border-border shadow-sm p-4">
+        <div key={i} className="bg-bg-surface rounded-xl border border-border shadow-sm p-4">
           <SkeletonCircle className="mb-3" />
           <SkeletonBar width="w-16" height="h-7" className="mb-2" />
           <SkeletonBar width="w-24" height="h-2.5" />

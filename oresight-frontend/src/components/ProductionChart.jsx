@@ -99,13 +99,13 @@ export default function ProductionChart({ site_id, days = 30, className = '' }) 
       mode: 'lines+markers',
       name: 'Actual',
       line: {
-        color: '#e0793a', // orange design token
+        color: '#6B2737', // oxblood accent
         width: 2.5,
         shape: 'spline',
         smoothing: 0.8,
       },
       marker: {
-        color: '#e0793a',
+        color: '#6B2737',
         size: 5,
       },
       hovertemplate: '<b>%{x}</b><br>Actual: <b>%{y:,.1f} t</b><extra></extra>',
@@ -117,7 +117,7 @@ export default function ProductionChart({ site_id, days = 30, className = '' }) 
       mode: 'lines',
       name: 'Target',
       line: {
-        color: '#101a2b', // navy design token
+        color: '#2C3E50', // slate navy accent
         width: 2,
         dash: 'dash',
       },
@@ -138,45 +138,45 @@ export default function ProductionChart({ site_id, days = 30, className = '' }) 
       xanchor: 'center',
       y: 1.15,
       font: {
-        family: 'Inter, system-ui, sans-serif',
+        family: 'PT Serif, Georgia, serif',
         size: 11,
-        color: '#5a6577',
+        color: '#6E695E',
       },
     },
     xaxis: {
       type: 'category',
       showgrid: true,
-      gridcolor: '#e2e7ee',
+      gridcolor: '#DDD6C8',
       gridwidth: 1,
       tickfont: {
-        family: 'Inter, system-ui, sans-serif',
+        family: 'IBM Plex Mono, monospace',
         size: 10,
-        color: '#8896a8',
+        color: '#6E695E',
       },
       tickangle: -30,
       showline: true,
-      linecolor: '#e2e7ee',
+      linecolor: '#DDD6C8',
     },
     yaxis: {
       showgrid: true,
-      gridcolor: '#e2e7ee',
+      gridcolor: '#DDD6C8',
       gridwidth: 1,
       tickfont: {
-        family: 'Inter, system-ui, sans-serif',
+        family: 'IBM Plex Mono, monospace',
         size: 10,
-        color: '#8896a8',
+        color: '#6E695E',
       },
       showline: false,
       zeroline: false,
       tickformat: ',.0f',
     },
     hoverlabel: {
-      bgcolor: '#101a2b',
-      bordercolor: '#16233a',
+      bgcolor: '#1A1815',
+      bordercolor: '#38352F',
       font: {
-        family: 'Inter, system-ui, sans-serif',
+        family: 'PT Serif, Georgia, serif',
         size: 12,
-        color: '#ffffff',
+        color: '#EDE8DD',
       },
     },
   };

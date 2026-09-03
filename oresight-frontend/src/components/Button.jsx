@@ -1,15 +1,15 @@
 import React from 'react';
 
 const base =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-200 cursor-pointer text-sm hover:scale-[1.01] active:scale-[0.99] disabled:hover:scale-100';
+  'inline-flex items-center justify-center gap-2 font-bold transition-all duration-150 cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed font-body';
 
 const variantClasses = {
   primary:
-    'bg-orange text-white hover:bg-orange/90 active:bg-orange/80 shadow-sm hover:shadow',
+    'bg-[var(--accent-primary)] text-white hover:opacity-90 active:opacity-80 rounded-[8px] shadow-xs',
   secondary:
-    'bg-navy text-white hover:bg-navy2 active:bg-navy/80 shadow-sm hover:shadow',
+    'bg-transparent text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--accent-primary)] hover:bg-[var(--bg-surface)] active:bg-[var(--bg-primary)] rounded-[8px]',
   ghost:
-    'bg-transparent text-text-secondary hover:bg-border/50 active:bg-border',
+    'bg-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border)]/30 active:bg-[var(--border)]/50 rounded-[4px]',
 };
 
 const sizeClasses = {
@@ -31,7 +31,7 @@ export default function Button({
       className={`${base} ${variantClasses[variant] || variantClasses.primary} ${sizeClasses[size] || sizeClasses.md} ${className}`}
       {...props}
     >
-      {Icon && <Icon size={size === 'sm' ? 14 : 16} />}
+      {Icon && <Icon size={size === 'sm' ? 14 : 16} strokeWidth={1.75} />}
       {children}
     </button>
   );

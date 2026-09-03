@@ -112,13 +112,13 @@ export default function EventTimeline() {
     <div className="page-container">
       <div className="flex items-start justify-between gap-4 flex-wrap mb-1">
         <div>
-          <h2 className="page-title">Event Timeline</h2>
+          <h2 className="page-title">Risk Timeline</h2>
           <p className="page-subtitle">
             Chronological record of disruptions, resolutions, and milestones across all mine sites
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-white border border-border rounded-lg p-1">
+        <div className="flex items-center gap-1.5 bg-bg-surface border border-border rounded-lg p-1">
           {FILTERS.map((f) => (
             <button
               key={f.value}
@@ -189,7 +189,7 @@ export default function EventTimeline() {
                     />
                   </div>
 
-                  <div className="flex-1 bg-white rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-teal/20">
+                  <div className="flex-1 bg-bg-surface rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-teal/20">
                     <div className="flex items-start justify-between gap-3 mb-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="text-sm font-semibold text-text-primary capitalize">

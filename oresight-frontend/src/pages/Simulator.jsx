@@ -141,7 +141,7 @@ export default function Simulator() {
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="page-title">What-If Simulator</h2>
+          <h2 className="page-title">Scenario Simulator</h2>
           <p className="page-subtitle mb-0">
             Model disruption scenarios (POST /simulate) and preview propagation through the twin causal graph
           </p>

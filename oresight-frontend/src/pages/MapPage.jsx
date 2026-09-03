@@ -116,7 +116,7 @@ export default function MapPage() {
 
       <div className="relative min-h-0 flex-1 h-full">
         {/* Compact Site Selector / Fly-To Navigation Header */}
-        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-white/95 border border-border px-3 py-1.5 rounded-xl shadow-lg backdrop-blur-md">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-bg-surface/95 border border-border px-3 py-1.5 rounded-xl shadow-lg backdrop-blur-md">
           <MapPin size={14} className="text-teal shrink-0" />
           <select
             aria-label="Jump to Mine Site"

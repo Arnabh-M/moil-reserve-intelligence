@@ -47,7 +47,7 @@ export default function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6">
+    <header className="sticky top-0 z-40 h-16 bg-bg-surface/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6">
       <div>
         <h1 className="text-lg font-bold text-text-primary">{title}</h1>
         <p className="text-[11px] text-text-muted -mt-0.5">MOIL Manganese Reserve Intelligence</p>
