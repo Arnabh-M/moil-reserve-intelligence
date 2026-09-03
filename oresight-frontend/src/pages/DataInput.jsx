@@ -310,7 +310,7 @@ export default function DataInput() {
       </div>
 
       {/* Two forms side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Equipment Status Form */}
         <Card
           title="Equipment Status Update"

@@ -131,11 +131,11 @@ export default function Reserves() {
           <div style={{ width: '100%', height: 280 }}>
             <ResponsiveContainer>
               <BarChart data={gradeDistribution} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e7ee" />
-                <XAxis dataKey="range" tick={{ fontSize: 11, fill: COLORS.muted }} label={{ value: '% Mn Grade', position: 'insideBottom', offset: -2, fontSize: 10, fill: COLORS.muted }} />
-                <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} label={{ value: 'Deposits', angle: -90, position: 'insideLeft', fontSize: 10, fill: COLORS.muted }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="count" fill={COLORS.teal} radius={[6, 6, 0, 0]} barSize={40}>
+                <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
+                <XAxis dataKey="range" tick={{ fontSize: 11, fill: COLORS.muted }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} label={{ value: '% Mn Grade', position: 'insideBottom', offset: -2, fontSize: 10, fill: COLORS.muted }} />
+                <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} axisLine={false} tickLine={false} width={36} label={{ value: 'Deposits', angle: -90, position: 'insideLeft', fontSize: 10, fill: COLORS.muted }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--border)', fillOpacity: 0.25 }} />
+                <Bar dataKey="count" fill={COLORS.teal} radius={[4, 4, 0, 0]} barSize={34}>
                   {gradeDistribution.map((entry, idx) => (
                     <Cell key={idx} fill={idx >= 3 ? COLORS.orange : COLORS.teal} />
                   ))}
@@ -150,15 +150,19 @@ export default function Reserves() {
           <div style={{ width: '100%', height: 280 }}>
             <ResponsiveContainer>
               <ScatterChart margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e7ee" />
+                <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
                 <XAxis
                   type="number" dataKey="depth_m" name="Depth"
                   tick={{ fontSize: 10, fill: COLORS.muted }}
+                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={false}
                   label={{ value: 'Depth (m)', position: 'insideBottom', offset: -2, fontSize: 10, fill: COLORS.muted }}
                 />
                 <YAxis
                   type="number" dataKey="grade_percent" name="Grade"
                   tick={{ fontSize: 10, fill: COLORS.muted }}
+                  axisLine={false}
+                  tickLine={false}
                   label={{ value: 'Grade (%)', angle: -90, position: 'insideLeft', fontSize: 10, fill: COLORS.muted }}
                 />
                 <ZAxis type="number" dataKey="confirmed" range={[40, 100]} name="Confirmed" />
@@ -187,7 +191,7 @@ export default function Reserves() {
       </div>
 
       {/* Site Summary Cards */}
-      <div className="grid-3 mb-1.5">
+      <div className="grid-3">
         {siteSummaries.map(site => (
           <Card key={site.id}>
             <div className="flex items-center gap-2 mb-3">

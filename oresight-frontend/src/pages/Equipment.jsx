@@ -213,21 +213,23 @@ export default function Equipment() {
       </div>
 
       {/* Monthly Downtime Stacked Bar */}
-      <Card title="Monthly Downtime Trends" subtitle="Hours by reason category per month" className="mb-6">
+      <Card title="Monthly Downtime Trends" subtitle="Hours by reason category per month" className="mb-8">
         <div style={{ width: '100%', height: 300 }}>
           <ResponsiveContainer>
             <BarChart data={monthlyDowntime} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e7ee" />
+              <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
               <XAxis
                 dataKey="month"
                 tick={{ fontSize: 10, fill: COLORS.muted }}
+                axisLine={{ stroke: 'var(--border)' }}
+                tickLine={false}
                 tickFormatter={v => {
                   const [, m] = v.split('-');
                   return ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][parseInt(m)];
                 }}
               />
-              <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} />
-              <Tooltip content={<CustomTooltip />} />
+              <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} axisLine={false} tickLine={false} width={36} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--border)', fillOpacity: 0.25 }} />
               <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10 }} />
               {allReasons.map(reason => (
                 <Bar
@@ -246,7 +248,7 @@ export default function Equipment() {
 
       {/* Redeploy Suggestion */}
       {redeploySuggestions.map(suggestion => (
-        <Card key={suggestion.downEquipment.id} className="mb-6">
+        <Card key={suggestion.downEquipment.id} className="mb-8">
           <div className="flex items-start gap-4 p-2">
             <div className="p-3 rounded-xl bg-orange/10 text-orange shrink-0">
               <ArrowRightLeft size={24} />

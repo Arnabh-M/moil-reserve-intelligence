@@ -170,24 +170,24 @@ export default function Production() {
             <ResponsiveContainer>
               {selectedSite === 'all' && multiSiteData ? (
                 <LineChart data={multiSiteData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e7ee" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: COLORS.muted }} tickFormatter={v => v.slice(5)} interval={4} />
-                  <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} />
+                  <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: COLORS.muted }} tickFormatter={v => v.slice(5)} interval={4} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} axisLine={false} tickLine={false} width={36} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="balaghat" stroke={SITE_COLORS.balaghat} strokeWidth={2} dot={false} name="Balaghat" />
-                  <Line type="monotone" dataKey="nagpur" stroke={SITE_COLORS.nagpur} strokeWidth={2} dot={false} name="Nagpur" />
-                  <Line type="monotone" dataKey="bhandara" stroke={SITE_COLORS.bhandara} strokeWidth={2} dot={false} name="Bhandara" />
+                  <Line type="monotone" dataKey="balaghat" stroke={SITE_COLORS.balaghat} strokeWidth={1.5} dot={false} name="Balaghat" />
+                  <Line type="monotone" dataKey="nagpur" stroke={SITE_COLORS.nagpur} strokeWidth={1.5} dot={false} name="Nagpur" />
+                  <Line type="monotone" dataKey="bhandara" stroke={SITE_COLORS.bhandara} strokeWidth={1.5} dot={false} name="Bhandara" />
                 </LineChart>
               ) : (
                 <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e7ee" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: COLORS.muted }} tickFormatter={v => v.slice(5)} interval={4} />
-                  <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} />
+                  <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: COLORS.muted }} tickFormatter={v => v.slice(5)} interval={4} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} axisLine={false} tickLine={false} width={36} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="actual" stroke={COLORS.orange} strokeWidth={2} dot={false} name="Actual" />
-                  <Line type="monotone" dataKey="target" stroke={COLORS.teal} strokeWidth={2} dot={false} strokeDasharray="6 3" name="Target" />
+                  <Line type="monotone" dataKey="actual" stroke={COLORS.orange} strokeWidth={1.5} dot={false} name="Actual" />
+                  <Line type="monotone" dataKey="target" stroke={COLORS.teal} strokeWidth={1.5} dot={false} strokeDasharray="6 3" name="Target" />
                 </LineChart>
               )}
             </ResponsiveContainer>
@@ -260,7 +260,7 @@ export default function Production() {
 
       {/* Deviation Table */}
       {deviations.length > 0 && (
-        <Card title="Production Deviations" subtitle="Days with >5% deviation from target" className="mt-1.5">
+        <Card title="Production Deviations" subtitle="Days with >5% deviation from target">
           <div className="max-h-64 overflow-y-auto">
             <table className="data-table">
               <thead>

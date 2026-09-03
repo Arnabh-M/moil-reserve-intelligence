@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  Factory, Activity, ShieldAlert, Gem, AlertTriangle, ArrowRight,
+  Factory, Activity, ShieldAlert, Gem, AlertTriangle,
   Gauge, Eye, RefreshCw,
 } from 'lucide-react';
-import { Card, KPIStat, Badge, SkeletonKPIRow, InlineError, SectionDivider } from '../components';
-import LiveEventFeed from '../components/LiveEventFeed';
+import { Card, KPIStat, SkeletonKPIRow, InlineError, SectionDivider, RecentRiskEvents } from '../components';
 import {
   dailyTotals, siteProductionSummary, equipment, riskEvents,
-  weatherEvents,
 } from '../data/mockData';
 import { getSites, getRiskEvents } from '../api/client';
 import { getEventTimestamp, formatRelativeTime } from '../lib/time';
@@ -44,28 +41,6 @@ const siteBarData = siteProductionSummary.map(s => ({
   target: s.totalTarget / 30,
 }));
 
-// Recent alerts
-const recentAlerts = [
-  ...riskEvents.map(r => ({
-    id: r.id,
-    title: r.risk_type,
-    description: r.description,
-    site: r.site_id,
-    severity: r.severity,
-    time: r.detected_at,
-  })),
-  ...weatherEvents
-    .filter(w => w.status === 'active')
-    .map(w => ({
-      id: w.id,
-      title: w.type,
-      description: `${w.type} (severity ${w.severity}) at ${w.site_id} from ${w.start} to ${w.end}`,
-      site: w.site_id,
-      severity: w.severity >= 4 ? 'critical' : 'warning',
-      time: w.start,
-    })),
-].sort((a, b) => b.time.localeCompare(a.time));
-
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
@@ -85,7 +60,6 @@ export default function Dashboard() {
   const [liveRiskEvents, setLiveRiskEvents] = useState([]);
   const [liveStatus, setLiveStatus] = useState('loading');
   const [retryToken, setRetryToken] = useState(0);
-  const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
@@ -144,17 +118,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Asymmetric Live Twin State Row: Hero Card (Active Risk Events) sized ~1.5x */}
+        {/* Primary KPI row — the 4 metrics a Production Planner needs at a glance */}
         {liveStatus === 'loading' ? (
-          <SkeletonKPIRow count={4} className="mb-4" />
+          <SkeletonKPIRow count={4} />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-            {/* Larger Hero KPI Card (Roughly 1.5x to 2x width) */}
             <div className="xl:col-span-2">
               <KPIStat
                 icon={ShieldAlert}
                 value={liveKpiValue(String(activeRiskEvents).padStart(2, '0'))}
-                label="Active Risk Events (Live Hero Metric)"
+                label="Active Risk Events"
                 color="orange"
                 className="h-full border-l-4 border-l-[var(--accent-primary)]"
               />
@@ -163,24 +136,27 @@ export default function Dashboard() {
               <KPIStat
                 icon={Gauge}
                 value={liveKpiValue(`${(avgReserveConfidence * 100).toFixed(1)}%`)}
-                label="Avg Confidence"
+                label="Avg Reserve Confidence"
                 color="teal"
               />
             </div>
             <div className="xl:col-span-1">
               <KPIStat
-                icon={Eye}
-                value={liveKpiValue(String(sitesUnderWatch).padStart(2, '0'))}
-                label="Sites Under Watch"
-                color="navy"
+                label="Total Output (Today)"
+                value={`${latestTotal.actual.toLocaleString()} t`}
+                delta={outputDelta}
+                deltaLabel="vs yesterday"
+                icon={Factory}
+                color="orange"
               />
             </div>
             <div className="xl:col-span-1">
               <KPIStat
-                icon={RefreshCw}
-                value={liveKpiValue(latestUpdateDate ? formatRelativeTime(latestUpdateDate) : 'no data')}
-                label="Twin Last Updated"
-                color="teal"
+                label="Active Risk Alerts"
+                value={riskEvents.filter(r => r.status === 'active').length}
+                deltaLabel="requires attention"
+                icon={AlertTriangle}
+                color="danger"
               />
             </div>
           </div>
@@ -195,31 +171,29 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* KPI Row (Sample/Demo metrics) */}
-      <div className="grid-kpi stagger-children mb-6">
-        <KPIStat
-          label="Total Output (Today)"
-          value={`${latestTotal.actual.toLocaleString()} t`}
-          delta={outputDelta}
-          deltaLabel="vs yesterday"
-          icon={Factory}
-          color="orange"
-        />
+      {/* Secondary metrics — supporting detail, de-emphasized below the primary row */}
+      <div className="grid-secondary">
         <KPIStat
           label="Equipment Uptime"
           value={`${Math.round((eqUp / equipment.length) * 100)}%`}
-          delta={0}
           deltaLabel={`${eqUp}/${equipment.length} online`}
           icon={Activity}
           color="teal"
+          className="!p-3.5"
         />
         <KPIStat
-          label="Active Risk Alerts"
-          value={riskEvents.filter(r => r.status === 'active').length}
-          delta={null}
-          deltaLabel="requires attention"
-          icon={AlertTriangle}
-          color="danger"
+          icon={Eye}
+          value={liveKpiValue(String(sitesUnderWatch).padStart(2, '0'))}
+          label="Sites Under Watch"
+          color="navy"
+          className="!p-3.5"
+        />
+        <KPIStat
+          icon={RefreshCw}
+          value={liveKpiValue(latestUpdateDate ? formatRelativeTime(latestUpdateDate) : 'no data')}
+          label="Twin Last Updated"
+          color="teal"
+          className="!p-3.5"
         />
         <KPIStat
           label="Target Achievement"
@@ -228,6 +202,7 @@ export default function Dashboard() {
           deltaLabel="vs last month"
           icon={Gem}
           color="success"
+          className="!p-3.5"
         />
       </div>
 
@@ -242,41 +217,52 @@ export default function Dashboard() {
               <AreaChart data={dailyTotals} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradActual" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.oxblood} stopOpacity={0.2} />
+                    <stop offset="5%" stopColor={COLORS.oxblood} stopOpacity={0.12} />
                     <stop offset="95%" stopColor={COLORS.oxblood} stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="gradTarget" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.slateNavy} stopOpacity={0.15} />
+                    <stop offset="5%" stopColor={COLORS.slateNavy} stopOpacity={0.08} />
                     <stop offset="95%" stopColor={COLORS.slateNavy} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 10, fill: COLORS.mutedGrey, fontFamily: 'var(--font-mono)' }}
                   tickFormatter={v => v.slice(5)}
                   interval={4}
+                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={false}
                 />
-                <YAxis tick={{ fontSize: 10, fill: COLORS.mutedGrey, fontFamily: 'var(--font-mono)' }} />
+                <YAxis tick={{ fontSize: 10, fill: COLORS.mutedGrey, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={36} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="target" stroke={COLORS.slateNavy} strokeWidth={2} fill="url(#gradTarget)" name="Target" dot={false} />
-                <Area type="monotone" dataKey="actual" stroke={COLORS.oxblood} strokeWidth={2} fill="url(#gradActual)" name="Actual" dot={false} />
+                <Area type="monotone" dataKey="target" stroke={COLORS.slateNavy} strokeWidth={1.5} fill="url(#gradTarget)" name="Target" dot={false} />
+                <Area type="monotone" dataKey="actual" stroke={COLORS.oxblood} strokeWidth={1.5} fill="url(#gradActual)" name="Actual" dot={false} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
         {/* Site Comparison */}
-        <Card title="Output by Site" subtitle="Average daily output (tonnes)">
+        <Card
+          title="Output by Site"
+          subtitle="Average daily output (tonnes)"
+          action={
+            <div className="flex items-center gap-3 font-mono text-[10px] text-[var(--text-muted)]">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-[1px]" style={{ background: COLORS.oxblood }} />Actual</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-[1px] opacity-55" style={{ background: COLORS.slateNavy }} />Target</span>
+            </div>
+          }
+        >
           <div style={{ width: '100%', height: 280 }}>
             <ResponsiveContainer>
               <BarChart data={siteBarData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: COLORS.mutedGrey, fontFamily: 'var(--font-body)' }} />
-                <YAxis tick={{ fontSize: 10, fill: COLORS.mutedGrey, fontFamily: 'var(--font-mono)' }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="actual" name="Actual" fill={COLORS.oxblood} radius={[2, 2, 0, 0]} barSize={34} />
-                <Bar dataKey="target" name="Target" fill={COLORS.slateNavy} radius={[2, 2, 0, 0]} barSize={34} opacity={0.65} />
+                <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: COLORS.mutedGrey, fontFamily: 'var(--font-body)' }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: COLORS.mutedGrey, fontFamily: 'var(--font-mono)' }} axisLine={false} tickLine={false} width={36} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--border)', fillOpacity: 0.25 }} />
+                <Bar dataKey="actual" name="Actual" fill={COLORS.oxblood} radius={[2, 2, 0, 0]} barSize={28} />
+                <Bar dataKey="target" name="Target" fill={COLORS.slateNavy} radius={[2, 2, 0, 0]} barSize={28} opacity={0.55} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -285,44 +271,9 @@ export default function Dashboard() {
 
       <SectionDivider label="OPERATIONAL FLEET & ALERTS" />
 
-      {/* Bottom Row */}
-      <div className="grid-3">
-        {/* Recent Alerts */}
-        <Card title="Recent Alerts" subtitle="Active risk events and weather alerts">
-          <div className="space-y-3">
-            {recentAlerts.map(alert => (
-              <div
-                key={alert.id}
-                onClick={alert.site ? () => navigate(`/site/${alert.site}`) : undefined}
-                className={`flex items-start gap-3 p-3 rounded-[3px] bg-[var(--bg-primary)] border border-[var(--border)] transition-colors duration-150 hover:border-[var(--accent-primary)] ${
-                  alert.site ? 'cursor-pointer' : ''
-                }`}
-              >
-                <div className={`mt-0.5 p-1.5 rounded-[3px] ${
-                  alert.severity === 'critical' ? 'bg-[var(--warning)]/15 text-[var(--warning)]' : 'bg-[var(--warning)]/10 text-[var(--warning)]'
-                }`}>
-                  <AlertTriangle size={14} strokeWidth={1.75} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-bold text-[var(--text-primary)]">{alert.title}</span>
-                    <Badge variant={alert.severity} dot>{alert.severity}</Badge>
-                  </div>
-                  <p className="text-xs text-[var(--text-muted)] line-clamp-2">{alert.description}</p>
-                  <div className="flex items-center gap-2 mt-1.5 font-mono">
-                    <span className="text-[10px] text-[var(--text-muted)] capitalize">{alert.site}</span>
-                    <span className="text-[10px] text-[var(--text-muted)]">•</span>
-                    <span className="text-[10px] text-[var(--text-muted)]">{alert.time}</span>
-                  </div>
-                </div>
-                <ArrowRight size={14} className="text-[var(--text-muted)] shrink-0 mt-1" />
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Live Event Feed */}
-        <LiveEventFeed />
+      {/* Bottom Row — merged risk-events widget (was two duplicate panels) + distinct fleet-status panel */}
+      <div className="grid-2">
+        <RecentRiskEvents />
 
         {/* Equipment Status */}
         <Card title="Equipment Overview" subtitle="Fleet status across all sites">

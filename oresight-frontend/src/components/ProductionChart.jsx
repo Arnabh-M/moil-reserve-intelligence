@@ -145,9 +145,7 @@ export default function ProductionChart({ site_id, days = 30, className = '' }) 
     },
     xaxis: {
       type: 'category',
-      showgrid: true,
-      gridcolor: '#DDD6C8',
-      gridwidth: 1,
+      showgrid: false,
       tickfont: {
         family: 'IBM Plex Mono, monospace',
         size: 10,
@@ -155,11 +153,11 @@ export default function ProductionChart({ site_id, days = 30, className = '' }) 
       },
       tickangle: -30,
       showline: true,
-      linecolor: '#DDD6C8',
+      linecolor: 'rgba(221,214,200,0.6)',
     },
     yaxis: {
       showgrid: true,
-      gridcolor: '#DDD6C8',
+      gridcolor: 'rgba(221,214,200,0.6)',
       gridwidth: 1,
       tickfont: {
         family: 'IBM Plex Mono, monospace',
@@ -169,6 +167,7 @@ export default function ProductionChart({ site_id, days = 30, className = '' }) 
       showline: false,
       zeroline: false,
       tickformat: ',.0f',
+      nticks: 6,
     },
     hoverlabel: {
       bgcolor: '#1A1815',

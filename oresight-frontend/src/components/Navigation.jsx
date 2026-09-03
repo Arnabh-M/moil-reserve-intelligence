@@ -4,10 +4,7 @@ import {
   ChevronDown,
   Mountain,
   Search,
-  Calendar,
   Bell,
-  Server,
-  Database,
   Map as MapIcon,
   Layers,
   MapPin,
@@ -110,6 +107,7 @@ export default function Navigation() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const timeoutRef = useRef(null);
   const [mockActive, setMockActive] = useState(USE_MOCK);
+  const [searchFocused, setSearchFocused] = useState(false);
 
   useEffect(() => {
     return subscribeUseMock(setMockActive);
@@ -265,39 +263,39 @@ export default function Navigation() {
 
         {/* Right Chrome / Controls */}
         <div className="flex items-center gap-3">
-          {/* Mock/Live API toggle */}
-          <button
-            onClick={toggleMock}
-            title="Toggle between Mock and Live API (http://localhost:8000)"
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] border text-[11px] font-semibold transition-all duration-150 cursor-pointer ${
-              mockActive
-                ? 'bg-[var(--accent-primary)]/15 text-[#E08A97] border-[var(--accent-primary)]/40 hover:bg-[var(--accent-primary)]/25'
-                : 'bg-[var(--success)]/20 text-[#A8C9A3] border-[var(--success)]/40 hover:bg-[var(--success)]/30'
+          {/* Search — collapsed pill, expands on focus */}
+          <div
+            className={`hidden md:flex items-center gap-2 bg-[var(--bg-surface)] rounded-[3px] px-2.5 py-1.5 border border-[var(--border)] transition-all duration-150 ${
+              searchFocused ? 'w-48' : 'w-8'
             }`}
           >
-            {mockActive ? <Database size={12} /> : <Server size={12} />}
-            <span className="font-mono">{mockActive ? 'MOCK' : 'LIVE :8000'}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse ml-0.5" />
-          </button>
-
-          {/* Search */}
-          <div className="hidden md:flex items-center gap-2 bg-[var(--bg-surface)] rounded-[3px] px-2.5 py-1.5 border border-[var(--border)]">
-            <Search size={13} className="text-[var(--text-muted)]" />
+            <Search size={13} className="text-[var(--text-muted)] shrink-0" />
             <input
               type="text"
               placeholder="Search assets..."
-              className="bg-transparent text-xs text-[var(--text-primary)] outline-none w-28 placeholder:text-[var(--text-muted)]"
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              className={`bg-transparent text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] transition-all duration-150 ${
+                searchFocused ? 'w-full opacity-100' : 'w-0 opacity-0'
+              }`}
             />
-          </div>
-
-          {/* Date Indicator */}
-          <div className="hidden sm:flex items-center gap-1.5 text-xs text-[var(--text-primary)] bg-[var(--bg-surface)] rounded-[3px] px-2.5 py-1.5 border border-[var(--border)]">
-            <Calendar size={13} className="text-[var(--text-muted)]" />
-            <span className="font-medium font-mono text-[11px]">Aug 2026</span>
           </div>
 
           {/* Theme Toggle (Light / Dark) */}
           <ThemeToggle />
+
+          {/* Data-source status: small dot, click to toggle mock/live */}
+          <button
+            onClick={toggleMock}
+            title={mockActive ? 'Mock data mode active — click to switch to live API' : 'Live API mode active — click to switch to mock data'}
+            className="p-2 flex items-center cursor-pointer"
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                mockActive ? 'bg-[var(--warning)]' : 'bg-[var(--success)] animate-pulse'
+              }`}
+            />
+          </button>
 
           {/* Notifications */}
           <button className="relative p-2 rounded-[3px] text-[#D5CFBF] hover:text-white transition-colors cursor-pointer">

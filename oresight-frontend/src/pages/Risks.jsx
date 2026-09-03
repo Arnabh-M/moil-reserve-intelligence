@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -42,7 +42,19 @@ const weatherChartData = weatherEvents.map(w => ({
   ),
 }));
 
+// Causal chain detail available for risk events that trace back through a
+// weather → blast-plan → ore-zone chain (currently only re_bal_01). Shown as
+// an inline expansion on the risk card itself, rather than a separate
+// duplicate widget repeating the same event.
+const CAUSAL_CHAINS = {
+  re_bal_01: {
+    label: 'Weather → Blast Delay → OreZone impact',
+    correlation: 'WeatherEvent we_bal_01 → DELAYS → bp_bal_01 → AFFECTS → oz_bal_01 | CORRELATES_WITH → re_bal_01',
+  },
+};
+
 export default function Risks() {
+  const [expandedRisk, setExpandedRisk] = useState(null);
   const activeRisks = riskEvents.filter(r => r.status === 'active').length;
   const highestScore = Math.max(...riskEvents.map(r => r.score));
   const delayedBlasts = blastPlans.filter(b => b.status === 'delayed').length;
@@ -130,10 +142,59 @@ export default function Risks() {
                       <span className="text-[10px] text-text-muted">Score: <strong className="text-text-primary">{risk.score}</strong></span>
                       <span className="text-[10px] text-text-muted">Detected: {risk.detected_at}</span>
                     </div>
-                    <Badge variant={risk.status === 'active' ? 'down' : 'operational'} dot>
-                      {risk.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      {CAUSAL_CHAINS[risk.id] && (
+                        <button
+                          onClick={() => setExpandedRisk(expandedRisk === risk.id ? null : risk.id)}
+                          className="flex items-center gap-1 text-[10px] font-medium text-teal hover:underline"
+                        >
+                          <Link2 size={11} />
+                          {expandedRisk === risk.id ? 'Hide causal chain' : 'View causal chain'}
+                        </button>
+                      )}
+                      <Badge variant={risk.status === 'active' ? 'down' : 'operational'} dot>
+                        {risk.status}
+                      </Badge>
+                    </div>
                   </div>
+
+                  {CAUSAL_CHAINS[risk.id] && expandedRisk === risk.id && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">{CAUSAL_CHAINS[risk.id].label}</p>
+                      <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                        <div className="shrink-0 p-2.5 rounded-lg bg-teal/10 border border-teal/20 min-w-[120px]">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <CloudRain size={11} className="text-teal" />
+                            <span className="text-[9px] font-semibold text-teal uppercase">Weather</span>
+                          </div>
+                          <p className="text-[11px] font-semibold text-text-primary">Heavy Rain</p>
+                          <p className="text-[9px] text-text-muted">Severity 5 • Balaghat</p>
+                        </div>
+                        <ArrowRight size={14} className="text-text-muted shrink-0" />
+                        <div className="shrink-0 p-2.5 rounded-lg bg-warning/10 border border-warning/20 min-w-[120px]">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Bomb size={11} className="text-warning" />
+                            <span className="text-[9px] font-semibold text-warning uppercase">Blast Plan</span>
+                          </div>
+                          <p className="text-[11px] font-semibold text-text-primary">bp_bal_01</p>
+                          <Badge variant="delayed" className="mt-1">Delayed</Badge>
+                        </div>
+                        <ArrowRight size={14} className="text-text-muted shrink-0" />
+                        <div className="shrink-0 p-2.5 rounded-lg bg-orange/10 border border-orange/20 min-w-[120px]">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Zap size={11} className="text-orange" />
+                            <span className="text-[9px] font-semibold text-orange uppercase">Ore Zone</span>
+                          </div>
+                          <p className="text-[11px] font-semibold text-text-primary">oz_bal_01</p>
+                          <p className="text-[9px] text-text-muted">Grade: 38.5% Mn</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-bg border border-border border-dashed">
+                        <Link2 size={11} className="text-text-muted shrink-0" />
+                        <span className="text-[9.5px] text-text-muted">{CAUSAL_CHAINS[risk.id].correlation}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -145,9 +206,9 @@ export default function Risks() {
           <div style={{ width: '100%', height: 200 }}>
             <ResponsiveContainer>
               <BarChart data={weatherChartData} layout="vertical" margin={{ top: 10, right: 10, left: 30, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e7ee" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: COLORS.muted }} label={{ value: 'Severity', position: 'insideBottom', offset: -2, fontSize: 10, fill: COLORS.muted }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: COLORS.muted }} width={120} />
+                <CartesianGrid horizontal={false} stroke="var(--border)" strokeOpacity={0.6} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: COLORS.muted }} axisLine={{ stroke: 'var(--border)' }} tickLine={false} label={{ value: 'Severity', position: 'insideBottom', offset: -2, fontSize: 10, fill: COLORS.muted }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 9, fill: COLORS.muted }} axisLine={false} tickLine={false} width={120} />
                 <Tooltip
                   contentStyle={{ background: '#101a2b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11 }}
                   formatter={(value, name) => [value, name]}
@@ -192,75 +253,10 @@ export default function Risks() {
         </Card>
       </div>
 
-      {/* Causal Chain + Blast Plans */}
-      <div className="grid-2">
-        {/* Causal Chain */}
-        <Card title="Causal Chain — Balaghat" subtitle="Weather → Blast Delay → OreZone impact">
-          <div className="relative py-4">
-            {/* Chain nodes */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-              {/* Weather Event */}
-              <div className="shrink-0 p-3 rounded-lg bg-teal/10 border border-teal/20 min-w-[140px]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <CloudRain size={12} className="text-teal" />
-                  <span className="text-[10px] font-semibold text-teal uppercase">Weather</span>
-                </div>
-                <p className="text-xs font-semibold text-text-primary">Heavy Rain</p>
-                <p className="text-[10px] text-text-muted">Severity 5 • Balaghat</p>
-                <p className="text-[10px] text-text-muted">Aug 24-29, 2026</p>
-              </div>
-
-              <ArrowRight size={16} className="text-text-muted shrink-0" />
-
-              {/* Blast Plan */}
-              <div className="shrink-0 p-3 rounded-lg bg-warning/10 border border-warning/20 min-w-[140px]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Bomb size={12} className="text-warning" />
-                  <span className="text-[10px] font-semibold text-warning uppercase">Blast Plan</span>
-                </div>
-                <p className="text-xs font-semibold text-text-primary">bp_bal_01</p>
-                <p className="text-[10px] text-text-muted">Scheduled: Aug 26</p>
-                <Badge variant="delayed" className="mt-1">Delayed</Badge>
-              </div>
-
-              <ArrowRight size={16} className="text-text-muted shrink-0" />
-
-              {/* Ore Zone */}
-              <div className="shrink-0 p-3 rounded-lg bg-orange/10 border border-orange/20 min-w-[140px]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Zap size={12} className="text-orange" />
-                  <span className="text-[10px] font-semibold text-orange uppercase">Ore Zone</span>
-                </div>
-                <p className="text-xs font-semibold text-text-primary">oz_bal_01</p>
-                <p className="text-[10px] text-text-muted">Grade: 38.5% Mn</p>
-                <p className="text-[10px] text-text-muted">Confidence: 82%</p>
-              </div>
-
-              <ArrowRight size={16} className="text-text-muted shrink-0" />
-
-              {/* Risk Event */}
-              <div className="shrink-0 p-3 rounded-lg bg-danger/10 border border-danger/20 min-w-[140px]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <AlertTriangle size={12} className="text-danger" />
-                  <span className="text-[10px] font-semibold text-danger uppercase">Risk</span>
-                </div>
-                <p className="text-xs font-semibold text-text-primary">re_bal_01</p>
-                <p className="text-[10px] text-text-muted">Score: 0.78</p>
-                <Badge variant="critical" dot className="mt-1">Critical</Badge>
-              </div>
-            </div>
-
-            {/* Correlation line */}
-            <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-bg border border-border border-dashed">
-              <Link2 size={12} className="text-text-muted" />
-              <span className="text-[10px] text-text-muted">
-                <strong>Correlation:</strong> WeatherEvent we_bal_01 → DELAYS → bp_bal_01 → AFFECTS → oz_bal_01 | CORRELATES_WITH → re_bal_01
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        {/* Blast Plan Status */}
+      {/* Blast Plans — the Causal Chain widget that used to sit here duplicated
+          the re_bal_01 risk event already shown in the Risk Events card above,
+          so it's now an inline expansion on that card instead of a separate panel. */}
+      <div>
         <Card title="Blast Plan Status" subtitle={`${blastPlans.length} plans across all sites`}>
           <div className="space-y-2.5">
             {blastPlans.map(bp => {

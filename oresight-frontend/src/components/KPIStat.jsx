@@ -16,7 +16,7 @@ export default function KPIStat({ label, value, delta, deltaLabel, icon: Icon, c
   const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
 
   return (
-    <div className={`bg-[var(--bg-surface)] rounded-[3px] border border-[var(--border)] p-4 transition-colors duration-180 hover:border-[var(--accent-primary)] ${className}`}>
+    <div className={`bg-[var(--bg-surface)] rounded-[3px] border border-[var(--border)] p-5 transition-colors duration-180 hover:border-[var(--accent-primary)] ${className}`}>
       <div className="flex items-start justify-between mb-2">
         <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
           {label}
