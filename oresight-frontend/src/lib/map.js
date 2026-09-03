@@ -48,6 +48,52 @@ export const RESERVE_ZONE_FILL_PAINT = {
   'fill-opacity': 0.65,
 }
 
+// P4 Day 4: Structural Lineament Layer Configuration
+export const STRUCTURAL_LINES_SOURCE_ID = 'structural-lines'
+export const STRUCTURAL_LINES_LAYER_ID = 'structural-lines-layer'
+
+export const STRUCTURAL_LINE_COLORS = {
+  fault: '#ef4444',       // vibrant red
+  shear_zone: '#f59e0b',  // warm amber
+  fold_axis: '#8b5cf6',   // deep violet
+  default: '#3b82f6',     // operational blue
+}
+
+export const STRUCTURAL_LINE_PAINT = {
+  'line-width': 2.5,
+  'line-color': [
+    'match',
+    ['get', 'structure_type'],
+    'fault', STRUCTURAL_LINE_COLORS.fault,
+    'shear_zone', STRUCTURAL_LINE_COLORS.shear_zone,
+    'fold_axis', STRUCTURAL_LINE_COLORS.fold_axis,
+    STRUCTURAL_LINE_COLORS.default,
+  ],
+  'line-opacity': 0.9,
+}
+
+// P4 Day 4: Site Clustering Configuration
+export const SITES_SOURCE_ID = 'sites-source'
+export const CLUSTERS_LAYER_ID = 'clusters'
+export const CLUSTER_COUNT_LAYER_ID = 'cluster-count'
+export const UNCLUSTERED_POINT_LAYER_ID = 'unclustered-point'
+
+export const SITES_GEOJSON = {
+  type: 'FeatureCollection',
+  features: SAMPLE_SITES.map((site) => ({
+    type: 'Feature',
+    properties: {
+      id: site.id,
+      name: site.name,
+    },
+    geometry: {
+      type: 'Point',
+      coordinates: [site.longitude, site.latitude],
+    },
+  })),
+}
+
+
 // P6 Raster Layer Configurations (from gis/tiles/manifest.json)
 export const SPECTRAL_LAYER_CONFIG = {
   sourceId: 'spectral-alteration-source',

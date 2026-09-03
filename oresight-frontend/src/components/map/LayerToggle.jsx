@@ -8,6 +8,8 @@ export default function LayerToggle({
   onProspectivityChange,
   spectralVisible = false,
   onSpectralChange,
+  lineamentVisible = false,
+  onLineamentChange,
   droneVisible = false,
   onDroneChange,
   ndviVisible = false,
@@ -16,7 +18,7 @@ export default function LayerToggle({
   const [enabled, setEnabled] = useState(() =>
     Object.fromEntries(
       MAP_LAYERS.filter(
-        (layer) => !['prospectivity', 'spectral', 'dsm', 'ndvi'].includes(layer.id)
+        (layer) => !['prospectivity', 'spectral', 'lineament', 'dsm', 'ndvi'].includes(layer.id)
       ).map((layer) => [layer.id, false])
     )
   )
@@ -28,6 +30,7 @@ export default function LayerToggle({
   function isLayerChecked(id) {
     if (id === 'prospectivity') return Boolean(prospectivityVisible)
     if (id === 'spectral') return Boolean(spectralVisible)
+    if (id === 'lineament') return Boolean(lineamentVisible)
     if (id === 'dsm') return Boolean(droneVisible)
     if (id === 'ndvi') return Boolean(ndviVisible)
     return Boolean(enabled[id])
@@ -40,6 +43,10 @@ export default function LayerToggle({
     }
     if (id === 'spectral' && onSpectralChange) {
       onSpectralChange(!spectralVisible)
+      return
+    }
+    if (id === 'lineament' && onLineamentChange) {
+      onLineamentChange(!lineamentVisible)
       return
     }
     if (id === 'dsm' && onDroneChange) {

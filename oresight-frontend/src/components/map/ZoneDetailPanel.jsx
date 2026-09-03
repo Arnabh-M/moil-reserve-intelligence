@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { X, ShieldAlert, Award, Layers, MapPin, Network, Loader2, AlertCircle } from 'lucide-react';
+import { X, ShieldAlert, Award, Layers, MapPin, Network, Loader2, AlertCircle, Activity } from 'lucide-react';
 import Badge from '../Badge';
 import CausalGraph from '../CausalGraph';
 import { getCausalGraph, getRiskEvents } from '../../api/client';
 
-export default function ZoneDetailPanel({ zone, siteName, onClose }) {
+export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCrossSection }) {
   const [graphState, setGraphState] = useState({
     status: 'idle',
     graph: null,
@@ -248,11 +248,21 @@ export default function ZoneDetailPanel({ zone, siteName, onClose }) {
         </div>
       </div>
 
-      <div className="pt-4 border-t border-border mt-4">
+      <div className="pt-4 border-t border-border mt-4 space-y-2">
+        {onInspectCrossSection && (
+          <button
+            onClick={onInspectCrossSection}
+            type="button"
+            className="w-full py-2 px-4 rounded-xl bg-teal text-white hover:bg-teal/90 text-xs font-semibold flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm cursor-pointer"
+          >
+            <Activity size={14} />
+            <span>View Subsurface Cross-Section (0–400m)</span>
+          </button>
+        )}
         <button
           onClick={onClose}
           type="button"
-          className="w-full py-2 px-4 rounded-xl border border-border bg-bg hover:bg-border/60 text-xs font-semibold text-navy transition-colors duration-150"
+          className="w-full py-2 px-4 rounded-xl border border-border bg-bg hover:bg-border/60 text-xs font-semibold text-navy transition-colors duration-150 cursor-pointer"
         >
           Deselect Zone
         </button>

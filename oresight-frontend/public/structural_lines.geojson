@@ -1,0 +1,1202 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_001",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.140056,
+            21.975331
+          ],
+          [
+            80.156071,
+            21.962997
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_002",
+        "site_id": "balaghat",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.278959,
+            21.927206
+          ],
+          [
+            80.288565,
+            21.938205
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_003",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.107431,
+            21.773721
+          ],
+          [
+            80.118934,
+            21.761403
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_004",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.104136,
+            21.779603
+          ],
+          [
+            80.117273,
+            21.800496
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_005",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.249598,
+            21.966206
+          ],
+          [
+            80.259335,
+            21.957926
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_006",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.233427,
+            21.694985
+          ],
+          [
+            80.246297,
+            21.708174
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_007",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.36633,
+            21.940723
+          ],
+          [
+            80.383972,
+            21.952013
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_008",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.283037,
+            21.935841
+          ],
+          [
+            80.294499,
+            21.9424
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_009",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.249718,
+            21.84732
+          ],
+          [
+            80.258752,
+            21.833441
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_010",
+        "site_id": "balaghat",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.242337,
+            21.782001
+          ],
+          [
+            80.255788,
+            21.799818
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_011",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.163622,
+            21.775895
+          ],
+          [
+            80.184888,
+            21.79116
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_012",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.102034,
+            21.772754
+          ],
+          [
+            80.105043,
+            21.780168
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_013",
+        "site_id": "balaghat",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.14907,
+            21.823594
+          ],
+          [
+            80.166372,
+            21.843451
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_014",
+        "site_id": "balaghat",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.305899,
+            21.849686
+          ],
+          [
+            80.30932,
+            21.853043
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_015",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.150221,
+            21.860631
+          ],
+          [
+            80.170143,
+            21.871467
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_016",
+        "site_id": "balaghat",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.203277,
+            22.007606
+          ],
+          [
+            80.218443,
+            21.989694
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_017",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.09846,
+            21.934917
+          ],
+          [
+            80.10378,
+            21.94068
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_018",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.344093,
+            21.891922
+          ],
+          [
+            80.353935,
+            21.881386
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_019",
+        "site_id": "balaghat",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.138165,
+            21.988125
+          ],
+          [
+            80.154513,
+            22.005251
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_020",
+        "site_id": "balaghat",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            80.177972,
+            21.763493
+          ],
+          [
+            80.182587,
+            21.765692
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_021",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.005686,
+            21.168856
+          ],
+          [
+            79.024737,
+            21.179535
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_022",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.056994,
+            21.138169
+          ],
+          [
+            79.07075,
+            21.117821
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_023",
+        "site_id": "nagpur",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.269259,
+            21.274718
+          ],
+          [
+            79.280019,
+            21.252195
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_024",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.249615,
+            21.120112
+          ],
+          [
+            79.254486,
+            21.126875
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_025",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.031302,
+            21.275642
+          ],
+          [
+            79.036141,
+            21.278014
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_026",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.172285,
+            21.015794
+          ],
+          [
+            79.189983,
+            21.025434
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_027",
+        "site_id": "nagpur",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.140816,
+            21.13278
+          ],
+          [
+            79.146701,
+            21.125218
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_028",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.170462,
+            21.151518
+          ],
+          [
+            79.18635,
+            21.160191
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_029",
+        "site_id": "nagpur",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.187927,
+            21.294321
+          ],
+          [
+            79.207636,
+            21.276241
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_030",
+        "site_id": "nagpur",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.089575,
+            21.081432
+          ],
+          [
+            79.09442,
+            21.069168
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_031",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.286127,
+            21.246456
+          ],
+          [
+            79.290683,
+            21.237167
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_032",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.137024,
+            21.209897
+          ],
+          [
+            79.142479,
+            21.195985
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_033",
+        "site_id": "nagpur",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.186975,
+            21.224707
+          ],
+          [
+            79.189886,
+            21.205545
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_034",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.189762,
+            21.192201
+          ],
+          [
+            79.191373,
+            21.185572
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_035",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.05027,
+            21.296147
+          ],
+          [
+            79.060064,
+            21.286789
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_036",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.015441,
+            21.102176
+          ],
+          [
+            79.021678,
+            21.097432
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_037",
+        "site_id": "nagpur",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.119758,
+            21.12858
+          ],
+          [
+            79.127152,
+            21.110385
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_038",
+        "site_id": "nagpur",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.220784,
+            21.069408
+          ],
+          [
+            79.237633,
+            21.052339
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_039",
+        "site_id": "bhandara",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.657643,
+            21.185901
+          ],
+          [
+            79.664029,
+            21.197945
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_040",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.717176,
+            21.341001
+          ],
+          [
+            79.731824,
+            21.358675
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_041",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.765457,
+            21.274313
+          ],
+          [
+            79.772495,
+            21.297641
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_042",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.533191,
+            21.156673
+          ],
+          [
+            79.542254,
+            21.155613
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_043",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.553779,
+            21.226918
+          ],
+          [
+            79.556783,
+            21.23397
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_044",
+        "site_id": "bhandara",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.7386,
+            21.361843
+          ],
+          [
+            79.741122,
+            21.36851
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_045",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.691477,
+            21.19941
+          ],
+          [
+            79.695236,
+            21.225815
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_046",
+        "site_id": "bhandara",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.704065,
+            21.319173
+          ],
+          [
+            79.728517,
+            21.307355
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_047",
+        "site_id": "bhandara",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.795447,
+            21.125529
+          ],
+          [
+            79.802616,
+            21.132555
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_048",
+        "site_id": "bhandara",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.767662,
+            21.317794
+          ],
+          [
+            79.795846,
+            21.3186
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_049",
+        "site_id": "bhandara",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.747993,
+            21.332884
+          ],
+          [
+            79.757822,
+            21.333
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_050",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.732097,
+            21.339812
+          ],
+          [
+            79.734172,
+            21.355648
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_051",
+        "site_id": "bhandara",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.615179,
+            21.29503
+          ],
+          [
+            79.621833,
+            21.309491
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_052",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.679044,
+            21.212767
+          ],
+          [
+            79.705693,
+            21.209671
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_053",
+        "site_id": "bhandara",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.552503,
+            21.119831
+          ],
+          [
+            79.558164,
+            21.118696
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_054",
+        "site_id": "bhandara",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.724297,
+            21.25086
+          ],
+          [
+            79.7314,
+            21.260406
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_055",
+        "site_id": "bhandara",
+        "structure_type": "shear_zone"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.717718,
+            21.328174
+          ],
+          [
+            79.736896,
+            21.326301
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_056",
+        "site_id": "bhandara",
+        "structure_type": "fault"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.713222,
+            21.157725
+          ],
+          [
+            79.719555,
+            21.156778
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "line_id": "ln_057",
+        "site_id": "bhandara",
+        "structure_type": "fold_axis"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            79.628299,
+            21.180895
+          ],
+          [
+            79.638581,
+            21.178847
+          ]
+        ]
+      }
+    }
+  ]
+}
