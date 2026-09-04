@@ -74,16 +74,31 @@ export default function Reports() {
       const numericId = toNumericSiteId(site.id);
       const siteRisks = riskEvents.filter((e) => toNumericSiteId(e.site_id) === numericId);
       const activeRiskCount = siteRisks.filter((e) => e.resolved === false).length;
+      const siteRiskIds = new Set(siteRisks.map((e) => e.id));
       const resolvedRiskIds = new Set(siteRisks.filter((e) => e.resolved === true).map((e) => e.id));
-      const recCount = recommendations.filter((r) => resolvedRiskIds.has(r.risk_event_id)).length;
       const confidence = estimateReserveConfidence(site);
+
+      // A recommendation belongs to this site when the risk event it was
+      // generated for does. Both halves are already in hand — `recommendations`
+      // is GET /recommendations (trigger + options, keyed by risk_event_id) and
+      // `riskEvents` is GET /risk-events (which carries site_id and resolved) —
+      // so the join happens here rather than as another round trip.
+      const siteRecommendations = recommendations
+        .filter((r) => siteRiskIds.has(r.risk_event_id))
+        .map((r) => ({
+          riskEventId: r.risk_event_id,
+          trigger: r.trigger,
+          optionCount: r.options?.length ?? 0,
+          resolved: resolvedRiskIds.has(r.risk_event_id),
+        }));
 
       return {
         id: site.id,
         name: site.name,
         confidence,
         activeRiskCount,
-        recCount,
+        recommendations: siteRecommendations,
+        recCount: siteRecommendations.filter((r) => r.resolved).length,
       };
     });
   }, [sites, riskEvents, recommendations]);
@@ -258,10 +273,33 @@ export default function Reports() {
                     Recommendations on Resolved Risks
                   </div>
                   <div className="mt-1 font-heading text-xl font-semibold text-navy">
-                    {String(site.recCount).padStart(2, '0')}
+                    {String(site.recCount).padStart(2, '0')} /{' '}
+                    {String(site.recommendations.length).padStart(2, '0')}
                   </div>
                 </div>
               </div>
+
+              {site.recommendations.length > 0 && (
+                <div className="flex flex-col gap-2 p-5 pt-1">
+                  {site.recommendations.map((rec, idx) => (
+                    <div
+                      key={rec.riskEventId ?? idx}
+                      className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-2"
+                    >
+                      <span className="text-xs text-navy">
+                        {rec.trigger}
+                        <span className="text-text-muted">
+                          {' '}
+                          ({rec.optionCount} option{rec.optionCount === 1 ? '' : 's'})
+                        </span>
+                      </span>
+                      <Badge variant={rec.resolved ? 'confirmed' : 'unconfirmed'}>
+                        {rec.resolved ? 'Resolved' : 'Open'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           ))}
         </div>
