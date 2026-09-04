@@ -608,6 +608,48 @@
         }
       }
     },
+    "/reports/upload": {
+      "post": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Upload a survey PDF for extraction",
+        "description": "Extract deposit entities from a survey PDF and MERGE them into the graph.\n\n- Not a PDF / empty / larger than 10 MB -> 400.\n- PDF with no extractable text -> 200 with `text_extracted=false`, `deposits=[]`.\n- Parser finds nothing -> 200 with `deposits=[]`.\n- Neo4j unavailable -> 200 with `nodes_created=[]` and a warning; the\n  extracted deposits are still returned so the frontend can show them.",
+        "operationId": "upload_report_reports_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_report_reports_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportUploadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/simulate": {
       "post": {
         "tags": [
@@ -672,6 +714,154 @@
         }
       }
     },
+    "/site-notes": {
+      "post": {
+        "tags": [
+          "site-notes"
+        ],
+        "summary": "Add a site note",
+        "description": "Store a note and its auto-generated embedding.\n\n- Unknown `site_id` -> 404.\n- Blank text -> 422 (schema `min_length=1`).",
+        "operationId": "create_site_note_site_notes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteNoteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SiteNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/site-notes/search": {
+      "get": {
+        "tags": [
+          "site-notes"
+        ],
+        "summary": "Similarity search over site notes",
+        "description": "Return the `limit` notes most similar to `q` by cosine similarity,\nbest first. Empty result (no notes, or none for the given site) is a\nnormal 200 `[]`, not an error.\n\n- Query that is only whitespace -> 400.\n- Unknown `site_id` -> 404.",
+        "operationId": "search_site_notes_site_notes_search_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Free-text query",
+              "title": "Q"
+            },
+            "description": "Free-text query"
+          },
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Restrict the search to one site",
+              "title": "Site Id"
+            },
+            "description": "Restrict the search to one site"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 5,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SiteNoteSearchHit"
+                  },
+                  "title": "Response Search Site Notes Site Notes Search Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/demo/scenarios": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Resolve seeded demo scenarios to their current risk_event ids",
+        "description": "Return the demo scenarios with their live `risk_event_id`. Every\nconfigured scenario is always listed; `available: false` means its seed\nscript hasn't been run against this database.",
+        "operationId": "list_demo_scenarios_demo_scenarios_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemoScenarioOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Demo Scenarios Demo Scenarios Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/jobs": {
       "get": {
         "tags": [
@@ -701,6 +891,21 @@
   },
   "components": {
     "schemas": {
+      "Body_upload_report_reports_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "A geological survey report, PDF"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_report_reports_upload_post"
+      },
       "CausalGraphOut": {
         "properties": {
           "nodes": {
@@ -795,6 +1000,105 @@
               "type": "RiskEvent"
             }
           ]
+        }
+      },
+      "DemoScenarioOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "scenario_name": {
+            "type": "string",
+            "title": "Scenario Name"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "risk_event_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Event Id"
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
+          "site_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Name"
+          },
+          "risk_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Type"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "expected_recommendation": {
+            "type": "string",
+            "title": "Expected Recommendation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "scenario_name",
+          "available",
+          "risk_event_id",
+          "site_id",
+          "site_name",
+          "risk_type",
+          "description",
+          "expected_recommendation"
+        ],
+        "title": "DemoScenarioOut",
+        "example": {
+          "available": true,
+          "description": "Drill NAG-1 at Nagpur is down: Hydraulic fault - demo seed",
+          "expected_recommendation": "redeploy",
+          "key": "equipment-down",
+          "risk_event_id": 8,
+          "risk_type": "equipment_failure",
+          "scenario_name": "Equipment down -> redeploy (Nagpur)",
+          "site_id": 2,
+          "site_name": "Nagpur"
         }
       },
       "EquipmentOut": {
@@ -904,6 +1208,74 @@
         "example": {
           "reason": "Engine overheating - pulled for inspection",
           "status": "down"
+        }
+      },
+      "ExtractedDeposit": {
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "title": "Deposit Id"
+          },
+          "depth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Depth",
+            "description": "Borehole / deposit depth in metres"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade",
+            "description": "Average Mn grade, percent"
+          },
+          "structure_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structure Type",
+            "description": "Dominant structural feature, canonicalised (fold_axis, fault_line, shear_zone, \u2026)"
+          },
+          "belt_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Belt Zone",
+            "description": "Manganese belt / zone the deposit sits in, as written in the source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deposit_id"
+        ],
+        "title": "ExtractedDeposit",
+        "example": {
+          "belt_zone": "Balaghat-Manganese Belt",
+          "deposit_id": "BAL-D1",
+          "depth": 145.2,
+          "grade": 38.5,
+          "structure_type": "fold_axis"
         }
       },
       "GraphEdge": {
@@ -1269,6 +1641,87 @@
           "trigger": "Excavator EX-201 hydraulic failure at Balaghat"
         }
       },
+      "ReportUploadOut": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "text_extracted": {
+            "type": "boolean",
+            "title": "Text Extracted"
+          },
+          "deposit_count": {
+            "type": "integer",
+            "title": "Deposit Count"
+          },
+          "deposits": {
+            "items": {
+              "$ref": "#/components/schemas/ExtractedDeposit"
+            },
+            "type": "array",
+            "title": "Deposits"
+          },
+          "nodes_created": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes Created"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "text_extracted",
+          "deposit_count",
+          "deposits",
+          "nodes_created"
+        ],
+        "title": "ReportUploadOut",
+        "example": {
+          "deposit_count": 2,
+          "deposits": [
+            {
+              "belt_zone": "Balaghat-Manganese Belt",
+              "deposit_id": "BAL-D1",
+              "depth": 145.2,
+              "grade": 38.5,
+              "structure_type": "fold_axis"
+            },
+            {
+              "belt_zone": "Balaghat-Manganese Belt",
+              "deposit_id": "BAL-D2",
+              "depth": 98.0,
+              "grade": 24.1,
+              "structure_type": "fault_line"
+            }
+          ],
+          "filename": "balaghat_survey_2026.pdf",
+          "nodes_created": [
+            {
+              "id": "oz_upload_bal_d1",
+              "label": "BAL-D1",
+              "type": "OreZone"
+            },
+            {
+              "id": "sf_upload_bal_d1",
+              "label": "fold_axis (BAL-D1)",
+              "type": "StructuralFeature"
+            }
+          ],
+          "text_extracted": true,
+          "warnings": []
+        }
+      },
       "RiskEventOut": {
         "properties": {
           "id": {
@@ -1497,6 +1950,106 @@
               }
             ]
           }
+        }
+      },
+      "SiteNoteCreate": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "text"
+        ],
+        "title": "SiteNoteCreate",
+        "example": {
+          "site_id": 1,
+          "text": "Haul road on the north ramp waterlogged after two days of monsoon rain; graders deployed."
+        }
+      },
+      "SiteNoteOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "text",
+          "created_at"
+        ],
+        "title": "SiteNoteOut",
+        "example": {
+          "created_at": "2026-09-02T16:20:00Z",
+          "id": 12,
+          "site_id": 1,
+          "text": "Haul road on the north ramp waterlogged after two days of monsoon rain."
+        }
+      },
+      "SiteNoteSearchHit": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "relevance": {
+            "type": "number",
+            "title": "Relevance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "text",
+          "created_at",
+          "relevance"
+        ],
+        "title": "SiteNoteSearchHit",
+        "description": "A `SiteNoteOut` plus its cosine relevance to the query (1.0 = identical\ndirection, 0.0 = orthogonal). Higher is better.",
+        "example": {
+          "created_at": "2026-09-02T16:20:00Z",
+          "id": 12,
+          "site_id": 1,
+          "text": "Haul road on the north ramp waterlogged after two days of monsoon rain."
         }
       },
       "SiteOut": {

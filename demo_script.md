@@ -63,7 +63,7 @@ entry at Nagpur (score 0.93, Haul Truck HT-302), click **View causal graph**.
 
 - Both risk events exist as real rows in Postgres (`/risk-events` — ids 5 and 10).
 - Both have real Neo4j causal graphs, confirmed live via
-  `curl http://localhost:8002/risk-events/{5,10}/causal-graph` returning
+  `curl http://localhost:8000/risk-events/{5,10}/causal-graph` returning
   `"graph_source": "neo4j"`.
 - The Event Timeline page fetches `/risk-events` directly — nothing is
   hardcoded in the frontend for these two scenarios.

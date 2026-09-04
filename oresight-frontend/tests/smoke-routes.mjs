@@ -29,7 +29,13 @@
  *
  * The test serves the app on port 5173 specifically: the backend's default
  * CORS_ORIGINS allows that origin, and an origin it does not allow makes
- * every request fail and silently drops the app onto mock data.
+ * every request fail and silently drops the app onto mock data. Note that
+ * CORS_ORIGINS is about the FRONTEND's origin and is independent of whichever
+ * port the backend itself binds to.
+ *
+ * The build runs with no VITE_API_URL, so the app under test uses client.js's
+ * compiled default origin. Set SMOKE_API_URL to point both the health check
+ * and the build at a different backend.
  */
 
 import { spawn } from 'node:child_process';
@@ -41,7 +47,12 @@ import { chromium } from 'playwright';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
 
-const API_URL = process.env.SMOKE_API_URL || 'http://localhost:8000';
+// Unset by default on purpose. The build below then gets no VITE_API_URL and
+// falls through to client.js's own compiled default, so this suite actually
+// exercises the shipped default origin. Injecting the URL unconditionally
+// would make the suite pass even if that default had drifted to another port.
+const API_URL_OVERRIDE = process.env.SMOKE_API_URL || null;
+const API_URL = API_URL_OVERRIDE || 'http://localhost:8000';
 const PORT = Number(process.env.SMOKE_PORT || 5173);
 const ORIGIN = `http://localhost:${PORT}`;
 
@@ -104,7 +115,10 @@ async function assertBackendUp() {
 
 function build() {
   return new Promise((ok, fail) => {
-    const proc = run(['build'], { env: { ...process.env, VITE_API_URL: API_URL } });
+    const env = { ...process.env };
+    if (API_URL_OVERRIDE) env.VITE_API_URL = API_URL_OVERRIDE;
+    else delete env.VITE_API_URL;
+    const proc = run(['build'], { env });
     let out = '';
     proc.stdout.on('data', (d) => (out += d));
     proc.stderr.on('data', (d) => (out += d));

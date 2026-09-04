@@ -12,8 +12,8 @@ export let USE_MOCK = false; // Default: attempt live backend, fall back to samp
 
 // Single source of truth for the API origin. Set VITE_API_URL in the
 // environment (e.g. an .env file) to point at a non-default backend;
-// otherwise fall back to the local dev backend on :8002.
-export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8002';
+// otherwise fall back to the local dev backend on :8000.
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Global listeners for reactive UI mode toggling
 const mockListeners = new Set();

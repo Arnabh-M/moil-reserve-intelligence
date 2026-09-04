@@ -31,7 +31,22 @@ from app.agents.watcher import WatcherAgent  # noqa: E402
 from app.db import SessionLocal  # noqa: E402
 from app.graph_db import close_graph_driver, init_graph_driver  # noqa: E402
 from app.main import app  # noqa: E402
-from app.models import Equipment, EquipmentStatus, ProductionRecord, RiskEvent  # noqa: E402
+from app.models import Equipment, EquipmentStatus, ProductionRecord, RiskEvent, SiteNote  # noqa: E402
+
+
+def _cleanup_uploaded_nodes(node_ids: list[str]) -> None:
+    """Delete the Neo4j nodes POST /reports/upload created for this capture."""
+    if not node_ids:
+        return
+    from app.graph_db import get_graph_driver
+
+    driver = get_graph_driver()
+    with driver.session() as session:
+        session.run(
+            "MATCH (n) WHERE n.id IN $ids AND n.source = 'report_upload' DETACH DELETE n",
+            ids=node_ids,
+        )
+    print(f"Cleaned up {len(node_ids)} uploaded graph node(s): {', '.join(node_ids)}")
 
 
 def _seed_linked_risk_event() -> tuple[int, int, str]:
@@ -118,9 +133,34 @@ STATUS_TABLE = [
     ("GET", "/risk-events/{risk_event_id}/causal-graph", "Live - Neo4j traversal (up to 3 hops from the RiskEvent node); falls back to a single-node graph with graph_source='postgres_fallback' when the risk event has no Neo4j node yet"),
     ("GET", "/recommendations", "Live - PlannerAgent (candidate search + simulation-backed scoring)"),
     ("POST", "/simulate", "Live - SimulatorAgent (trained shortfall forecaster + Neo4j causal-chain traversal)"),
+    ("POST", "/reports/upload", "Live - survey PDF -> deterministic deposit extraction -> Neo4j OreZone/StructuralFeature nodes"),
+    ("POST", "/site-notes", "Live (stores the note and its embedding)"),
+    ("GET", "/site-notes/search", "Live - pgvector cosine similarity over site notes"),
+    ("GET", "/demo/scenarios", "Live - resolves the seeded demo scenarios to their CURRENT risk_event ids (never hardcode those ids)"),
     ("GET", "/admin/jobs", "Live (scheduler introspection)"),
     ("GET", "/health", "Live"),
 ]
+
+# Every path in the live app must appear in STATUS_TABLE. Day 4 shipped four
+# routes that were never added, so the committed contract silently omitted
+# them and regenerating did not help - the table is hand-maintained, not
+# derived. This check turns that into a loud failure instead of a quiet gap.
+def _assert_status_table_covers_app() -> None:
+    documented = {(m, p) for m, p, _ in STATUS_TABLE}
+    live = {
+        (method.upper(), path)
+        for path, ops in app.openapi()["paths"].items()
+        for method in ops
+    }
+    missing = live - documented
+    stale = documented - live
+    problems = []
+    if missing:
+        problems.append("missing from STATUS_TABLE: " + ", ".join(f"{m} {p}" for m, p in sorted(missing)))
+    if stale:
+        problems.append("in STATUS_TABLE but not in the app: " + ", ".join(f"{m} {p}" for m, p in sorted(stale)))
+    if problems:
+        raise SystemExit("export_contract: STATUS_TABLE is out of sync with the app.\n  " + "\n  ".join(problems))
 
 
 def _resolve_schema_type(schema: dict) -> str:
@@ -164,7 +204,13 @@ def _describe_request_body(operation: dict, components: dict) -> list[dict] | No
     body = operation.get("requestBody")
     if not body:
         return None
-    schema = body["content"]["application/json"]["schema"]
+    # Not every write endpoint takes JSON — POST /reports/upload is
+    # multipart/form-data — so read whichever content type is declared.
+    content = body.get("content", {})
+    media_type = "application/json" if "application/json" in content else next(iter(content), None)
+    if media_type is None:
+        return None
+    schema = content[media_type]["schema"]
     ref = schema.get("$ref")
     if ref:
         schema = components["schemas"][ref.rsplit("/", 1)[-1]]
@@ -204,6 +250,7 @@ def _format_body_md(fields: list[dict] | None) -> str:
 
 
 def main() -> None:
+    _assert_status_table_covers_app()
     DOCS_DIR.mkdir(exist_ok=True)
     openapi_schema = app.openapi()
     OPENAPI_PATH.write_text(json.dumps(openapi_schema, indent=2), encoding="utf-8")
@@ -309,6 +356,44 @@ def main() -> None:
         r = client.get("/kpi/summary")
         captured.append({"group": "KPI", "method": "GET", "path": "/kpi/summary", "concrete": "/kpi/summary", "status": r.status_code, "body": r.json()})
 
+        # --- Reports ---
+        # The committed fixture, so this capture needs no PDF toolchain.
+        sample_pdf = PROJECT_ROOT / "tests" / "fixtures" / "sample_survey.pdf"
+        with sample_pdf.open("rb") as fh:
+            r = client.post(
+                "/reports/upload",
+                files={"file": ("sample_survey.pdf", fh, "application/pdf")},
+            )
+        upload_result = r.json()
+        captured.append({
+            "group": "Reports", "method": "POST", "path": "/reports/upload",
+            "concrete": "/reports/upload (multipart/form-data, field 'file')",
+            "status": r.status_code, "body": upload_result,
+            "note": "Extraction is deterministic text parsing, not an LLM. `nodes_created` are MERGEd into Neo4j and keyed on the deposit id, so re-uploading the same report is idempotent rather than duplicating zones. A deposit whose belt/zone matches no known site still yields nodes - it just gets a `warnings` entry and no LOCATED_IN edge.",
+        })
+
+        # --- Site Notes (RAG) ---
+        note_payload = {"site_id": site_id, "text": "Contract-export probe note: north ramp haul road waterlogged after overnight rain; graders deployed at first light."}
+        r = client.post("/site-notes", json=note_payload)
+        created_note = r.json()
+        captured.append({"group": "Site Notes (RAG)", "method": "POST", "path": "/site-notes", "concrete": "/site-notes", "status": r.status_code, "body": created_note})
+
+        r = client.get(f"/site-notes/search?q=waterlogged%20haul%20road&site_id={site_id}")
+        captured.append({
+            "group": "Site Notes (RAG)", "method": "GET", "path": "/site-notes/search",
+            "concrete": f"/site-notes/search?q=waterlogged+haul+road&site_id={site_id}",
+            "status": r.status_code, "body": r.json(),
+            "note": "`relevance` is 1 - cosine distance, so 1.0 is an exact direction match and higher is better. No notes (or none for the given site) is a normal 200 `[]`, not an error.",
+        })
+
+        # --- Demo ---
+        r = client.get("/demo/scenarios")
+        captured.append({
+            "group": "Demo", "method": "GET", "path": "/demo/scenarios",
+            "concrete": "/demo/scenarios", "status": r.status_code, "body": r.json(),
+            "note": "`risk_events.id` shifts on every scripts/rebuild_demo_db.py run, so address the demo scenarios by their stable `key` and read the current id from here. `available: false` means that scenario's seed script has not been run against this database.",
+        })
+
         # --- Meta & Ops ---
         r = client.get("/health")
         captured.append({"group": "Meta & Ops", "method": "GET", "path": "/health", "concrete": "/health", "status": r.status_code, "body": r.json()})
@@ -321,17 +406,29 @@ def main() -> None:
     try:
         cleanup_db.query(RiskEvent).filter(RiskEvent.id == created_risk_event_id).delete()
         cleanup_db.query(ProductionRecord).filter(ProductionRecord.id == created_production["id"]).delete()
+        cleanup_db.query(SiteNote).filter(SiteNote.id == created_note["id"]).delete()
         cleanup_db.commit()
-        print(f"Cleaned up captured test rows (risk_event {created_risk_event_id}, production {created_production['id']})")
+        print(
+            f"Cleaned up captured test rows (risk_event {created_risk_event_id}, "
+            f"production {created_production['id']}, site_note {created_note['id']})"
+        )
     finally:
         cleanup_db.close()
+
+    # POST /reports/upload MERGEs OreZone/StructuralFeature nodes into Neo4j.
+    # Drop exactly the ones this run created so the demo graph is unchanged.
+    _cleanup_uploaded_nodes([n["id"] for n in upload_result.get("nodes_created", [])])
 
     _cleanup_linked_risk_event(linked_risk_event_id)
     print(f"Cleaned up Watcher-linked risk_event {linked_risk_event_id} (Postgres + Neo4j)")
     close_graph_driver()
 
     # --- Render markdown ---
-    groups_order = ["Sites", "Equipment", "Production", "Risk & Graph", "Recommendations & Simulation", "KPI", "Meta & Ops"]
+    groups_order = [
+        "Sites", "Equipment", "Production", "Risk & Graph",
+        "Recommendations & Simulation", "KPI", "Reports", "Site Notes (RAG)",
+        "Demo", "Meta & Ops",
+    ]
     lines: list[str] = []
 
     lines.append("# OreSight API Contract")
