@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Bell, Search, Calendar, Server, Database } from 'lucide-react';
-import { USE_MOCK, setUseMock, subscribeUseMock } from '../api/client';
+import { USE_MOCK, setUseMock, subscribeUseMock, BASE_URL } from '../api/client';
 import toast from 'react-hot-toast';
 
 const pageTitles = {
@@ -27,6 +27,8 @@ export default function TopBar() {
     || (location.pathname.startsWith('/site/') ? 'Site Detail' : 'OreSight');
 
   const [mockActive, setMockActive] = useState(USE_MOCK);
+  // Show just the host:port of the configured backend on the Live badge.
+  const apiHost = BASE_URL.replace(/^https?:\/\//, '');
 
   useEffect(() => {
     return subscribeUseMock(setMockActive);
@@ -39,7 +41,7 @@ export default function TopBar() {
       <div>
         <p className="font-semibold text-xs">{nextState ? 'Mock Engine Active' : 'Live API Mode Active'}</p>
         <p className="text-[11px] text-white/70 mt-0.5">
-          {nextState ? 'Simulating backend responses offline.' : 'Connecting to live FastAPI at http://localhost:8000.'}
+          {nextState ? 'Simulating backend responses offline.' : `Connecting to live FastAPI at ${BASE_URL}.`}
         </p>
       </div>,
       { id: 'mode-toast' }
@@ -57,7 +59,7 @@ export default function TopBar() {
         {/* Mock/Live API toggle button */}
         <button
           onClick={toggleMock}
-          title={`Click to switch between Mock and Live API (http://localhost:8000)`}
+          title={`Click to switch between Mock and Live API (${BASE_URL})`}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-200 cursor-pointer ${
             mockActive
               ? 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/15'
@@ -65,7 +67,7 @@ export default function TopBar() {
           }`}
         >
           {mockActive ? <Database size={13} /> : <Server size={13} />}
-          <span>{mockActive ? 'MOCK MODE' : 'LIVE API :8000'}</span>
+          <span>{mockActive ? 'MOCK MODE' : `LIVE API ${apiHost}`}</span>
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse ml-0.5" />
         </button>
 

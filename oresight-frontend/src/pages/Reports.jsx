@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 // fork that adds support for the modern CSS color syntax.
 import html2canvas from 'html2canvas-pro';
 import { Card, KPIStat, Badge, Button, SkeletonKPIRow, SkeletonCard, EmptyState, InlineError, SectionDivider } from '../components';
-import { getSites, getRiskEvents, getAllRecommendations, SITE_MAP } from '../api/client';
+import { getSites, getRiskEvents, getAllRecommendations, SITE_MAP, BASE_URL } from '../api/client';
 
 // Mock getSites() returns string site ids ('balaghat'); mock getRiskEvents()
 // returns numeric ones (1). Compare through SITE_MAP's numeric ids so both
@@ -157,7 +157,7 @@ export default function Reports() {
 
       {failedEndpoints.length > 0 && (
         <InlineError
-          message={`Unable to reach ${failedEndpoints.join(', ')} at http://localhost:8000 — this report may be incomplete.`}
+          message={`Unable to reach ${failedEndpoints.join(', ')} at ${BASE_URL} — this report may be incomplete.`}
         />
       )}
 

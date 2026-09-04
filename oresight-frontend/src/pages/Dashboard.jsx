@@ -11,7 +11,7 @@ import { Card, KPIStat, SkeletonKPIRow, InlineError, SectionDivider, RecentRiskE
 import {
   dailyTotals, siteProductionSummary, equipment, riskEvents,
 } from '../data/mockData';
-import { getSites, getRiskEvents } from '../api/client';
+import { getSites, getRiskEvents, BASE_URL } from '../api/client';
 import { getEventTimestamp, formatRelativeTime } from '../lib/time';
 import { estimateReserveConfidence } from '../lib/metrics';
 
@@ -165,7 +165,7 @@ export default function Dashboard() {
         {liveStatus === 'error' && (
           <InlineError
             className="mt-4"
-            message="Unable to reach the backend at http://localhost:8000 — live KPI row above is showing offline fallback data."
+            message={`Unable to reach the backend at ${BASE_URL} — live KPI row above is showing offline fallback data.`}
             onRetry={() => setRetryToken((t) => t + 1)}
           />
         )}

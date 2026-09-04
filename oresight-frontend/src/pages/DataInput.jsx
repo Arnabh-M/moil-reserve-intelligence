@@ -18,6 +18,18 @@ const DEFAULT_TARGETS = {
   bhandara: 980.0,
 };
 
+// Resolve an extracted deposit's belt/zone string to a numeric site id so the
+// "View in graph" link can jump to that site — mirrors the backend's
+// name-based match (app/routers/reports.py:_match_site).
+const SITE_KEY_TO_ID = { balaghat: 1, nagpur: 2, bhandara: 3 };
+function resolveSiteFromBeltZones(beltZones) {
+  const hay = beltZones.map(z => (z || '').toLowerCase());
+  for (const [key, id] of Object.entries(SITE_KEY_TO_ID)) {
+    if (hay.some(z => z.includes(key))) return id;
+  }
+  return null;
+}
+
 export default function DataInput() {
   const navigate = useNavigate();
 
@@ -245,10 +257,19 @@ export default function DataInput() {
     try {
       const result = await uploadReport(file);
       setUploadResult(result);
-      toast.success('Geological report parsed successfully');
+      if (result.text_extracted === false) {
+        toast.error('No readable text found in that PDF');
+      } else {
+        const n = result.deposit_count ?? (result.deposits?.length ?? 0);
+        toast.success(`Report parsed — ${n} deposit${n === 1 ? '' : 's'} extracted`);
+      }
     } catch (err) {
       console.error('[DataInput] PDF upload failed:', err);
-      setUploadError(err.message || 'Failed to upload and parse the report.');
+      setUploadError(
+        err.isServiceUnavailable
+          ? 'The backend is temporarily unavailable. Please retry shortly.'
+          : (err.message || 'Failed to upload and parse the report.')
+      );
     } finally {
       setIsUploading(false);
     }
@@ -289,12 +310,23 @@ export default function DataInput() {
   // Helper to safely display a field value or "—"
   const displayField = (value) => (value != null && value !== '' ? String(value) : '—');
 
+  // ── Upload result shape: { filename, text_extracted, deposit_count,
+  //    deposits[], nodes_created[], warnings[] } ─────────────────────────
+  const uploadOk = !!uploadResult && uploadResult.text_extracted === true;
+  const uploadNoText = !!uploadResult && uploadResult.text_extracted === false;
+  const uploadDeposits = uploadOk && Array.isArray(uploadResult.deposits) ? uploadResult.deposits : [];
+  const uploadNodes = uploadResult && Array.isArray(uploadResult.nodes_created) ? uploadResult.nodes_created : [];
+  const uploadWarnings = uploadResult && Array.isArray(uploadResult.warnings) ? uploadResult.warnings : [];
+  const graphSiteId = uploadDeposits.length
+    ? resolveSiteFromBeltZones(uploadDeposits.map(d => d.belt_zone))
+    : null;
+
   return (
     <div className="page-container">
       {/* Page Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="page-title">Field Data Entry</h2>
+          <h2 className="page-title">Data Input</h2>
           <p className="page-subtitle mb-0">
             Submit field observations, equipment updates, and geological reports
           </p>
@@ -310,7 +342,7 @@ export default function DataInput() {
       </div>
 
       {/* Two forms side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Equipment Status Form */}
         <Card
           title="Equipment Status Update"
@@ -637,13 +669,15 @@ export default function DataInput() {
           className={`relative mt-1 border-2 border-dashed rounded-xl p-8 text-center transition-all duration-150 ${
             dragActive
               ? 'border-orange bg-orange/5 scale-[1.005] cursor-pointer'
-              : uploadResult
+              : uploadOk
                 ? 'border-success/40 bg-success/5'
-                : uploadError
-                  ? 'border-danger/40 bg-danger/5'
-                  : isUploading
-                    ? 'border-orange/40 bg-orange/5'
-                    : 'border-border hover:border-teal/40 hover:bg-teal/5 cursor-pointer'
+                : uploadNoText
+                  ? 'border-warning/40 bg-warning/5'
+                  : uploadError
+                    ? 'border-danger/40 bg-danger/5'
+                    : isUploading
+                      ? 'border-orange/40 bg-orange/5'
+                      : 'border-border hover:border-teal/40 hover:bg-teal/5 cursor-pointer'
           }`}
         >
           <input
@@ -670,52 +704,114 @@ export default function DataInput() {
             </div>
           )}
 
-          {/* === Success state (confirmation card) === */}
-          {!isUploading && uploadResult && uploadedFile && (
-            <div className="flex flex-col items-center">
+          {/* === Success state — deposits extracted === */}
+          {!isUploading && uploadOk && uploadedFile && (
+            <div className="flex flex-col items-center w-full" onClick={e => e.stopPropagation()}>
               <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-3 text-success">
                 <CheckCircle2 size={24} />
               </div>
-              <p className="text-sm font-semibold text-text-primary mb-1">{uploadedFile.name}</p>
+              <p className="text-sm font-semibold text-text-primary mb-1">
+                {uploadResult.filename || uploadedFile.name}
+              </p>
               <p className="text-xs text-text-muted mb-4">
-                {(uploadedFile.size / 1024).toFixed(1)} KB — Parsed successfully
+                {(uploadedFile.size / 1024).toFixed(1)} KB — {uploadResult.deposit_count} deposit
+                {uploadResult.deposit_count === 1 ? '' : 's'} extracted
               </p>
 
-              {/* Extracted entities grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg mb-4" onClick={e => e.stopPropagation()}>
-                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Deposit ID</p>
-                  <p className="text-sm font-bold text-navy truncate" title={displayField(uploadResult.deposit_id)}>
-                    {displayField(uploadResult.deposit_id)}
-                  </p>
+              {/* One card per extracted deposit */}
+              {uploadDeposits.length > 0 ? (
+                <div className="w-full max-w-lg space-y-3 mb-4">
+                  {uploadDeposits.map((dep, i) => (
+                    <div
+                      key={dep.deposit_id || i}
+                      className="bg-white rounded-lg border border-border p-3 shadow-xs text-left"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <p className="text-sm font-bold text-navy truncate" title={displayField(dep.deposit_id)}>
+                          {displayField(dep.deposit_id)}
+                        </p>
+                        {dep.belt_zone && (
+                          <span className="text-[10px] text-text-muted truncate" title={dep.belt_zone}>
+                            {dep.belt_zone}
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Depth</p>
+                          <p className="text-sm font-bold text-navy">
+                            {dep.depth != null ? `${dep.depth}m` : '—'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Grade</p>
+                          <p className="text-sm font-bold text-orange">
+                            {dep.grade != null ? `${dep.grade}%` : '—'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Structure</p>
+                          <p className="text-sm font-bold text-teal truncate" title={displayField(dep.structure_type)}>
+                            {displayField(dep.structure_type)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Depth</p>
-                  <p className="text-sm font-bold text-navy">
-                    {uploadResult.depth != null ? `${uploadResult.depth}m` : '—'}
+              ) : (
+                <p className="text-xs text-text-muted mb-4 max-w-sm">
+                  Text was read, but no deposit entities could be extracted — see notes below.
+                </p>
+              )}
+
+              {/* Graph nodes MERGE-d by this upload */}
+              <div className="w-full max-w-lg mb-4 text-left">
+                <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                  <Network size={12} /> Graph nodes created
+                </p>
+                {uploadNodes.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {uploadNodes.map(node => (
+                      <span
+                        key={node.id}
+                        title={node.id}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-border text-[11px]"
+                      >
+                        <span className="font-semibold text-text-primary">{node.label}</span>
+                        <span className="text-text-muted">{node.type}</span>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-text-muted">
+                    No graph nodes were created — see notes below.
                   </p>
-                </div>
-                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Grade</p>
-                  <p className="text-sm font-bold text-orange">
-                    {uploadResult.grade != null ? `${uploadResult.grade}%` : '—'}
-                  </p>
-                </div>
-                <div className="bg-bg-surface rounded-lg border border-border p-3 text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wide mb-0.5">Structure</p>
-                  <p className="text-sm font-bold text-teal truncate" title={displayField(uploadResult.structure_type)}>
-                    {displayField(uploadResult.structure_type)}
-                  </p>
-                </div>
+                )}
               </div>
 
+              {/* Warnings from the extraction / graph write */}
+              {uploadWarnings.length > 0 && (
+                <div className="w-full max-w-lg mb-4 space-y-1.5 text-left">
+                  {uploadWarnings.map((w, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 text-[11px] text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
+                    >
+                      <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Action buttons */}
-              <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                {uploadResult.site_id && (
+              <div className="flex items-center gap-3">
+                {graphSiteId && (
                   <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => navigate(`/site/${uploadResult.site_id}`)}
+                    onClick={() => navigate(`/site/${graphSiteId}`)}
                   >
                     <Eye size={14} />
                     View in graph
@@ -726,6 +822,46 @@ export default function DataInput() {
                   className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors duration-150"
                 >
                   <X size={12} /> Upload another
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* === Parsed, but no extractable text (distinct from success) === */}
+          {!isUploading && uploadNoText && uploadedFile && (
+            <div className="flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center mb-3 text-warning">
+                <FileText size={24} />
+              </div>
+              <p className="text-sm font-semibold text-text-primary mb-0.5">
+                {uploadResult.filename || uploadedFile.name}
+              </p>
+              <p className="text-xs text-text-muted mb-3 max-w-sm">
+                No readable text could be extracted from this PDF — it may be a scan or an
+                image-only export. Nothing was added to the graph.
+              </p>
+              {uploadWarnings.length > 0 && (
+                <div className="w-full max-w-sm mb-3 space-y-1.5 text-left">
+                  {uploadWarnings.map((w, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-2 text-[11px] text-warning bg-warning/10 border border-warning/20 rounded-lg px-3 py-2"
+                    >
+                      <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                      <span>{w}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Button variant="primary" size="sm" onClick={handleRetryUpload}>
+                  Retry Upload
+                </Button>
+                <button
+                  onClick={handleClearUpload}
+                  className="text-xs text-text-muted hover:text-danger flex items-center gap-1 transition-colors duration-150"
+                >
+                  <X size={12} /> Remove file
                 </button>
               </div>
             </div>

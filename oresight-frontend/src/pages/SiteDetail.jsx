@@ -10,7 +10,7 @@ import {
 import CausalGraph from '../components/CausalGraph';
 import {
   getSites, getEquipment, getRiskEvents, getRecommendations,
-  getCausalGraph, searchSiteNotes, SITE_MAP, SITE_NAME_MAP,
+  getCausalGraph, searchSiteNotes, getDemoScenarios, SITE_MAP, SITE_NAME_MAP,
 } from '../api/client';
 
 const tabs = [
@@ -19,9 +19,10 @@ const tabs = [
   { id: 'graph', label: 'Graph', icon: Network },
 ];
 
-function relevanceBadge(score) {
-  if (score >= 0.7) return { label: 'High', variant: 'critical' };
-  if (score >= 0.4) return { label: 'Medium', variant: 'warning' };
+// `relevance` is the 0-1 cosine score from GET /site-notes/search.
+function relevanceBadge(relevance) {
+  if (relevance >= 0.7) return { label: 'High', variant: 'critical' };
+  if (relevance >= 0.4) return { label: 'Medium', variant: 'warning' };
   return { label: 'Low', variant: 'unconfirmed' };
 }
 
@@ -37,6 +38,9 @@ export default function SiteDetail() {
   const [causalGraph, setCausalGraph] = useState(null);
   const [graphLoading, setGraphLoading] = useState(false);
   const [graphError, setGraphError] = useState(null);
+  // The seeded demo scenario for this site, if any (GET /demo/scenarios).
+  // When set, its risk_event_id is the authoritative pick for the causal graph.
+  const [demoScenario, setDemoScenario] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,6 +50,7 @@ export default function SiteDetail() {
   const [searchResults, setSearchResults] = useState(null); // null = not searched yet
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [searchUnavailable, setSearchUnavailable] = useState(false); // 503 / infra down vs. a generic error
   const debounceRef = useRef(null);
 
   // Resolve numeric site ID from route param
@@ -57,10 +62,11 @@ export default function SiteDetail() {
     setError(null);
 
     try {
-      const [sitesData, eqData, riskData] = await Promise.all([
+      const [sitesData, eqData, riskData, demoScenarios] = await Promise.all([
         getSites(),
         getEquipment(numericSiteId),
         getRiskEvents({ site_id: numericSiteId }),
+        getDemoScenarios(),
       ]);
 
       // Find the matching site
@@ -71,6 +77,13 @@ export default function SiteDetail() {
       setSite(foundSite || null);
       setSiteEquipment(eqData || []);
       setRiskEvents(riskData || []);
+
+      // If this site is one of the seeded demo scenarios, its risk_event_id
+      // is the definitive pick for the causal graph (below).
+      const scenarioForSite = (demoScenarios || []).find(
+        s => s.available && s.site_id === numericSiteId && s.risk_event_id != null
+      );
+      setDemoScenario(scenarioForSite || null);
 
       // Fetch recommendations for active risks (up to 3 to avoid overloading)
       const activeRisks = (riskData || []).filter(r => r.resolved === false);
@@ -99,16 +112,19 @@ export default function SiteDetail() {
   useEffect(() => {
     if (activeTab !== 'graph' || causalGraph || graphLoading) return;
 
-    const firstRisk = riskEvents.find(r => r.resolved === false) || riskEvents[0];
-    if (!firstRisk) return;
+    // Known demo site/scenario -> use its risk_event_id directly.
+    // Otherwise fall back to the first unresolved risk event at this site.
+    const heuristicRisk = riskEvents.find(r => r.resolved === false) || riskEvents[0];
+    const riskEventId = demoScenario?.risk_event_id ?? heuristicRisk?.id;
+    if (riskEventId == null) return;
 
     setGraphLoading(true);
     setGraphError(null);
-    getCausalGraph(firstRisk.id)
+    getCausalGraph(riskEventId)
       .then(graph => setCausalGraph(graph))
       .catch(err => setGraphError(err.message || 'Failed to load causal graph.'))
       .finally(() => setGraphLoading(false));
-  }, [activeTab, riskEvents, causalGraph, graphLoading]);
+  }, [activeTab, riskEvents, causalGraph, graphLoading, demoScenario]);
 
   // ── RAG Search with debounce ─────────────────────────────────────────
   const handleSearchChange = (value) => {
@@ -120,11 +136,13 @@ export default function SiteDetail() {
       setSearchResults(null);
       setSearchLoading(false);
       setSearchError(null);
+      setSearchUnavailable(false);
       return;
     }
 
     setSearchLoading(true);
     setSearchError(null);
+    setSearchUnavailable(false);
 
     debounceRef.current = setTimeout(async () => {
       try {
@@ -132,7 +150,14 @@ export default function SiteDetail() {
         setSearchResults(results);
       } catch (err) {
         console.error('[SiteDetail] RAG search failed:', err);
-        setSearchError(err.message || 'Search failed.');
+        // Infra down (503 / SERVICE_UNAVAILABLE) reads differently from a
+        // genuine query error — the banner below says so.
+        setSearchUnavailable(Boolean(err.isServiceUnavailable));
+        setSearchError(
+          err.isServiceUnavailable
+            ? 'The backend is temporarily unavailable. Try again shortly.'
+            : (err.message || 'Search failed.')
+        );
         setSearchResults([]);
       } finally {
         setSearchLoading(false);
@@ -273,12 +298,12 @@ export default function SiteDetail() {
             </div>
           )}
 
-          {/* Search error */}
+          {/* Search error — distinct copy when the backend itself is down */}
           {!searchLoading && searchError && (
             <div className="mt-3">
               <ErrorState
                 compact
-                title="Search failed"
+                title={searchUnavailable ? 'Backend unavailable' : 'Search failed'}
                 message={searchError}
                 onRetry={() => handleSearchChange(searchQuery)}
               />
@@ -299,10 +324,12 @@ export default function SiteDetail() {
               ) : (
                 <div className="space-y-2">
                   {searchResults.map((result, idx) => {
-                    const badge = relevanceBadge(result.score ?? 0);
+                    const relevance = result.relevance ?? 0;
+                    const badge = relevanceBadge(relevance);
+                    const relevancePct = Math.round(relevance * 100);
                     return (
                       <div
-                        key={result.note_id || idx}
+                        key={result.id ?? idx}
                         className="p-3 rounded-lg bg-bg border border-border hover:border-teal/30 transition-colors duration-150"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
@@ -310,12 +337,12 @@ export default function SiteDetail() {
                             {result.text || '—'}
                           </p>
                           <Badge variant={badge.variant} className="shrink-0">
-                            {badge.label}{result.score != null ? ` (${Math.round(result.score * 100)}%)` : ''}
+                            {badge.label} · {relevancePct}%
                           </Badge>
                         </div>
-                        {result.note_id && (
+                        {result.id != null && (
                           <span className="text-[10px] text-text-muted font-mono">
-                            Note: {result.note_id}
+                            Note #{result.id}
                           </span>
                         )}
                       </div>
