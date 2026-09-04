@@ -17,11 +17,23 @@ import {
   STRUCTURAL_LINES_SOURCE_ID,
   STRUCTURAL_LINES_LAYER_ID,
   STRUCTURAL_LINE_PAINT,
+  STRUCTURAL_LINES_MIN_ZOOM,
   SITES_SOURCE_ID,
   CLUSTERS_LAYER_ID,
   CLUSTER_COUNT_LAYER_ID,
   UNCLUSTERED_POINT_LAYER_ID,
+  SITE_MARKER_SHADOW_LAYER_ID,
+  SITE_MARKER_SHADOW_PAINT,
   SITES_GEOJSON,
+  DEFAULT_RASTER_OPACITY,
+  PROSPECTIVITY_SOURCE_ID,
+  PROSPECTIVITY_FILL_LAYER_ID,
+  PROSPECTIVITY_BOUNDARY_LAYER_ID,
+  PROSPECTIVITY_EDGE_LAYER_ID,
+  PROSPECTIVITY_FILL_PAINT,
+  PROSPECTIVITY_BOUNDARY_PAINT,
+  PROSPECTIVITY_EDGE_PAINT,
+  PROSPECTIVITY_BANDS_SOURCE_ID,
 } from '../../lib/map'
 import ConfidenceLegend from './ConfidenceLegend'
 import NdviTimeSlider from './NdviTimeSlider'
@@ -40,6 +52,10 @@ export default function MineMap({
   onToggleCrossSection,
   onSelectCrossSectionPoint,
   crossSectionPoint = null,
+  rasterOpacity = DEFAULT_RASTER_OPACITY,
+  prospectivityData = null,
+  prospectivityBands = null,
+  onProspectivityCellSelect,
 }) {
   const mapRef = useRef(null)
   const [selectedSiteId, setSelectedSiteId] = useState(null)
@@ -97,10 +113,11 @@ export default function MineMap({
   // Smooth Fly-To effect when flyToTarget changes (Day 4)
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
+      // Part 7.2 — 1.2 s eased transition to the selected site's boundary.
       mapRef.current.flyTo({
         center: [flyToTarget.longitude, flyToTarget.latitude],
         zoom: flyToTarget.zoom ?? 10.5,
-        duration: 1600,
+        duration: 1200,
         essential: true,
       })
       if (flyToTarget.id) {
@@ -111,6 +128,14 @@ export default function MineMap({
   }, [flyToTarget])
 
   function handleMapClick(event) {
+    // PART 7.10 — a click on a prospectivity grid cell opens its detail panel.
+    // Checked first so cells stay selectable when the surface covers other layers.
+    const cellFeature = event.features?.find((f) => f.layer.id === PROSPECTIVITY_FILL_LAYER_ID)
+    if (cellFeature && onProspectivityCellSelect && !crossSectionActive) {
+      onProspectivityCellSelect(cellFeature.properties)
+      return
+    }
+
     // 1. Cross-Section Tool Active: capture clicked coordinate and open drawer
     if (crossSectionActive && onSelectCrossSectionPoint) {
       const { lng, lat } = event.lngLat
@@ -180,7 +205,8 @@ export default function MineMap({
         (f) =>
           f.layer.id === RESERVE_ZONES_FILL_LAYER_ID ||
           f.layer.id === CLUSTERS_LAYER_ID ||
-          f.layer.id === UNCLUSTERED_POINT_LAYER_ID
+          f.layer.id === UNCLUSTERED_POINT_LAYER_ID ||
+          f.layer.id === PROSPECTIVITY_FILL_LAYER_ID
       )
     canvas.style.cursor = overInteractive ? 'pointer' : ''
   }
@@ -190,8 +216,11 @@ export default function MineMap({
     if (prospectivityVisible && reserveZones) {
       ids.push(RESERVE_ZONES_FILL_LAYER_ID)
     }
+    if (prospectivityData) {
+      ids.push(PROSPECTIVITY_FILL_LAYER_ID)
+    }
     return ids
-  }, [prospectivityVisible, reserveZones])
+  }, [prospectivityVisible, reserveZones, prospectivityData])
 
   return (
     <div className="relative h-full w-full">
@@ -218,7 +247,7 @@ export default function MineMap({
           <Layer
             id={SPECTRAL_LAYER_CONFIG.layerId}
             type="raster"
-            paint={{ 'raster-opacity': 0.75 }}
+            paint={{ 'raster-opacity': rasterOpacity, 'raster-fade-duration': 200 }}
             layout={{
               visibility: spectralVisible ? 'visible' : 'none',
             }}
@@ -235,7 +264,7 @@ export default function MineMap({
           <Layer
             id={DRONE_LAYER_CONFIG.layerId}
             type="raster"
-            paint={{ 'raster-opacity': 0.85 }}
+            paint={{ 'raster-opacity': rasterOpacity, 'raster-fade-duration': 200 }}
             layout={{
               visibility: droneVisible ? 'visible' : 'none',
             }}
@@ -254,7 +283,7 @@ export default function MineMap({
             <Layer
               id={`layer-${week.id}`}
               type="raster"
-              paint={{ 'raster-opacity': 0.75 }}
+              paint={{ 'raster-opacity': rasterOpacity, 'raster-fade-duration': 200 }}
               layout={{
                 visibility:
                   ndviVisible && selectedWeek === week.week_index
@@ -265,12 +294,41 @@ export default function MineMap({
           </Source>
         ))}
 
+        {/* PART 7.2/7.3/7.4 — Per-site prospectivity surface. Rendered ONLY when a
+            site has been selected and its GeoJSON loaded (7.1 keeps the default
+            view free of any heatmap). */}
+        {prospectivityData && (
+          <Source id={PROSPECTIVITY_SOURCE_ID} type="geojson" data={prospectivityData}>
+            {/* 7.3 — flat discrete band colors, no gradient, no blur. Cells carry
+                the per-cell properties the 7.10 detail panel reads on click.
+                7.5 — opacity from the shared slider so the basemap's roads and
+                place names stay legible underneath. */}
+            <Layer
+              id={PROSPECTIVITY_FILL_LAYER_ID}
+              type="fill"
+              paint={{ ...PROSPECTIVITY_FILL_PAINT, 'fill-opacity': rasterOpacity }}
+            />
+          </Source>
+        )}
+
+        {/* Dissolved band polygons: outlines only. Kept in a separate source so
+            the hairline follows band boundaries rather than every cell edge. */}
+        {prospectivityBands && (
+          <Source id={PROSPECTIVITY_BANDS_SOURCE_ID} type="geojson" data={prospectivityBands}>
+            {/* 7.4 — blurred stroke along the dissolved outer ring only. */}
+            <Layer id={PROSPECTIVITY_EDGE_LAYER_ID} type="line" paint={PROSPECTIVITY_EDGE_PAINT} />
+            {/* 7.3 — crisp hairline where two bands meet. */}
+            <Layer id={PROSPECTIVITY_BOUNDARY_LAYER_ID} type="line" paint={PROSPECTIVITY_BOUNDARY_PAINT} />
+          </Source>
+        )}
+
         {/* Structural Lineament Vector Layer (Day 4) */}
         {structuralLines && (
           <Source id={STRUCTURAL_LINES_SOURCE_ID} type="geojson" data={structuralLines}>
             <Layer
               id={STRUCTURAL_LINES_LAYER_ID}
               type="line"
+              minzoom={STRUCTURAL_LINES_MIN_ZOOM}
               paint={STRUCTURAL_LINE_PAINT}
               layout={{
                 visibility: lineamentVisible ? 'visible' : 'none',
@@ -304,6 +362,14 @@ export default function MineMap({
           clusterMaxZoom={8}
           clusterRadius={45}
         >
+          {/* Soft shadow beneath individual site markers for legibility over overlays */}
+          <Layer
+            id={SITE_MARKER_SHADOW_LAYER_ID}
+            type="circle"
+            filter={['!', ['has', 'point_count']]}
+            paint={SITE_MARKER_SHADOW_PAINT}
+          />
+
           {/* Cluster Circles */}
           <Layer
             id={CLUSTERS_LAYER_ID}
@@ -388,10 +454,10 @@ export default function MineMap({
         <button
           type="button"
           onClick={onToggleCrossSection}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold shadow-md transition-all duration-150 border backdrop-blur-md cursor-pointer ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-[3px] text-xs font-semibold shadow-xs transition-all duration-150 border cursor-pointer ${
             crossSectionActive
-              ? 'bg-teal text-white border-teal ring-2 ring-teal/30 shadow-teal/20'
-              : 'bg-bg-surface/95 text-navy border-border hover:bg-bg hover:text-teal'
+              ? 'bg-teal text-white border-teal ring-2 ring-teal/30'
+              : 'bg-bg-surface text-navy border-border hover:bg-bg hover:text-teal'
           }`}
         >
           <Activity size={15} className={crossSectionActive ? 'text-white' : 'text-teal'} />
@@ -399,31 +465,39 @@ export default function MineMap({
         </button>
       </div>
 
-      {/* Upgraded Multi-Layer Collapsible Legend (Day 4) */}
-      <ConfidenceLegend
-        prospectivityVisible={prospectivityVisible}
-        lineamentVisible={lineamentVisible}
-        spectralVisible={spectralVisible}
-        droneVisible={droneVisible}
-        ndviVisible={ndviVisible}
-      />
-
-      {/* 4-Week NDVI Time Slider */}
-      <NdviTimeSlider
-        visible={ndviVisible}
-        selectedWeek={selectedWeek}
-        onWeekChange={onWeekChange}
-      />
+      {/* Legend + NDVI time slider share one bottom row via flexbox so they can
+          never overlap: they lay out in normal flow at opposite ends of the
+          same container and wrap onto their own line if the map is too
+          narrow to fit both side by side. */}
+      <div className="pointer-events-none absolute inset-x-4 bottom-4 z-10 flex flex-wrap items-end gap-3">
+        <NdviTimeSlider
+          visible={ndviVisible}
+          selectedWeek={selectedWeek}
+          onWeekChange={onWeekChange}
+        />
+        {/* ml-auto pushes the legend to the right edge whether or not the
+            slider above is currently rendered, so it never jumps to the
+            left when NDVI is off. */}
+        <div className="ml-auto">
+          <ConfidenceLegend
+            prospectivityVisible={prospectivityVisible}
+            lineamentVisible={lineamentVisible}
+            spectralVisible={spectralVisible}
+            droneVisible={droneVisible}
+            ndviVisible={ndviVisible}
+          />
+        </div>
+      </div>
 
       {zonesStatus === 'loading' && (
-        <div className="absolute left-4 top-16 z-10 flex items-center gap-2 rounded-xl border border-border bg-bg-surface/95 px-3 py-2 text-xs text-text-secondary shadow-lg backdrop-blur-md">
+        <div className="absolute left-4 top-16 z-10 flex items-center gap-2 rounded-[3px] border border-border bg-bg-surface px-3 py-2 text-xs text-text-secondary shadow-xs">
           <Loader2 size={14} className="shrink-0 animate-spin text-teal" />
           Loading reserve zones…
         </div>
       )}
 
       {zonesStatus === 'error' && (
-        <div className="absolute left-4 top-16 z-10 rounded-xl border border-danger/30 bg-bg-surface/95 px-3 py-2 text-xs text-danger shadow-lg backdrop-blur-md">
+        <div className="absolute left-4 top-16 z-10 rounded-[3px] border border-danger/30 bg-bg-surface px-3 py-2 text-xs text-danger shadow-xs">
           Unable to load reserve zones from the backend.
         </div>
       )}

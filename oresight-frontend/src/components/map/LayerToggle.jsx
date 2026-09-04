@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Layers } from 'lucide-react'
+import { Layers, Contrast } from 'lucide-react'
 import Card from '../Card'
 import { MAP_LAYERS } from '../../lib/map'
 
@@ -14,7 +14,10 @@ export default function LayerToggle({
   onDroneChange,
   ndviVisible = false,
   onNdviChange,
+  rasterOpacity,
+  onRasterOpacityChange,
 }) {
+  const anyRasterLayerVisible = spectralVisible || droneVisible || ndviVisible
   const [enabled, setEnabled] = useState(() =>
     Object.fromEntries(
       MAP_LAYERS.filter(
@@ -87,6 +90,27 @@ export default function LayerToggle({
             </label>
           ))}
         </Card>
+
+        {anyRasterLayerVisible && (
+          <Card title="Overlay Opacity" subtitle="Blend the data layer into the basemap" className="mt-4">
+            <div className="flex items-center gap-3">
+              <Contrast size={14} className="text-teal shrink-0" />
+              <input
+                type="range"
+                min={25}
+                max={95}
+                step={5}
+                value={Math.round(rasterOpacity * 100)}
+                onChange={(e) => onRasterOpacityChange(Number(e.target.value) / 100)}
+                className="w-full accent-orange cursor-pointer"
+                aria-label="Raster overlay opacity"
+              />
+              <span className="w-9 shrink-0 text-right font-mono text-xs font-semibold text-navy">
+                {Math.round(rasterOpacity * 100)}%
+              </span>
+            </div>
+          </Card>
+        )}
       </div>
     </aside>
   )

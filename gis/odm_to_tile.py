@@ -22,6 +22,8 @@ import argparse
 import numpy as np
 from PIL import Image
 
+from gis.raster_utils import feather_edges
+
 # Default Balaghat MOIL Bharweli Mine drone flight area bounding box (for fallback/sample)
 # Balaghat Bharweli Mine: ~21.87°N, 80.22°E
 SAMPLE_ODM_BBOX_WGS84 = [80.215, 21.865, 80.235, 21.885] # [west, south, east, north]
@@ -136,6 +138,10 @@ def convert_odm_to_tile(input_tif_path="data/odm_orthophoto.tif", output_png_pat
     orig_w, orig_h = pil_image.size
     pil_image.thumbnail((max_dim, max_dim), Image.Resampling.LANCZOS)
     final_w, final_h = pil_image.size
+
+    # 4b. Feather the outer edge so the orthophoto blends into the basemap
+    # instead of showing a hard-edged rectangle when rendered in MapLibre.
+    pil_image = feather_edges(pil_image, feather_px=max(16, min(final_w, final_h) // 20))
 
     # 5. Save web-ready PNG
     pil_image.save(output_png_path, format="PNG", optimize=True)

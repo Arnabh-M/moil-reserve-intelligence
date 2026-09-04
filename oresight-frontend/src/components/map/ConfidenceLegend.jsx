@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
-import { CONFIDENCE_COLOR_RAMP, STRUCTURAL_LINE_COLORS } from '../../lib/map';
+import { CONFIDENCE_COLOR_RAMP, STRUCTURAL_LINE_COLORS, SPECTRAL_LAYER_CONFIG, DRONE_LAYER_CONFIG } from '../../lib/map';
 
 export default function ConfidenceLegend({
   visible,
@@ -10,7 +10,7 @@ export default function ConfidenceLegend({
   droneVisible = false,
   ndviVisible = false,
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   // Backward-compatibility: if `visible` prop is explicitly provided, treat it as prospectivityVisible
   const showProspectivity = prospectivityVisible || (visible && !lineamentVisible && !spectralVisible && !droneVisible && !ndviVisible);
@@ -29,12 +29,12 @@ export default function ConfidenceLegend({
   return (
     <aside
       aria-label="Map Legend"
-      className="absolute bottom-6 right-6 z-10 w-72 rounded-xl border border-border bg-bg-surface/95 shadow-lg backdrop-blur-md transition-all duration-200"
+      className="pointer-events-auto w-64 max-w-full rounded-[3px] border border-border bg-bg-surface shadow-xs transition-all duration-200"
     >
       {/* Legend Header */}
       <div
         onClick={() => setCollapsed(!collapsed)}
-        className="flex cursor-pointer items-center justify-between px-3.5 py-2.5 hover:bg-bg/50 transition-colors rounded-t-xl"
+        className="flex cursor-pointer items-center justify-between px-3.5 py-2.5 hover:bg-bg/50 transition-colors rounded-t-[3px]"
       >
         <div className="flex items-center gap-2">
           <Layers size={14} className="text-teal" />
@@ -116,7 +116,7 @@ export default function ConfidenceLegend({
             <div className="flex items-center justify-between pt-0.5">
               <div>
                 <span className="font-semibold text-navy text-[11px] block">Spectral Alteration</span>
-                <span className="text-[10px] text-slate-500">ASTER / Landsat Iron Oxide</span>
+                <span className="text-[10px] text-slate-500">ASTER / Landsat · {SPECTRAL_LAYER_CONFIG.date}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="h-3 w-8 rounded bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 border border-border" />
@@ -129,7 +129,7 @@ export default function ConfidenceLegend({
             <div className="flex items-center justify-between pt-0.5">
               <div>
                 <span className="font-semibold text-navy text-[11px] block">Drone Orthomosaic</span>
-                <span className="text-[10px] text-slate-500">UAV High-Res RGB / DSM</span>
+                <span className="text-[10px] text-slate-500">UAV RGB · {DRONE_LAYER_CONFIG.date}</span>
               </div>
               <span className="text-[10px] font-mono font-medium text-teal bg-teal/10 px-1.5 py-0.5 rounded">
                 10cm/px

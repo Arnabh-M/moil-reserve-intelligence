@@ -47,7 +47,7 @@ export default function NdviTimeSlider({
   }
 
   return (
-    <div className="absolute bottom-6 left-6 z-10 w-84 rounded-xl border border-border bg-bg-surface/95 p-4 shadow-lg backdrop-blur-md">
+    <div className="pointer-events-auto w-80 max-w-full rounded-[3px] border border-border bg-bg-surface p-4 shadow-xs">
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">

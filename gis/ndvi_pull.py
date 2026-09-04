@@ -28,6 +28,8 @@ import argparse
 from datetime import datetime, timedelta, timezone
 import urllib.request
 
+from gis.raster_utils import feather_edges
+
 # ---------------------------------------------------------------------------
 # Default Configuration & MOIL Mining Belt Bounding Box
 # ---------------------------------------------------------------------------
@@ -128,34 +130,59 @@ def export_thumb_png(ee_image, roi, output_path, min_val, max_val, palette, dime
 
     url = ee_image.getThumbURL(vis_params)
     urllib.request.urlretrieve(url, output_path)
+
+    # Feather the outer edge so the overlay blends into the basemap instead
+    # of showing a hard-edged rectangle when rendered in MapLibre.
+    from PIL import Image
+    downloaded = Image.open(output_path)
+    feathered = feather_edges(downloaded, feather_px=max(24, int(min(downloaded.size) * 0.05)))
+    feathered.save(output_path, format="PNG")
+
     print(f"[OK] Downloaded PNG tile -> {output_path}")
     return output_path
 
 
-def create_sample_tile(output_path, palette, title="Sample Tile"):
+def create_sample_tile(output_path, palette, title="Sample Tile", size=512, seed=None):
     """
-    Creates a styled mock PNG tile when running offline/dry-run for local verification.
+    Creates a color-mapped mock PNG tile for offline/dry-run verification, standing
+    in for the real GEE getThumbURL output. Contains ONLY color-mapped pixel data —
+    no text, title, or border is ever drawn onto the image; any contextual label
+    (date, week number, bounds) is rendered separately as a UI overlay in the
+    frontend, not baked into the raster. Edges are feathered to match the real
+    tile pipeline's blending behavior.
     """
-    from PIL import Image, ImageDraw
+    import numpy as np
+    from PIL import Image, ImageFilter
     os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
-    
-    img = Image.new("RGBA", (512, 512), (30, 35, 45, 255))
-    draw = ImageDraw.Draw(img)
-    
-    # Draw sample gradient bars based on palette
-    num_bars = len(palette)
-    bar_width = 512 // num_bars
-    for idx, hex_color in enumerate(palette):
-        x0 = idx * bar_width
-        x1 = x0 + bar_width
-        # parse hex color
-        c = hex_color.lstrip("#")
-        rgb = tuple(int(c[i:i+2], 16) for i in (0, 2, 4))
-        draw.rectangle([x0, 100, x1, 400], fill=rgb + (220,))
-        
-    draw.text((20, 30), f"MOIL Intelligence - {title}", fill=(255, 255, 255, 255))
-    draw.text((20, 50), f"Bounds: {MOIL_BBOX}", fill=(180, 200, 220, 255))
-    draw.rectangle([0, 0, 511, 511], outline=(100, 150, 255, 255), width=3)
+
+    rng = np.random.default_rng(seed if seed is not None else abs(hash(title)) % (2**32))
+    yy, xx = (np.mgrid[0:size, 0:size].astype(np.float32) / size)
+
+    # Smooth pseudo-spatial field (overlapping sine components + light noise),
+    # normalized to 0..1, standing in for a real georeferenced data surface.
+    phase_a, phase_b, phase_c = rng.uniform(0, 2 * np.pi, size=3)
+    field = (
+        np.sin(xx * 6.0 + phase_a) * np.cos(yy * 5.0 + phase_b)
+        + 0.6 * np.sin((xx + yy) * 4.0 + phase_c)
+        + rng.normal(0, 0.05, size=(size, size))
+    )
+    field = (field - field.min()) / (field.max() - field.min() + 1e-9)
+
+    palette_rgb = np.array(
+        [[int(c.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4)] for c in palette],
+        dtype=np.float32,
+    )
+    stops = np.linspace(0.0, 1.0, len(palette_rgb))
+
+    rgb = np.empty((size, size, 3), dtype=np.float32)
+    for channel in range(3):
+        rgb[:, :, channel] = np.interp(field, stops, palette_rgb[:, channel])
+
+    alpha = np.full((size, size, 1), 235.0, dtype=np.float32)
+    rgba = np.concatenate([rgb, alpha], axis=2).astype(np.uint8)
+
+    img = Image.fromarray(rgba, mode="RGBA").filter(ImageFilter.GaussianBlur(radius=size / 160))
+    img = feather_edges(img, feather_px=max(24, size // 12))
     img.save(output_path, format="PNG")
     print(f"[MOCK] Created simulation PNG tile -> {output_path}")
 

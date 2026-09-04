@@ -8,7 +8,7 @@
       "id": "ndvi-latest",
       "name": "Sentinel-2 NDVI (Latest)",
       "file": "ndvi_latest.png",
-      "date": "2026-08-31",
+      "date": "2026-09-04",
       "bbox": [
         78.5,
         20.9,
@@ -50,7 +50,7 @@
       "id": "iron-oxide-latest",
       "name": "Sentinel-2 Iron-Oxide Alteration Index",
       "file": "iron_oxide_latest.png",
-      "date": "2026-08-31",
+      "date": "2026-09-04",
       "bbox": [
         78.5,
         20.9,
@@ -122,11 +122,11 @@
     {
       "week_index": 1,
       "id": "ndvi-week-1",
-      "name": "NDVI Week 1 (2026-08-10)",
+      "name": "NDVI Week 1 (2026-08-14)",
       "file": "ndvi_week_1.png",
-      "date": "2026-08-10",
-      "window_start": "2026-08-03",
-      "window_end": "2026-08-10",
+      "date": "2026-08-14",
+      "window_start": "2026-08-07",
+      "window_end": "2026-08-14",
       "bbox": [
         78.5,
         20.9,
@@ -156,11 +156,11 @@
     {
       "week_index": 2,
       "id": "ndvi-week-2",
-      "name": "NDVI Week 2 (2026-08-17)",
+      "name": "NDVI Week 2 (2026-08-21)",
       "file": "ndvi_week_2.png",
-      "date": "2026-08-17",
-      "window_start": "2026-08-10",
-      "window_end": "2026-08-17",
+      "date": "2026-08-21",
+      "window_start": "2026-08-14",
+      "window_end": "2026-08-21",
       "bbox": [
         78.5,
         20.9,
@@ -190,11 +190,11 @@
     {
       "week_index": 3,
       "id": "ndvi-week-3",
-      "name": "NDVI Week 3 (2026-08-24)",
+      "name": "NDVI Week 3 (2026-08-28)",
       "file": "ndvi_week_3.png",
-      "date": "2026-08-24",
-      "window_start": "2026-08-17",
-      "window_end": "2026-08-24",
+      "date": "2026-08-28",
+      "window_start": "2026-08-21",
+      "window_end": "2026-08-28",
       "bbox": [
         78.5,
         20.9,
@@ -224,11 +224,11 @@
     {
       "week_index": 4,
       "id": "ndvi-week-4",
-      "name": "NDVI Week 4 (2026-08-31)",
+      "name": "NDVI Week 4 (2026-09-04)",
       "file": "ndvi_week_4.png",
-      "date": "2026-08-31",
-      "window_start": "2026-08-24",
-      "window_end": "2026-08-31",
+      "date": "2026-09-04",
+      "window_start": "2026-08-28",
+      "window_end": "2026-09-04",
       "bbox": [
         78.5,
         20.9,
