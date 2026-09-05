@@ -1,95 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 @import "tailwindcss";
 
-/* ── Design Tokens & Themes ─────────────────────────────────────────── */
+/* ── OreSight Geological Intelligence System Tokens & Themes ────────────── */
 
-/* Light Mode Palette (Default) */
+/* LIGHT MODE — Industrial Scientific Mineral Palette */
 :root {
-  --bg-primary: #FAF8F3;       /* ivory background */
-  --bg-surface: #FFFFFF;       /* card / panel backgrounds */
-  --text-primary: #1A1815;     /* near-black ink */
-  --text-muted: #6E695E;       /* warm grey secondary text */
-  --charcoal: #1A1815;         /* dark headers / topbar */
-  --nav-bg: #1A1815;           /* top navigation bar background */
-  --accent-primary: #6B2737;   /* oxblood / burgundy — primary buttons, active state */
-  --accent-secondary: #2C3E50; /* slate navy — secondary elements, links */
-  --border: #DDD6C8;           /* warm parchment grey hairline borders */
-  --success: #3E5C3A;          /* deep pine green */
-  --warning: #8C3B24;          /* rust red */
-  --danger: #8C3B24;           /* alert red */
+  --bg-primary:          #F4F5F0;
+  --bg-surface:          #FFFFFF;
+  --bg-secondary:        #E9EDE6;
+  --bg-elevated:         #F0F4EE;
+  --bg-glass:            rgba(255, 255, 255, 0.88);
 
-  /* Legacy aliases for backwards compatibility */
-  --bg: #FAF8F3;
-  --navy: #1A1815;
-  --navy2: #211F1D;
-  --orange: #6B2737;
-  --orange-soft: #9C4A57;
-  --teal: #2C3E50;
-  --text-secondary: #6E695E;
-  --white: #FFFFFF;
+  --forest-primary:      #164A3A;
+  --forest-secondary:    #2F6B52;
+  --mineral-orange:      #C56A32;
+  --copper-light:        #E8B38A;
 
-  /* Typography Stacks (Classic Institutional Serif) */
-  --font-heading: 'Libre Baskerville', Georgia, serif;
-  --font-body: 'PT Serif', Georgia, serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  --text-primary:        #202521;
+  --text-muted:          #68716B;
+  --text-subtle:         #8F9992;
+
+  --accent-primary:      #164A3A;
+  --accent-hover:        #0E3328;
+  --accent-soft:         #E4ECE7;
+  --accent-glow:         rgba(22, 74, 58, 0.12);
+
+  --divider:             #D9DED7;
+  --border:              #D9DED7;
+  --border-strong:       #BAC2B8;
+
+  --success:             #2E7D5B;
+  --success-soft:        #E6F3ED;
+  --warning:             #C38A32;
+  --warning-soft:        #FAF3E6;
+  --critical:            #B84A3A;
+  --danger:              #B84A3A;
+  --danger-soft:         #F9ECE9;
+
+  --accent-secondary:    #2F6B52;
+  --charcoal:            #202521;
+  --nav-bg:              rgba(244, 245, 240, 0.94);
+
+  /* Font Families */
+  --font-heading: 'IBM Plex Mono', monospace;
+  --font-mono:    'IBM Plex Mono', monospace;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Dark Mode Palette */
+/* DARK MODE — Deep Mine Command Center Palette */
 [data-theme="dark"],
 html.dark {
-  --bg-primary: #161514;       /* near-black charcoal */
-  --bg-surface: #211F1D;       /* elevated charcoal for cards */
-  --text-primary: #EDE8DD;     /* warm ivory text */
-  --text-muted: #A39C8D;       /* warm grey secondary text */
-  --charcoal: #161514;         /* dark charcoal */
-  --nav-bg: #161514;           /* top navigation bar */
-  --accent-primary: #9C4A57;   /* lighter oxblood, readable on dark bg */
-  --accent-secondary: #5B7A99; /* muted slate blue */
-  --border: #38352F;           /* charcoal grey hairline borders */
-  --success: #6B8A63;          /* muted sage green */
-  --warning: #B0583C;          /* warm terracotta */
-  --danger: #B0583C;           /* alert terracotta */
+  --bg-primary:          #101614;
+  --bg-surface:          #151D19;
+  --bg-secondary:        #1B2520;
+  --bg-elevated:         #202C26;
+  --bg-glass:            rgba(21, 29, 25, 0.90);
 
-  /* Legacy aliases for backwards compatibility */
-  --bg: #161514;
-  --navy: #161514;
-  --navy2: #211F1D;
-  --orange: #9C4A57;
-  --orange-soft: #B0583C;
-  --teal: #5B7A99;
-  --text-secondary: #A39C8D;
-  --white: #211F1D;
+  --forest-primary:      #4E9472;
+  --forest-secondary:    #69B48A;
+  --mineral-orange:      #D27A3F;
+  --copper-light:        #A95F36;
+
+  --text-primary:        #E9EEE9;
+  --text-muted:          #9CA8A0;
+  --text-subtle:         #67756D;
+
+  --accent-primary:      #4E9472;
+  --accent-hover:        #69B48A;
+  --accent-soft:         rgba(78, 148, 114, 0.16);
+  --accent-glow:         rgba(78, 148, 114, 0.24);
+
+  --divider:             #2C3932;
+  --border:              #2C3932;
+  --border-strong:       #3E4F46;
+
+  --success:             #55A878;
+  --success-soft:        rgba(85, 168, 120, 0.16);
+  --warning:             #D19A45;
+  --warning-soft:        rgba(209, 154, 69, 0.16);
+  --critical:            #D05C4B;
+  --danger:              #D05C4B;
+  --danger-soft:         rgba(208, 92, 75, 0.16);
+
+  --accent-secondary:    #69B48A;
+  --charcoal:            #101614;
+  --nav-bg:              rgba(16, 22, 20, 0.95);
 }
 
-/* ── TailwindCSS v4 theme extension ────────────────────────────────── */
+/* ── Tailwind v4 Theme Binding ───────────────────────────────────────── */
 @theme {
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-surface: var(--bg-surface);
-  --color-text-primary: var(--text-primary);
-  --color-text-muted: var(--text-muted);
-  --color-charcoal: var(--charcoal);
-  --color-accent-primary: var(--accent-primary);
+  --color-bg-primary:       var(--bg-primary);
+  --color-bg-elevated:      var(--bg-elevated);
+  --color-bg-surface:       var(--bg-surface);
+  --color-text-primary:     var(--text-primary);
+  --color-text-muted:       var(--text-muted);
+  --color-text-subtle:      var(--text-subtle);
+  --color-accent-primary:   var(--accent-primary);
+  --color-accent-soft:      var(--accent-soft);
   --color-accent-secondary: var(--accent-secondary);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-border: var(--border);
+  --color-divider:          var(--divider);
+  --color-border:           var(--divider);
+  --color-success:          var(--success);
+  --color-warning:          var(--warning);
+  --color-critical:         var(--critical);
+  --color-danger:           var(--critical);
+  --color-charcoal:         var(--charcoal);
 
-  /* Legacy utility color aliases mapped directly to CSS variables */
-  --color-bg: var(--bg-primary);
-  --color-navy: var(--charcoal);
-  --color-navy2: var(--bg-surface);
-  --color-orange: var(--accent-primary);
-  --color-orange-soft: var(--warning);
-  --color-teal: var(--accent-secondary);
-  --color-danger: var(--danger);
-  --color-text-secondary: var(--text-muted);
+  --color-forest-primary:   var(--forest-primary);
+  --color-forest-secondary: var(--forest-secondary);
+  --color-mineral-orange:   var(--mineral-orange);
 
-  --font-heading: 'Libre Baskerville', Georgia, serif;
-  --font-body: 'PT Serif', Georgia, serif;
-  --font-mono: 'IBM Plex Mono', monospace;
-  --font-sans: 'PT Serif', Georgia, serif;
+  --font-heading: 'IBM Plex Mono', monospace;
+  --font-mono:    'IBM Plex Mono', monospace;
+  --font-body:    'Inter', sans-serif;
+  --font-sans:    'Inter', sans-serif;
 }
 
-/* ── Base Styles ───────────────────────────────────────────────────── */
+/* ── Base Reset & Atmospheric Radial Background ──────────────────────── */
 *,
 *::before,
 *::after {
@@ -99,70 +127,103 @@ html.dark {
 }
 
 html {
-  font-size: 16px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 180ms ease, color 180ms ease;
+  font-family: var(--font-body);
+  transition: background-color 200ms ease, color 200ms ease;
+  background: radial-gradient(circle at 15% 10%, rgba(47,107,82,0.10), transparent 32%), radial-gradient(circle at 90% 85%, rgba(197,106,50,0.07), transparent 28%), #F4F5F0;
+  background-attachment: fixed;
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-primary);
   color: var(--text-primary);
-  line-height: 1.65;
-  transition: background-color 180ms ease, color 180ms ease;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+  transition: background-color 200ms ease, color 200ms ease;
+  min-height: 100vh;
+  background: radial-gradient(circle at 15% 10%, rgba(47,107,82,0.10), transparent 32%), radial-gradient(circle at 90% 85%, rgba(197,106,50,0.07), transparent 28%), #F4F5F0;
+  background-attachment: fixed;
 }
 
-h1, h2, h3, h4, h5, h6, .font-heading, .page-title {
+[data-theme="dark"] body,
+html.dark body {
+  background: radial-gradient(circle at 15% 10%, rgba(78,148,114,0.12), transparent 30%), radial-gradient(circle at 90% 90%, rgba(210,122,63,0.07), transparent 28%), #101614;
+  background-attachment: fixed;
+  color: var(--text-primary);
+}
+
+/* ── Typography Hierarchy ───────────────────────────────────────────── */
+h1, .page-title {
   font-family: var(--font-heading);
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+h3 {
+  font-family: var(--font-heading);
+  font-size: 1.0625rem;
+  font-weight: 600;
   letter-spacing: -0.015em;
+  line-height: 1.35;
+  color: var(--text-primary);
+  margin-bottom: 0.375rem;
 }
 
-/* Tabular and numeric data ONLY use monospace */
-code, kbd, samp, pre, .font-mono, td.font-mono, th.font-mono {
-  font-family: var(--font-mono);
+h4 {
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: var(--text-primary);
 }
 
-/* ── Topographic Contour SVG Pattern ──────────────────────────────── */
-.contour-bg {
-  background-color: var(--bg-primary);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cpath d='M -20 100 Q 40 60 100 100 T 260 100 M -20 140 Q 40 100 100 140 T 260 140 M -20 60 Q 40 20 100 60 T 260 60 M -20 180 Q 40 140 100 180 T 260 180 M -20 20 Q 40 -20 100 20 T 260 20' fill='none' stroke='%23DDD6C8' stroke-width='0.75' stroke-opacity='0.015'/%3E%3C/svg%3E");
+p {
+  font-family: var(--font-body);
+  line-height: 1.6;
+  margin-bottom: 0.375rem;
 }
 
-[data-theme="dark"] .contour-bg,
-html.dark .contour-bg {
-  background-color: var(--bg-surface);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cpath d='M -20 100 Q 40 60 100 100 T 260 100 M -20 140 Q 40 100 100 140 T 260 140 M -20 60 Q 40 20 100 60 T 260 60 M -20 180 Q 40 140 100 180 T 260 180 M -20 20 Q 40 -20 100 20 T 260 20' fill='none' stroke='%2338352F' stroke-width='0.75' stroke-opacity='0.02'/%3E%3C/svg%3E");
-}
-
-/* ── Section Divider Glyph ─────────────────────────────────────────── */
-.section-divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 2rem 0;
-}
-
-.section-divider::before,
-.section-divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--border);
-}
-
-.section-divider-glyph {
-  padding: 0 1rem;
+.page-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  opacity: 0.7;
+  line-height: 1.6;
+  margin-top: 0.25rem;
+  margin-bottom: 2rem;
+  font-weight: 400;
+}
+
+label {
+  font-family: var(--font-body);
+  line-height: 1.4;
+}
+
+code, kbd, samp, pre, .font-mono, .mono-val {
+  font-family: var(--font-mono);
 }
 
 /* ── Scrollbar Styling ─────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -170,141 +231,153 @@ html.dark .contour-bg {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
+  background: var(--divider);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
 
-/* ── Utility Classes ───────────────────────────────────────────────── */
+/* ── Layout & Containers ───────────────────────────────────────────── */
 .page-container {
-  padding: 2rem 2.5rem;
-  max-width: 1560px;
+  padding: 2.25rem 3rem 4.5rem 3rem;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
-.page-title {
-  font-size: 1.625rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.35rem;
+@media (max-width: 1280px) {
+  .page-container { padding: 1.75rem 2rem 3.5rem 2rem; }
 }
 
-.page-subtitle {
-  font-size: 0.9375rem;
+@media (max-width: 768px) {
+  .page-container { padding: 1.25rem 1rem 2.5rem 1rem; }
+}
+
+/* Un-boxed Scientific Card Container */
+.card-base {
+  background-color: var(--bg-surface);
+  border-radius: 0.75rem; /* Max 12px */
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+}
+
+/* ── Buttons & CTAs ─────────────────────────────────────────────────── */
+.btn-gradient {
+  background: linear-gradient(135deg, var(--forest-primary) 0%, var(--forest-secondary) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.625rem;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.01em;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  transition: all 160ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-gradient:hover {
+  opacity: 0.93;
+  transform: translateY(-1px);
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* ── Data Tables ────────────────────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+.data-table thead th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--divider);
+  background: transparent;
+  font-family: var(--font-body);
 }
 
-.grid-kpi {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2rem;
+.data-table tbody tr {
+  transition: background-color 0.14s ease;
+  border-bottom: 1px solid var(--divider);
 }
 
+.data-table tbody tr:last-child { border-bottom: none; }
+
+.data-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.data-table tbody td {
+  padding: 0.875rem 1rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  vertical-align: middle;
+}
+
+/* ── Form Controls & Select Spacing ─────────────────────────────────── */
+input, select, textarea {
+  font-family: var(--font-body);
+  line-height: 1.6;
+  font-size: 0.875rem;
+}
+
+select option {
+  padding: 0.75rem 1rem;
+  line-height: 1.6;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+/* ── Grid Utilities ─────────────────────────────────────────────────── */
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
-  margin-bottom: 2rem;
 }
 
 .grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.grid-secondary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.875rem;
-  margin-bottom: 2rem;
-  opacity: 0.88;
 }
 
 @media (max-width: 1024px) {
-  .page-container {
-    padding: 1.25rem;
-  }
-  .grid-2,
-  .grid-3 {
-    grid-template-columns: 1fr;
-  }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
 }
 
-/* ── Table Styles ──────────────────────────────────────────────────── */
-.data-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: 0.875rem;
-}
-
-.data-table thead th {
-  padding: 0.75rem 1rem;
-  text-align: left;
-  font-weight: 700;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-surface);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.data-table tbody tr {
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.data-table tbody tr:hover {
-  background: rgba(107, 39, 55, 0.05);
-}
-
-[data-theme="dark"] .data-table tbody tr:hover,
-html.dark .data-table tbody tr:hover {
-  background: rgba(156, 74, 87, 0.12);
-}
-
-.data-table tbody td {
-  padding: 0.625rem 1rem;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-primary);
-}
-
-/* ── Animations ────────────────────────────────────────────────────── */
+/* ── Animations ─────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-slide-in {
-  animation: slideIn 0.2s ease-out forwards;
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
-.stagger-children > * {
-  opacity: 0;
-  animation: fadeIn 0.3s ease-out forwards;
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-.stagger-children > *:nth-child(1) { animation-delay: 0.03s; }
-.stagger-children > *:nth-child(2) { animation-delay: 0.06s; }
-.stagger-children > *:nth-child(3) { animation-delay: 0.09s; }
-.stagger-children > *:nth-child(4) { animation-delay: 0.12s; }
-.stagger-children > *:nth-child(5) { animation-delay: 0.15s; }
-.stagger-children > *:nth-child(6) { animation-delay: 0.18s; }
+

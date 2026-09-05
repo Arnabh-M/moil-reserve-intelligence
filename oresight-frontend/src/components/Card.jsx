@@ -1,20 +1,38 @@
 import React from 'react';
 
-export default function Card({ children, title, subtitle, action, className = '', noPadding = false }) {
+export default function Card({
+  children,
+  title,
+  subtitle,
+  action,
+  className = '',
+  noPadding = false,
+}) {
   return (
     <div
-      className={`bg-[var(--bg-surface)] rounded-[3px] border border-[var(--border)] transition-colors duration-180 hover:border-[var(--accent-primary)] ${className}`}
+      className={`bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] transition-colors duration-150 ${
+        noPadding ? 'p-0' : 'p-6'
+      } ${className}`}
     >
-      {(title || action) && (
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[var(--border)]/60 mb-3">
-          <div>
-            {title && <h3 className="font-heading text-sm font-bold text-[var(--text-primary)]">{title}</h3>}
-            {subtitle && <p className="text-xs text-[var(--text-muted)] mt-1">{subtitle}</p>}
+      {(title || subtitle || action) && (
+        <div className="flex items-start justify-between gap-4 pb-4 mb-5 border-b border-[var(--divider)]">
+          <div className="min-w-0">
+            {title && (
+              <h3 className="font-heading font-semibold text-[var(--text-primary)] leading-tight text-sm">
+                {title}
+              </h3>
+            )}
+            {subtitle && (
+              <p className="text-xs text-[var(--text-muted)] mt-1 font-body leading-relaxed">
+                {subtitle}
+              </p>
+            )}
           </div>
-          {action && <div>{action}</div>}
+          {action && <div className="shrink-0 flex items-center gap-2">{action}</div>}
         </div>
       )}
-      <div className={noPadding ? '' : `px-5 pb-5 ${title || action ? '' : 'pt-5'}`}>{children}</div>
+      <div>{children}</div>
     </div>
   );
 }
+

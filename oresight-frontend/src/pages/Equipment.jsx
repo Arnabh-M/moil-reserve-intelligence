@@ -3,43 +3,32 @@ import {
   PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import { Wrench, CheckCircle, XCircle, Clock, ArrowRightLeft, AlertTriangle } from 'lucide-react';
-import { Card, KPIStat, Badge, Button, EmptyState } from '../components';
+import { Wrench, CheckCircle, XCircle, Clock, ArrowRightLeft } from 'lucide-react';
+import { Card, KPIStat, Badge, Button, EmptyState, SectionDivider } from '../components';
 import {
   equipment, downtimeLog, downtimeByReason, monthlyDowntime,
   redeploySuggestions, sites,
 } from '../data/mockData';
 
-const COLORS = {
-  orange: '#e0793a',
-  orangeSoft: '#f2a768',
-  teal: '#2a7f8c',
-  navy: '#101a2b',
-  navy2: '#16233a',
-  muted: '#8896a8',
-  success: '#22c55e',
-  danger: '#ef4444',
-  warning: '#f59e0b',
-};
-
 const REASON_COLORS = {
-  'Weather Delay': '#2a7f8c',
-  'Scheduled Maintenance': '#22c55e',
-  'Hydraulic Leak': '#e0793a',
-  'Electrical Fault': '#f59e0b',
-  'Mechanical Failure': '#ef4444',
-  'Operator Shift Gap': '#16233a',
-  'Spare Parts Unavailable': '#f2a768',
+  'Weather Delay': '#C1571E',
+  'Scheduled Maintenance': '#4A7A4E',
+  'Hydraulic Leak': '#B23B2E',
+  'Electrical Fault': '#E07B3F',
+  'Mechanical Failure': '#706B62',
+  'Operator Shift Gap': '#8A8578',
+  'Spare Parts Unavailable': '#EBE8E1',
 };
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-navy text-white px-3 py-2 rounded-lg shadow-lg text-xs">
-      {label && <p className="font-semibold mb-1">{label}</p>}
+    <div className="bg-[var(--bg-elevated)] text-[var(--text-primary)] px-3 py-2 rounded-lg border border-[var(--divider)] shadow-md text-xs">
+      {label && <p className="font-semibold mb-1 text-[var(--text-primary)]">{label}</p>}
       {payload.map((p, i) => (
-        <p key={i} style={{ color: p.color || p.fill }}>
-          {p.name}: {typeof p.value === 'number' ? p.value.toFixed(1) : p.value} hrs
+        <p key={i} style={{ color: p.color || p.fill }} className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color || p.fill }} />
+          <span>{p.name}: {typeof p.value === 'number' ? p.value.toFixed(1) : p.value} hrs</span>
         </p>
       ))}
     </div>
@@ -61,67 +50,64 @@ export default function Equipment() {
   const pieData = downtimeByReason.map(d => ({
     name: d.reason,
     value: d.hours,
-    color: REASON_COLORS[d.reason] || COLORS.muted,
+    color: REASON_COLORS[d.reason] || '#8A8578',
   }));
 
-  // All unique reasons for stacked bar
   const allReasons = [...new Set(downtimeLog.map(d => d.reason))];
 
   return (
     <div className="page-container">
-      <h2 className="page-title">Equipment Management</h2>
-      <p className="page-subtitle">Fleet status, downtime analytics, and redeployment intelligence</p>
+      <div className="mb-10">
+        <h1 className="page-title">Equipment Management</h1>
+        <p className="page-subtitle">Fleet operational telemetry, downtime root-cause analysis, and AI redeployment dispatch</p>
+      </div>
 
-      {/* KPI Row */}
-      <div className="grid-kpi stagger-children">
+      {/* Stacked KPI Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
         <KPIStat
           label="Total Equipment"
           value={equipment.length}
-          delta={null}
           deltaLabel="across 3 sites"
           icon={Wrench}
-          color="navy"
         />
         <KPIStat
           label="Operational"
           value={upCount}
-          delta={null}
           deltaLabel={`${Math.round((upCount / equipment.length) * 100)}% uptime`}
           icon={CheckCircle}
-          color="success"
         />
         <KPIStat
           label="Down"
           value={downCount}
-          delta={null}
-          deltaLabel="requires attention"
+          deltaLabel="active repair / delay"
           icon={XCircle}
-          color="danger"
         />
         <KPIStat
           label="Avg Downtime"
           value={`${avgDowntime} hrs`}
-          delta={null}
           deltaLabel={`${totalDowntimeHours} hrs total`}
           icon={Clock}
-          color="warning"
         />
       </div>
 
-      {/* Equipment Table + Pie Chart */}
-      <div className="grid-2">
-        {/* Equipment Table */}
+      <SectionDivider />
+
+      {/* Equipment Fleet Table + Downtime Pie Chart */}
+      <div className="grid-2 mb-10">
+        {/* Equipment Fleet List */}
         <Card
           title="Equipment Fleet"
-          subtitle={`${filteredEquipment.length} units`}
+          subtitle={`${filteredEquipment.length} units in active monitoring`}
           action={
-            <div className="flex gap-1 p-0.5 bg-bg rounded-lg border border-border">
+            <div className="flex items-center gap-1">
               {['all', ...sites.map(s => s.id)].map(s => (
                 <button
                   key={s}
                   onClick={() => setFilterSite(s)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
-                    filterSite === s ? 'bg-bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-primary'
+                  className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                    filterSite === s
+                      ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)] font-semibold'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -141,11 +127,11 @@ export default function Equipment() {
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Name</th>
+                    <th>Asset Name</th>
                     <th>Type</th>
                     <th>Site</th>
                     <th>Status</th>
-                    <th>Last Change</th>
+                    <th>Last Sync</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -153,16 +139,16 @@ export default function Equipment() {
                     <tr key={eq.id}>
                       <td>
                         <div>
-                          <p className="font-medium text-text-primary">{eq.name}</p>
-                          <p className="text-[10px] text-text-muted font-mono">{eq.id}</p>
+                          <p className="font-medium text-[var(--text-primary)]">{eq.name}</p>
+                          <p className="text-[10px] text-[var(--text-muted)] font-mono">{eq.id}</p>
                         </div>
                       </td>
-                      <td>{eq.type}</td>
-                      <td className="capitalize">{eq.site_id}</td>
+                      <td className="text-[var(--text-muted)]">{eq.type}</td>
+                      <td className="capitalize text-[var(--text-muted)]">{eq.site_id}</td>
                       <td>
                         <Badge variant={eq.status} dot>{eq.status === 'up' ? 'Operational' : 'Down'}</Badge>
                       </td>
-                      <td className="text-xs text-text-muted">
+                      <td className="text-xs text-[var(--text-muted)]">
                         {new Date(eq.lastChange).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                       </td>
                     </tr>
@@ -174,8 +160,8 @@ export default function Equipment() {
         </Card>
 
         {/* Downtime by Reason Pie */}
-        <Card title="Downtime by Reason" subtitle="Total hours breakdown">
-          <div style={{ width: '100%', height: 260 }}>
+        <Card title="Downtime by Reason" subtitle="Cumulative hours breakdown across all fleets">
+          <div style={{ width: '100%', height: 240 }}>
             <ResponsiveContainer>
               <PieChart>
                 <Pie
@@ -183,7 +169,7 @@ export default function Equipment() {
                   cx="50%"
                   cy="50%"
                   innerRadius={55}
-                  outerRadius={90}
+                  outerRadius={85}
                   paddingAngle={3}
                   dataKey="value"
                   stroke="none"
@@ -192,94 +178,102 @@ export default function Equipment() {
                     <Cell key={idx} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value) => `${value.toFixed(1)} hrs`}
-                  contentStyle={{ background: '#101a2b', border: 'none', borderRadius: 8, color: '#fff', fontSize: 11 }}
-                  itemStyle={{ color: '#fff' }}
-                />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="grid grid-cols-2 gap-2.5 mt-3 pt-3 border-t border-[var(--divider)]">
             {pieData.map(d => (
-              <div key={d.name} className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-                <span className="text-xs text-text-secondary truncate">{d.name}</span>
-                <span className="text-xs font-semibold text-text-primary ml-auto">{d.value.toFixed(0)}h</span>
+              <div key={d.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                  <span className="text-[var(--text-muted)] truncate">{d.name}</span>
+                </div>
+                <span className="font-semibold text-[var(--text-primary)] ml-2">{d.value.toFixed(0)}h</span>
               </div>
             ))}
           </div>
         </Card>
       </div>
 
-      {/* Monthly Downtime Stacked Bar */}
-      <Card title="Monthly Downtime Trends" subtitle="Hours by reason category per month" className="mb-8">
-        <div style={{ width: '100%', height: 300 }}>
-          <ResponsiveContainer>
-            <BarChart data={monthlyDowntime} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
-              <XAxis
-                dataKey="month"
-                tick={{ fontSize: 10, fill: COLORS.muted }}
-                axisLine={{ stroke: 'var(--border)' }}
-                tickLine={false}
-                tickFormatter={v => {
-                  const [, m] = v.split('-');
-                  return ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][parseInt(m)];
-                }}
-              />
-              <YAxis tick={{ fontSize: 10, fill: COLORS.muted }} axisLine={false} tickLine={false} width={36} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--border)', fillOpacity: 0.25 }} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-              {allReasons.map(reason => (
-                <Bar
-                  key={reason}
-                  dataKey={reason}
-                  stackId="a"
-                  fill={REASON_COLORS[reason] || COLORS.muted}
-                  radius={0}
-                  barSize={28}
-                />
-              ))}
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      <SectionDivider />
 
-      {/* Redeploy Suggestion */}
-      {redeploySuggestions.map(suggestion => (
-        <Card key={suggestion.downEquipment.id} className="mb-8">
-          <div className="flex items-start gap-4 p-2">
-            <div className="p-3 rounded-xl bg-orange/10 text-orange shrink-0">
-              <ArrowRightLeft size={24} />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="text-sm font-bold text-text-primary">Redeployment Opportunity</h4>
-                <Badge variant="orange">AI Suggested</Badge>
+      {/* Monthly Downtime Stacked Bar */}
+      <div className="mb-10">
+        <Card title="Monthly Downtime Trends" subtitle="Hours categorized by reason category per month">
+          <div style={{ width: '100%', height: 280 }}>
+            <ResponsiveContainer>
+              <BarChart data={monthlyDowntime} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                <CartesianGrid vertical={false} stroke="var(--divider)" strokeOpacity={0.7} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={v => {
+                    const [, m] = v.split('-');
+                    return ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][parseInt(m)];
+                  }}
+                />
+                <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Inter, sans-serif' }} axisLine={false} tickLine={false} width={36} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--divider)', fillOpacity: 0.3 }} />
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontFamily: 'Inter, sans-serif' }} />
+                {allReasons.map(reason => (
+                  <Bar
+                    key={reason}
+                    dataKey={reason}
+                    stackId="a"
+                    fill={REASON_COLORS[reason] || '#8A8578'}
+                    radius={0}
+                    barSize={24}
+                  />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      <SectionDivider />
+
+      {/* AI Redeployment Opportunities */}
+      <div className="space-y-4">
+        <h3 className="text-base font-semibold text-[var(--text-primary)]">AI Fleet Dispatch &amp; Optimization</h3>
+        {redeploySuggestions.map(suggestion => (
+          <div key={suggestion.downEquipment.id} className="bg-[var(--bg-elevated)]/50 rounded-xl p-5 border border-[var(--divider)]">
+            <div className="flex items-start gap-4">
+              <div className="p-2.5 rounded-lg bg-[var(--accent-soft)] text-[var(--accent-primary)] shrink-0">
+                <ArrowRightLeft size={20} />
               </div>
-              <p className="text-sm text-text-secondary mb-3">{suggestion.reason}</p>
-              <div className="flex items-center gap-4">
-                <div className="flex-1 p-3 rounded-lg bg-danger/5 border border-danger/20">
-                  <p className="text-[10px] text-text-muted uppercase tracking-wide mb-0.5">Down Equipment</p>
-                  <p className="text-sm font-semibold text-danger">{suggestion.downEquipment.name}</p>
-                  <p className="text-xs text-text-muted">{suggestion.downEquipment.site} • {suggestion.downEquipment.type}</p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-xs font-semibold text-[var(--text-primary)]">Redeployment Opportunity</h4>
+                  <Badge variant="orange">AI Recommended</Badge>
                 </div>
-                <ArrowRightLeft size={18} className="text-text-muted shrink-0" />
-                <div className="flex-1 p-3 rounded-lg bg-success/5 border border-success/20">
-                  <p className="text-[10px] text-text-muted uppercase tracking-wide mb-0.5">Redeploy Candidate</p>
-                  <p className="text-sm font-semibold text-success">{suggestion.candidate.name}</p>
-                  <p className="text-xs text-text-muted">{suggestion.candidate.site} • {suggestion.candidate.type}</p>
+                <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed">{suggestion.reason}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <div className="p-3 rounded-lg bg-[var(--critical)]/8 text-xs">
+                    <p className="text-[10px] uppercase font-semibold text-[var(--critical)] mb-0.5">Down Equipment</p>
+                    <p className="font-semibold text-[var(--text-primary)]">{suggestion.downEquipment.name}</p>
+                    <p className="text-[11px] text-[var(--text-muted)]">{suggestion.downEquipment.site} • {suggestion.downEquipment.type}</p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-[var(--success)]/8 text-xs">
+                    <p className="text-[10px] uppercase font-semibold text-[var(--success)] mb-0.5">Replacement Candidate</p>
+                    <p className="font-semibold text-[var(--text-primary)]">{suggestion.candidate.name}</p>
+                    <p className="text-[11px] text-[var(--text-muted)]">{suggestion.candidate.site} • {suggestion.candidate.type}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex gap-2 mt-3">
-                <Button variant="primary" size="sm">Approve Redeployment</Button>
-                <Button variant="ghost" size="sm">Dismiss</Button>
+                <div className="flex items-center gap-2">
+                  <Button variant="primary" size="sm">Approve Redeployment</Button>
+                  <Button variant="ghost" size="sm">Dismiss</Button>
+                </div>
               </div>
             </div>
           </div>
-        </Card>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
+
+

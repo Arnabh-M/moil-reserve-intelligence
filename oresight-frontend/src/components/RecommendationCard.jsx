@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
-  Zap, ArrowRight, ArrowUp, ArrowDown, Loader2, ChevronUp, ChevronDown, CheckCircle2, X,
+  Zap, ArrowRight, Loader2, ChevronUp, X,
 } from 'lucide-react';
 import Badge from './Badge';
 import Button from './Button';
@@ -21,7 +21,6 @@ export default function RecommendationCard({
   const [simResult, setSimResult] = useState(null);
   const [simError, setSimError] = useState(null);
 
-  // Map option type to simulate scenario
   const getScenarioType = (optType, triggerText = '') => {
     const lower = (optType + ' ' + triggerText).toLowerCase();
     if (lower.includes('rain') || lower.includes('weather') || lower.includes('flood')) {
@@ -35,7 +34,6 @@ export default function RecommendationCard({
 
   const handleSimulate = async (opt, idx) => {
     if (activeSimIdx === idx && simResult) {
-      // Toggle close if already open
       setActiveSimIdx(null);
       return;
     }
@@ -59,7 +57,7 @@ export default function RecommendationCard({
       toast.success(
         <div>
           <p className="font-semibold text-xs">Simulated: {opt.title || opt.type}</p>
-          <p className="text-[11px] text-white/70 mt-0.5">Projected impact calculated inline.</p>
+          <p className="text-[11px] opacity-80 mt-0.5">Projected impact calculated inline.</p>
         </div>,
         { id: `sim-inline-${idx}` }
       );
@@ -77,7 +75,7 @@ export default function RecommendationCard({
     toast.success(
       <div>
         <p className="font-semibold text-xs">Mitigation Actioned</p>
-        <p className="text-[11px] text-white/70 mt-0.5">
+        <p className="text-[11px] opacity-80 mt-0.5">
           "{opt.title || opt.type}" logged for mine control dispatch.
         </p>
       </div>,
@@ -86,29 +84,28 @@ export default function RecommendationCard({
   };
 
   return (
-    <div className="bg-bg-surface rounded-xl border border-border shadow-sm transition-all duration-200 hover:shadow-md overflow-hidden">
+    <div className="bg-[var(--bg-elevated)]/50 rounded-xl border border-[var(--divider)] overflow-hidden">
       {/* Trigger Description */}
-      <div className="flex items-start gap-3 px-5 pt-4 pb-3 border-b border-border bg-bg-surface">
-        <div className="p-2 rounded-lg bg-orange/10 text-orange shrink-0 mt-0.5 shadow-xs">
-          <Zap size={16} />
+      <div className="flex items-start gap-3 px-5 py-4 border-b border-[var(--divider)]">
+        <div className="p-1.5 rounded-md bg-[var(--accent-soft)] text-[var(--accent-primary)] shrink-0 mt-0.5">
+          <Zap size={15} />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-medium text-text-primary leading-relaxed">{trigger}</p>
+          <p className="text-xs font-semibold text-[var(--text-primary)] leading-relaxed">{trigger}</p>
           {risk_event_id && (
-            <span className="inline-block text-[10px] text-text-muted mt-0.5 font-medium">
+            <span className="inline-block text-[11px] text-[var(--text-muted)] mt-0.5">
               Source: Risk Event #{risk_event_id}
             </span>
           )}
         </div>
       </div>
 
-      {/* 3 Option Sub-Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 p-4">
+      {/* 3 Option Sub-Blocks */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
         {(options || []).map((opt, idx) => {
           const isCurrentSimulating = activeSimIdx === idx;
           const isActioned = actioned[idx];
 
-          // Normalize title and impact text
           const title = opt.title || (opt.type === 'reschedule' ? 'Reschedule' : opt.type === 'redeploy' ? 'Redeploy' : 'Adjust Plan');
           const impactLabel = opt.impact || (opt.projected_impact !== undefined ? `${opt.projected_impact >= 0 ? '+' : ''}${opt.projected_impact}% projected impact` : '+15% recovery');
           const variant = opt.impactVariant || (opt.type === 'redeploy' ? 'operational' : opt.type === 'reschedule' ? 'warning' : 'info');
@@ -116,24 +113,24 @@ export default function RecommendationCard({
           return (
             <div
               key={idx}
-              className={`flex flex-col justify-between rounded-xl border p-4 transition-all duration-200 ${
+              className={`flex flex-col justify-between rounded-lg p-4 transition-colors ${
                 isActioned
-                  ? 'bg-success/5 border-success/30 shadow-xs'
+                  ? 'bg-[var(--success)]/8 border border-[var(--success)]/30'
                   : isCurrentSimulating
-                    ? 'bg-orange/5 border-orange ring-1 ring-orange/30 shadow-xs'
-                    : 'bg-bg border-border hover:border-teal/40 hover:-translate-y-0.5'
+                    ? 'bg-[var(--accent-soft)]/50 border border-[var(--accent-primary)]'
+                    : 'bg-[var(--bg-primary)] border border-[var(--divider)]'
               }`}
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <h4 className="text-sm font-bold text-text-primary capitalize">{title}</h4>
+                  <h4 className="text-xs font-semibold text-[var(--text-primary)] capitalize">{title}</h4>
                   {opt.confidence !== undefined && (
-                    <span className="text-[10px] font-semibold text-text-muted bg-bg-surface px-1.5 py-0.5 rounded border border-border">
+                    <span className="text-[10px] text-[var(--text-muted)] font-mono">
                       {Math.round(opt.confidence * 100)}% conf
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-text-secondary mb-3 leading-relaxed min-h-[36px]">
+                <p className="text-xs text-[var(--text-muted)] mb-3 leading-relaxed min-h-[36px]">
                   {opt.description}
                 </p>
                 <div className="mb-4">
@@ -142,7 +139,7 @@ export default function RecommendationCard({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-2 pt-2 border-t border-border/50">
+              <div className="flex gap-2 pt-2 border-t border-[var(--divider)]">
                 <Button
                   variant={isCurrentSimulating ? 'primary' : 'ghost'}
                   size="sm"
@@ -152,7 +149,7 @@ export default function RecommendationCard({
                 >
                   {isCurrentSimulating ? (
                     <span className="flex items-center gap-1">
-                      <ChevronUp size={13} /> Close
+                      <ChevronUp size={12} /> Close
                     </span>
                   ) : (
                     'Simulate'
@@ -175,31 +172,30 @@ export default function RecommendationCard({
 
       {/* Inline Expandable Simulation Result Panel */}
       {activeSimIdx !== null && (
-        <div className="border-t border-border bg-bg/70 p-4 transition-all duration-300 animate-fade-in">
-          <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
+        <div className="border-t border-[var(--divider)] bg-[var(--bg-primary)] p-5 animate-fade-in">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--divider)]">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-orange animate-pulse" />
-              <h5 className="text-xs font-bold text-text-primary uppercase tracking-wide">
-                Simulation Projection: {options[activeSimIdx]?.title || options[activeSimIdx]?.type}
+              <span className="w-2 h-2 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+              <h5 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
+                Projected Impact: {options[activeSimIdx]?.title || options[activeSimIdx]?.type}
               </h5>
             </div>
             <button
+              type="button"
               onClick={() => setActiveSimIdx(null)}
-              className="text-text-muted hover:text-text-primary transition-colors p-1"
+              className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors p-1 cursor-pointer"
             >
               <X size={14} />
             </button>
           </div>
 
-          {/* Loading state */}
           {simLoading && (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <Loader2 size={24} className="animate-spin text-orange mb-2" />
-              <p className="text-xs text-text-muted">Evaluating twin scenario model...</p>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Loader2 size={20} className="animate-spin text-[var(--accent-primary)] mb-2" />
+              <p className="text-xs text-[var(--text-muted)]">Evaluating twin scenario model...</p>
             </div>
           )}
 
-          {/* Error state */}
           {simError && (
             <InlineError
               message={simError}
@@ -207,61 +203,58 @@ export default function RecommendationCard({
             />
           )}
 
-          {/* Result content */}
           {!simLoading && simResult && (
             <div className="space-y-4">
-              {/* 3 Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-bg-surface p-3 rounded-lg border border-border text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-bold uppercase">Reserve Confidence</p>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-sm font-bold text-text-primary">
+                <div className="bg-[var(--bg-elevated)]/60 p-3 rounded-lg border border-[var(--divider)] text-left">
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Reserve Confidence</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">
                       {Math.round((simResult.before.reserve_confidence || 0) * 100)}%
                     </span>
-                    <ArrowRight size={12} className="text-text-muted" />
-                    <span className="text-sm font-bold text-success">
+                    <ArrowRight size={12} className="text-[var(--text-muted)]" />
+                    <span className="text-sm font-semibold text-[var(--success)]">
                       {Math.round((simResult.after.reserve_confidence || 0) * 100)}%
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-bg-surface p-3 rounded-lg border border-border text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-bold uppercase">Production Forecast</p>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-sm font-bold text-text-primary">
+                <div className="bg-[var(--bg-elevated)]/60 p-3 rounded-lg border border-[var(--divider)] text-left">
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Production Forecast</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">
                       {Math.round(simResult.before.production_forecast_tonnes || 0)} t
                     </span>
-                    <ArrowRight size={12} className="text-text-muted" />
-                    <span className="text-sm font-bold text-orange">
+                    <ArrowRight size={12} className="text-[var(--text-muted)]" />
+                    <span className="text-sm font-semibold text-[var(--accent-primary)]">
                       {Math.round(simResult.after.production_forecast_tonnes || 0)} t
                     </span>
                   </div>
                 </div>
 
-                <div className="bg-bg-surface p-3 rounded-lg border border-border text-center shadow-xs">
-                  <p className="text-[10px] text-text-muted font-bold uppercase">Risk Score</p>
-                  <div className="flex items-center justify-center gap-2 mt-1">
-                    <span className="text-sm font-bold text-text-primary">
+                <div className="bg-[var(--bg-elevated)]/60 p-3 rounded-lg border border-[var(--divider)] text-left">
+                  <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider font-semibold">Risk Score</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">
                       {simResult.before.risk_score?.toFixed(2)}
                     </span>
-                    <ArrowRight size={12} className="text-text-muted" />
-                    <span className="text-sm font-bold text-danger">
+                    <ArrowRight size={12} className="text-[var(--text-muted)]" />
+                    <span className="text-sm font-semibold text-[var(--critical)]">
                       {simResult.after.risk_score?.toFixed(2)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Causal Graph rendering */}
               {simResult.updated_graph && (
-                <div>
-                  <p className="text-[11px] font-bold text-text-secondary mb-1.5">
-                    Perturbed Causal Graph Propagation:
+                <div className="mt-3">
+                  <p className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+                    Perturbed Causal Propagation:
                   </p>
                   <CausalGraph
                     graph={simResult.updated_graph}
                     affectedPath={simResult.affected_graph_path}
-                    height={220}
+                    height={200}
                   />
                 </div>
               )}

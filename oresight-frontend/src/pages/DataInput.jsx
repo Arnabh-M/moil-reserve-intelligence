@@ -322,35 +322,36 @@ export default function DataInput() {
     : null;
 
   return (
-    <div className="page-container">
+    <div className="page-container space-y-8">
       {/* Page Header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap pb-4 border-b border-[var(--divider)]">
         <div>
-          <h2 className="page-title">Data Input</h2>
+          <h1 className="page-title">Field Operations Data Entry</h1>
           <p className="page-subtitle mb-0">
-            Submit field observations, equipment updates, and geological reports
+            Submit machinery telemetry updates, daily extraction logs, and geological drill-core lithology reports
           </p>
         </div>
 
         {/* Development MOCK indicator */}
         {USE_MOCK && (
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold shadow-xs animate-fade-in">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            USE_MOCK = true (Simulated API)
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--forest-primary)] dark:text-[var(--forest-secondary)] text-xs font-mono font-medium animate-fade-in">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--forest-primary)] dark:bg-[var(--forest-secondary)] animate-pulse" />
+            <span>Simulated Telemetry API Active</span>
           </div>
         )}
       </div>
 
-      {/* Two forms side by side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Equipment Status Form */}
+      {/* Asymmetric Operations Grid (7 col / 5 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Equipment Status Form (7 cols) */}
+        <div className="lg:col-span-7">
         <Card
-          title="Equipment Status Update"
-          subtitle="Report telemetry status changes for mine machinery"
+          title="Machinery & Equipment Status Update"
+          subtitle="Report operational state changes and maintenance telemetry"
           action={
             currentSelectedEq && (
               <Badge variant={currentSelectedEq.status} dot>
-                {currentSelectedEq.status === 'up' ? 'Operational' : 'Down'}
+                {currentSelectedEq.status === 'up' ? 'Operational' : 'Down / Breakdown'}
               </Badge>
             )
           }
@@ -505,8 +506,10 @@ export default function DataInput() {
             </Button>
           </form>
         </Card>
+        </div>
 
-        {/* Production Entry Form */}
+        {/* Daily Production Entry Form (5 cols) */}
+        <div className="lg:col-span-5">
         <Card
           title="Daily Production Entry"
           subtitle="Record actual extraction output against daily targets"
@@ -652,10 +655,14 @@ export default function DataInput() {
             </Button>
           </form>
         </Card>
+        </div>
       </div>
 
-      {/* PDF Upload Card */}
-      <Card title="Geological Report PDF Upload" subtitle="Drop exploration or borehole lithology reports for parsing">
+      {/* Geological Report PDF Upload Card */}
+      <Card
+        title="Geological Report PDF Upload"
+        subtitle="Upload exploration or borehole lithology reports for parsing (PDF format, Max 25 MB)"
+      >
         <div
           onDragOver={e => { e.preventDefault(); setDragActive(true); }}
           onDragLeave={() => setDragActive(false)}
@@ -908,3 +915,5 @@ export default function DataInput() {
     </div>
   );
 }
+
+

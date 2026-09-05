@@ -1,18 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronUp, SearchX } from 'lucide-react';
-import { Badge, EmptyState, ErrorState, SkeletonCard } from '../components';
+import { Badge, EmptyState, ErrorState, SkeletonCard, SectionDivider } from '../components';
 import CausalGraph from '../components/CausalGraph';
 import { getRiskEvents, getCausalGraph } from '../api/client';
 
 const SEVERITY_STYLE = {
-  critical: { dot: 'bg-danger', badge: 'critical' },
-  high: { dot: 'bg-danger', badge: 'critical' },
-  medium: { dot: 'bg-warning', badge: 'warning' },
-  low: { dot: 'bg-text-muted', badge: 'unconfirmed' },
+  critical: { dot: 'bg-[var(--critical)]', badge: 'critical' },
+  high: { dot: 'bg-[var(--critical)]', badge: 'critical' },
+  medium: { dot: 'bg-[var(--warning-medium)]', badge: 'warning' },
+  low: { dot: 'bg-[var(--text-muted)]', badge: 'unconfirmed' },
 };
 
 const FILTERS = [
-  { value: 'all', label: 'All' },
+  { value: 'all', label: 'All Events' },
   { value: 'critical', label: 'Critical' },
   { value: 'resolved', label: 'Resolved' },
 ];
@@ -110,23 +110,24 @@ export default function EventTimeline() {
 
   return (
     <div className="page-container">
-      <div className="flex items-start justify-between gap-4 flex-wrap mb-1">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-8">
         <div>
-          <h2 className="page-title">Risk Timeline</h2>
+          <h1 className="page-title">Risk &amp; Incident Timeline</h1>
           <p className="page-subtitle">
-            Chronological record of disruptions, resolutions, and milestones across all mine sites
+            Chronological record of disruptions, resolutions, and operational milestones across all mine sites
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 bg-bg-surface border border-border rounded-lg p-1">
+        <div className="flex items-center gap-1.5">
           {FILTERS.map((f) => (
             <button
               key={f.value}
               onClick={() => setFilter(f.value)}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors duration-150 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 filter === f.value
-                  ? 'bg-navy text-white'
-                  : 'text-text-secondary hover:bg-bg'
+                  ? 'bg-[var(--accent-soft)] text-[var(--accent-primary)] font-semibold'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
             >
               {f.label}
@@ -165,13 +166,14 @@ export default function EventTimeline() {
       )}
 
       {!loading && !error && filteredEvents.length > 0 && (
-        <div className="relative ml-4 mt-6">
+        <div className="relative ml-2 mt-6">
+          {/* Vertical connecting line */}
           <div
-            className="absolute left-[7px] top-3 bottom-3 w-[2px] bg-border"
+            className="absolute left-[5px] top-2 bottom-2 w-[1px] bg-[var(--divider)]"
             aria-hidden="true"
           />
 
-          <div className="space-y-0">
+          <div className="space-y-6">
             {filteredEvents.map((event, idx) => {
               const style = SEVERITY_STYLE[event.severity] || SEVERITY_STYLE.low;
               const isExpanded = expandedId === event.id;
@@ -180,67 +182,61 @@ export default function EventTimeline() {
               return (
                 <div
                   key={event.id}
-                  className="relative flex items-start gap-5 pb-8 group animate-fade-in"
-                  style={{ animationDelay: `${idx * 0.04}s` }}
+                  className="relative flex items-start gap-4 animate-fade-in"
+                  style={{ animationDelay: `${idx * 0.03}s` }}
                 >
                   <div className="relative z-10 shrink-0 mt-1">
                     <span
-                      className={`block w-4 h-4 rounded-full border-[3px] border-white shadow-sm ${style.dot}`}
+                      className={`block w-2.5 h-2.5 rounded-full ${style.dot}`}
                     />
                   </div>
 
-                  <div className="flex-1 bg-bg-surface rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-teal/20">
-                    <div className="flex items-start justify-between gap-3 mb-1.5">
+                  <div className="flex-1 min-w-0 pb-2">
+                    <div className="flex items-start justify-between gap-3 mb-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-sm font-semibold text-text-primary capitalize">
+                        <h4 className="text-xs font-semibold text-[var(--text-primary)] capitalize">
                           {event.risk_type.replace(/_/g, ' ')}
                         </h4>
-                        <Badge variant={style.badge} dot>{event.severity}</Badge>
+                        <Badge variant={style.badge}>{event.severity}</Badge>
                         {event.resolved && <Badge variant="operational">resolved</Badge>}
                       </div>
-                      <span className="text-[11px] text-text-muted whitespace-nowrap shrink-0">
+                      <span className="text-[11px] text-[var(--text-muted)] whitespace-nowrap shrink-0">
                         {formatTimestamp(event.detected_at)}
                       </span>
                     </div>
 
-                    <p className="text-xs text-text-secondary leading-relaxed mb-2">
+                    <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-2">
                       {event.description}
                     </p>
 
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wider">
                         {event.site_name}
                       </span>
                       <button
+                        type="button"
                         onClick={() => toggleExpand(event)}
-                        className="flex items-center gap-1 text-xs text-teal font-medium hover:text-teal/80 transition-colors duration-150"
+                        className="inline-flex items-center gap-1 text-[11px] text-[var(--accent-primary)] font-medium hover:underline cursor-pointer"
                       >
                         {isExpanded ? 'Hide causal graph' : 'View causal graph'}
-                        {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                        {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                       </button>
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-3 pt-3 border-t border-border">
+                      <div className="mt-3 pt-3 border-t border-[var(--divider)] animate-fade-in">
                         {graphState?.status === 'loading' && (
-                          <div className="h-[200px] flex items-center justify-center text-xs text-text-muted border border-dashed border-border rounded-lg">
+                          <div className="h-32 flex items-center justify-center text-xs text-[var(--text-muted)]">
                             Loading causal graph…
                           </div>
                         )}
                         {graphState?.status === 'error' && (
-                          <div className="h-[120px] flex items-center justify-center text-xs text-danger border border-dashed border-danger/30 rounded-lg">
+                          <div className="h-24 flex items-center justify-center text-xs text-[var(--critical)]">
                             {graphState.message}
                           </div>
                         )}
                         {graphState?.status === 'ready' && (
-                          <>
-                            {graphState.graph.graph_source === 'postgres_fallback' && (
-                              <div className="mb-2 text-[11px] text-warning bg-warning/10 border border-warning/20 rounded-lg px-2.5 py-1.5">
-                                {graphState.graph.note || 'This event has no causal graph yet.'}
-                              </div>
-                            )}
-                            <CausalGraph graph={graphState.graph} height={260} />
-                          </>
+                          <CausalGraph graph={graphState.graph} height={240} />
                         )}
                       </div>
                     )}
@@ -254,3 +250,5 @@ export default function EventTimeline() {
     </div>
   );
 }
+
+

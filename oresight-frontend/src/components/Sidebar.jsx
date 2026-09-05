@@ -20,83 +20,102 @@ import {
   Map as MapIcon,
 } from 'lucide-react';
 
-const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/production', icon: Factory, label: 'Production' },
-  { to: '/reserves', icon: Mountain, label: 'Reserves' },
-  { to: '/equipment', icon: Wrench, label: 'Equipment' },
-  { to: '/risks', icon: ShieldAlert, label: 'Risk & Alerts' },
-  { to: '/map', icon: MapIcon, label: 'Map' },
-  { type: 'divider' },
-  { to: '/simulator', icon: FlaskRound, label: 'Simulator' },
-  { to: '/recommendations', icon: Lightbulb, label: 'Recommendations' },
-  { to: '/timeline', icon: Clock, label: 'Timeline' },
-  { to: '/site/balaghat', icon: MapPin, label: 'Site Detail' },
-  { to: '/data-input', icon: ClipboardEdit, label: 'Data Input' },
-  { type: 'divider' },
-  { to: '/blasting', icon: Bomb, label: 'Blast Planning' },
-  { to: '/geology', icon: FlaskConical, label: 'Geology' },
-  { to: '/reports', icon: FileText, label: 'Reports' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+const navSections = [
+  {
+    title: 'Core Telemetry',
+    items: [
+      { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+      { to: '/production', icon: Factory, label: 'Production' },
+      { to: '/reserves', icon: Mountain, label: 'Reserves' },
+      { to: '/equipment', icon: Wrench, label: 'Equipment' },
+      { to: '/risks', icon: ShieldAlert, label: 'Risk & Alerts' },
+      { to: '/map', icon: MapIcon, label: 'Map View' },
+    ],
+  },
+  {
+    title: 'Intelligence & Sim',
+    items: [
+      { to: '/simulator', icon: FlaskRound, label: 'Simulator' },
+      { to: '/recommendations', icon: Lightbulb, label: 'AI Insights' },
+      { to: '/timeline', icon: Clock, label: 'Event Timeline' },
+      { to: '/site/balaghat', icon: MapPin, label: 'Site Detail' },
+      { to: '/data-input', icon: ClipboardEdit, label: 'Field Data Input' },
+    ],
+  },
+  {
+    title: 'Operations & Reports',
+    items: [
+      { to: '/blasting', icon: Bomb, label: 'Blast Planning' },
+      { to: '/geology', icon: FlaskConical, label: 'Geology' },
+      { to: '/reports', icon: FileText, label: 'Reports' },
+      { to: '/settings', icon: Settings, label: 'Settings' },
+    ],
+  },
 ];
 
 export default function Sidebar({ collapsed, onToggle }) {
   return (
     <aside
-      className={`fixed top-0 left-0 h-screen bg-navy flex flex-col transition-all duration-300 z-50 ${
-        collapsed ? 'w-[68px]' : 'w-[240px]'
+      className={`fixed top-0 left-0 h-screen bg-[var(--bg-surface)] border-r border-[var(--divider)] flex flex-col transition-all duration-300 z-50 shadow-sm ${
+        collapsed ? 'w-[72px]' : 'w-[260px]'
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange to-orange-soft flex items-center justify-center shrink-0">
-          <Mountain size={18} className="text-white" />
+      <div className="flex items-center gap-3 px-5 h-20 border-b border-[var(--divider)] shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/20">
+          <Mountain size={20} className="text-white" />
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <span className="text-white font-bold text-sm tracking-wide">OreSight</span>
-            <span className="block text-[10px] text-white/50 leading-tight">MOIL Intelligence</span>
+            <span className="text-[var(--text-primary)] font-bold text-base tracking-tight font-mono">OreSight</span>
+            <span className="block text-[11px] text-[var(--text-muted)] font-mono leading-tight mt-0.5">MOIL Intelligence</span>
           </div>
         )}
       </div>
 
-      {/* Nav links */}
-      <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-        {navItems.map((item, idx) => {
-          if (item.type === 'divider') {
-            return (
-              <div key={`div-${idx}`} className="my-2 mx-3 border-t border-white/10" />
-            );
-          }
-
-          const { to, icon: Icon, label } = item;
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group ${
-                  isActive
-                    ? 'bg-white/10 text-orange-soft'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`
-              }
-            >
-              <Icon size={18} className="shrink-0" />
-              {!collapsed && <span className="truncate">{label}</span>}
-            </NavLink>
-          );
-        })}
+      {/* Nav links grouped by section */}
+      <nav className="flex-1 py-6 px-3 space-y-6 overflow-y-auto custom-scrollbar">
+        {navSections.map((section, sIdx) => (
+          <div key={sIdx} className="space-y-1.5">
+            {!collapsed && (
+              <div className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-subtle)] font-mono">
+                {section.title}
+              </div>
+            )}
+            {section.items.map((item) => {
+              const { to, icon: Icon, label } = item;
+              return (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3.5 px-3.5 py-3 rounded-xl text-sm font-medium transition-all duration-150 font-mono group ${
+                      isActive
+                        ? 'bg-[var(--accent-primary)] text-white shadow-md shadow-blue-500/20 font-semibold'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--accent-soft)]'
+                    }`
+                  }
+                >
+                  <Icon size={19} className="shrink-0 transition-transform duration-150 group-hover:scale-105" />
+                  {!collapsed && <span className="truncate leading-normal">{label}</span>}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       {/* Collapse toggle */}
-      <button
-        onClick={onToggle}
-        className="flex items-center justify-center h-10 mx-2 mb-3 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/5 transition-all duration-200"
-      >
-        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-      </button>
+      <div className="p-3 border-t border-[var(--divider)] shrink-0">
+        <button
+          onClick={onToggle}
+          className="flex items-center justify-center w-full h-10 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--accent-soft)] transition-all duration-200 cursor-pointer"
+          title={collapsed ? "Expand menu" : "Collapse menu"}
+        >
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+        </button>
+      </div>
     </aside>
   );
 }

@@ -2,34 +2,23 @@ import React, { useMemo } from 'react';
 import { ReactFlow, Background, Controls, Position, MarkerType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
-// Color palette keyed by the backend's node `type` values (see
-// oresight-backend/app/agents/simulator.py + planner.py's GraphNode/GraphEdge
-// shapes, and app/schemas/causal_graph.py's real Pydantic contract).
 const TYPE_STYLES = {
-  SimulatedEvent: { bg: '#e0793a', border: '#c9662c' }, // orange
-  Equipment: { bg: '#2a7f8c', border: '#226771' }, // teal
-  BlastPlan: { bg: '#16233a', border: '#0e1726' }, // navy2
-  OreZone: { bg: '#22c55e', border: '#16a34a' }, // success
-  RiskEvent: { bg: '#e0793a', border: '#c9662c' }, // orange (roadmap)
-  WeatherEvent: { bg: '#f59e0b', border: '#d97706' }, // warning
-  ProductionForecast: { bg: '#5a6577', border: '#454e5d' }, // text-secondary
-  MineSite: { bg: '#8896a8', border: '#6b7889' }, // text-muted
+  SimulatedEvent: { bg: 'rgba(193, 87, 30, 0.15)', text: '#C1571E', border: '#C1571E' },
+  Equipment: { bg: 'rgba(112, 107, 98, 0.15)', text: 'var(--text-primary)', border: 'var(--divider)' },
+  BlastPlan: { bg: 'rgba(74, 122, 78, 0.15)', text: '#4A7A4E', border: '#4A7A4E' },
+  OreZone: { bg: 'rgba(74, 122, 78, 0.15)', text: '#4A7A4E', border: '#4A7A4E' },
+  RiskEvent: { bg: 'rgba(178, 59, 46, 0.15)', text: '#B23B2E', border: '#B23B2E' },
+  WeatherEvent: { bg: 'rgba(193, 87, 30, 0.15)', text: '#C1571E', border: '#C1571E' },
+  ProductionForecast: { bg: 'rgba(138, 133, 120, 0.15)', text: 'var(--text-muted)', border: 'var(--divider)' },
+  MineSite: { bg: 'rgba(138, 133, 120, 0.15)', text: 'var(--text-primary)', border: 'var(--divider)' },
 };
-const DEFAULT_STYLE = { bg: '#8896a8', border: '#6b7889' };
+const DEFAULT_STYLE = { bg: 'rgba(138, 133, 120, 0.15)', text: 'var(--text-primary)', border: 'var(--divider)' };
 
-const NODE_WIDTH = 168;
-const NODE_HEIGHT = 44;
-const COLUMN_GAP = 90;
-const ROW_GAP = 20;
+const NODE_WIDTH = 160;
+const NODE_HEIGHT = 40;
+const COLUMN_GAP = 80;
+const ROW_GAP = 18;
 
-/**
- * Assigns each node a {depth, row} position via BFS from the graph's root
- * (affectedPath[0] if given, else the first node with no incoming edge,
- * else the first node in the list) so causally-later nodes lay out to the
- * right — @xyflow/react has no built-in auto-layout, so this is a small
- * bespoke layered layout rather than pulling in a full layout dependency
- * for what's usually a handful of nodes.
- */
 function layoutNodes(nodes, edges, rootId) {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const outgoing = new Map(nodes.map((n) => [n.id, []]));
@@ -56,8 +45,6 @@ function layoutNodes(nodes, edges, rootId) {
       }
     }
   }
-  // Any node unreachable from the root (disconnected graph fragment)
-  // still needs a column so it isn't dropped from the view.
   let maxDepth = Math.max(0, ...depth.values());
   nodes.forEach((n) => {
     if (!depth.has(n.id)) depth.set(n.id, ++maxDepth);
@@ -112,14 +99,19 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
         data: { label: n.label, type: n.type },
         style: {
           width: NODE_WIDTH,
-          background: style.bg,
-          color: '#ffffff',
-          border: `2px solid ${isAffected ? '#e0793a' : style.border}`,
-          borderRadius: 8,
-          padding: '8px 10px',
+          background: isAffected ? 'rgba(193, 87, 30, 0.15)' : style.bg,
+          color: isAffected ? '#C1571E' : style.text,
+          border: `1px solid ${isAffected ? '#C1571E' : style.border}`,
+          borderRadius: 20,
+          padding: '6px 12px',
           fontSize: 11,
-          fontWeight: 600,
-          boxShadow: isAffected ? '0 0 0 3px rgba(224, 121, 58, 0.25)' : '0 1px 2px rgba(0,0,0,0.08)',
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 500,
+          boxShadow: isAffected ? '0 0 12px rgba(193, 87, 30, 0.35)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
         },
       };
     });
@@ -133,10 +125,10 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
         target: e.target,
         label: e.relationship,
         animated: isAffected,
-        style: { stroke: isAffected ? '#e0793a' : '#8896a8', strokeWidth: isAffected ? 2 : 1.5 },
-        labelStyle: { fontSize: 10, fill: '#5a6577', fontWeight: 600 },
+        style: { stroke: isAffected ? '#C1571E' : 'var(--text-muted)', strokeWidth: isAffected ? 2 : 1, opacity: 0.7 },
+        labelStyle: { fontSize: 10, fill: 'var(--text-muted)', fontFamily: 'Inter, sans-serif', fontWeight: 500 },
         labelBgStyle: { fill: 'transparent' },
-        markerEnd: { type: MarkerType.ArrowClosed, color: isAffected ? '#e0793a' : '#8896a8' },
+        markerEnd: { type: MarkerType.ArrowClosed, color: isAffected ? '#C1571E' : 'var(--text-muted)' },
       };
     });
 
@@ -147,7 +139,7 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
     return (
       <div
         style={{ height }}
-        className={`flex items-center justify-center rounded-lg border border-dashed border-border text-xs text-text-muted ${className}`}
+        className={`flex items-center justify-center rounded-xl bg-[var(--bg-primary)] text-xs text-[var(--text-muted)] ${className}`}
       >
         No graph data for this scenario.
       </div>
@@ -155,7 +147,7 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
   }
 
   return (
-    <div style={{ height }} className={`overflow-hidden rounded-lg border border-border ${className}`}>
+    <div style={{ height }} className={`overflow-hidden rounded-xl bg-[var(--bg-primary)] border border-[var(--divider)] ${className}`}>
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
@@ -168,7 +160,7 @@ export default function CausalGraph({ graph, affectedPath = [], height = 320, cl
         fitViewOptions={{ padding: 0.2 }}
         proOptions={{ hideAttribution: true }}
       >
-        <Background gap={16} size={1} color="var(--border)" />
+        <Background gap={20} size={1} color="var(--divider)" />
         <Controls showInteractive={false} position="bottom-right" />
       </ReactFlow>
     </div>

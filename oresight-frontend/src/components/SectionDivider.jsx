@@ -1,11 +1,17 @@
 import React from 'react';
 
 export default function SectionDivider({ label, className = '' }) {
-  return (
-    <div className={`section-divider ${className}`} role="separator">
-      <span className="section-divider-glyph font-mono">
-        {label ? `◆ ${label} ◆` : '◆'}
-      </span>
-    </div>
-  );
+  if (label) {
+    return (
+      <div className={`flex items-center my-8 ${className}`} role="separator">
+        <div className="flex-1 border-t border-[var(--divider)]" />
+        <span className="px-3 text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wider">
+          {label}
+        </span>
+        <div className="flex-1 border-t border-[var(--divider)]" />
+      </div>
+    );
+  }
+
+  return <div className={`my-8 border-t border-[var(--divider)] ${className}`} role="separator" />;
 }

@@ -12,7 +12,7 @@ const events = [
     description:
       'eq_bal_03 went offline due to sustained heavy rain at Balaghat. Estimated downtime 44.6 hrs. Blast plan bp_bal_01 impacted.',
     site: 'Balaghat',
-    dotColor: 'bg-danger',
+    dotColor: 'bg-[var(--critical)]',
   },
   {
     id: 2,
@@ -22,7 +22,7 @@ const events = [
     description:
       'Weather delay risk score increased from 0.65 to 0.78. Heavy rain severity 5 continues at Balaghat, threatening OreZone oz_bal_01 extraction.',
     site: 'Balaghat',
-    dotColor: 'bg-danger',
+    dotColor: 'bg-[var(--critical)]',
   },
   {
     id: 3,
@@ -32,7 +32,7 @@ const events = [
     description:
       'eq_nag_02 went down at Nagpur site. BlastPlan bp_nag_01 readiness now blocked. Spare drill available at Bhandara (eq_bhd_02).',
     site: 'Nagpur',
-    dotColor: 'bg-warning',
+    dotColor: 'bg-[var(--warning-medium)]',
   },
   {
     id: 4,
@@ -42,7 +42,7 @@ const events = [
     description:
       'eq_bal_04 repaired after 8.19 hrs downtime at Balaghat. Back online and operational. No blast plan impact.',
     site: 'Balaghat',
-    dotColor: 'bg-warning',
+    dotColor: 'bg-[var(--warning-medium)]',
   },
   {
     id: 5,
@@ -52,7 +52,7 @@ const events = [
     description:
       'Bhandara blasting operation completed on schedule (Aug 12). OreZone oz_bhd_01 ready for extraction. No incidents reported.',
     site: 'Bhandara',
-    dotColor: 'bg-success',
+    dotColor: 'bg-[var(--success)]',
   },
   {
     id: 6,
@@ -62,7 +62,7 @@ const events = [
     description:
       'WeatherEvent we_bhd_01 (severity 3) ended Aug 17. Operations resumed at full capacity. Equipment inspections cleared.',
     site: 'Bhandara',
-    dotColor: 'bg-success',
+    dotColor: 'bg-[var(--success)]',
   },
 ];
 
@@ -72,7 +72,7 @@ export default function Timeline() {
   if (events.length === 0) {
     return (
       <div className="page-container">
-        <h2 className="page-title">Risk Timeline</h2>
+        <h1 className="page-title">Risk Timeline</h1>
         <p className="page-subtitle">
           Chronological record of disruptions, resolutions, and milestones across all mine sites
         </p>
@@ -88,57 +88,55 @@ export default function Timeline() {
 
   return (
     <div className="page-container">
-      <h2 className="page-title">Risk Timeline</h2>
+      <h1 className="page-title">Risk Timeline</h1>
       <p className="page-subtitle">
         Chronological record of disruptions, resolutions, and milestones across all mine sites
       </p>
 
       {/* Timeline */}
-      <div className="relative ml-4 mt-2">
+      <div className="relative ml-2 mt-4">
         {/* Vertical connecting line */}
         <div
-          className="absolute left-[7px] top-3 bottom-3 w-[2px] bg-border"
+          className="absolute left-[5px] top-2 bottom-2 w-[1px] bg-[var(--divider)]"
           aria-hidden="true"
         />
 
-        <div className="space-y-0">
+        <div className="space-y-6">
           {events.map((event, idx) => (
             <div
               key={event.id}
-              className="relative flex items-start gap-5 pb-8 group animate-fade-in"
-              style={{ animationDelay: `${idx * 0.08}s` }}
+              className="relative flex items-start gap-4 animate-fade-in"
+              style={{ animationDelay: `${idx * 0.05}s` }}
             >
               {/* Dot */}
-              <div className="relative z-10 shrink-0">
-                <span
-                  className={`block w-4 h-4 rounded-full border-[3px] border-white shadow-sm ${event.dotColor}`}
-                />
+              <div className="relative z-10 shrink-0 mt-1">
+                <span className={`block w-2.5 h-2.5 rounded-full ${event.dotColor}`} />
               </div>
 
               {/* Event content */}
-              <div className="flex-1 bg-bg-surface rounded-xl border border-border p-4 transition-all duration-200 hover:shadow-md hover:border-teal/20 -mt-1">
-                <div className="flex items-start justify-between gap-3 mb-1.5">
+              <div className="flex-1 min-w-0 pb-2">
+                <div className="flex items-start justify-between gap-3 mb-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4 className="text-sm font-semibold text-text-primary">{event.title}</h4>
-                    <Badge variant={event.severity} dot>{event.severity}</Badge>
+                    <h4 className="text-xs font-semibold text-[var(--text-primary)]">{event.title}</h4>
+                    <Badge variant={event.severity}>{event.severity}</Badge>
                   </div>
-                  <span className="text-[11px] text-text-muted whitespace-nowrap shrink-0">
+                  <span className="text-[11px] text-[var(--text-muted)] whitespace-nowrap shrink-0">
                     {event.timestamp}
                   </span>
                 </div>
-                <p className="text-xs text-text-secondary leading-relaxed mb-2">
+                <p className="text-xs text-[var(--text-muted)] leading-relaxed mb-2">
                   {event.description}
                 </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium text-text-muted uppercase tracking-wide">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-wider">
                     {event.site}
                   </span>
                   <button
                     type="button"
                     onClick={() => navigate(`/site/${event.site.toLowerCase()}`)}
-                    className="flex items-center gap-1 text-xs text-teal font-medium hover:text-teal/80 transition-colors duration-150 cursor-pointer"
+                    className="inline-flex items-center gap-1 text-[11px] text-[var(--accent-primary)] font-medium hover:underline cursor-pointer"
                   >
-                    View Details
+                    <span>View Details</span>
                     <ExternalLink size={11} />
                   </button>
                 </div>
@@ -150,3 +148,5 @@ export default function Timeline() {
     </div>
   );
 }
+
+

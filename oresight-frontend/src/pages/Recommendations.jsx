@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles } from 'lucide-react';
-import { RecommendationCard, Card, EmptyState, ErrorState } from '../components';
+import { RecommendationCard, EmptyState, ErrorState } from '../components';
 import { getAllRecommendations, USE_MOCK } from '../api/client';
 
 export default function Recommendations() {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterType, setFilterType] = useState('all');
 
   const fetchRecommendations = async () => {
     setLoading(true);
@@ -30,74 +29,63 @@ export default function Recommendations() {
   return (
     <div className="page-container">
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
         <div>
-          <h2 className="page-title flex items-center gap-2">
-            <span>Corrective Actions</span>
-            <span className="p-1 rounded-md bg-orange/10 text-orange text-xs flex items-center gap-1 font-semibold">
-              <Sparkles size={12} /> GET /recommendations
+          <h1 className="page-title flex items-center gap-2.5">
+            <span>Corrective Actions &amp; Mitigations</span>
+            <span className="px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent-primary)] text-[11px] font-semibold flex items-center gap-1">
+              <Sparkles size={11} /> AI Decision Engine
             </span>
-          </h2>
-          <p className="page-subtitle mb-0">
-            Real-time mitigation and response options generated from active risk events
+          </h1>
+          <p className="page-subtitle">
+            Real-time mitigation recommendations, multi-variable tradeoff matrices, and inline what-if scenario simulations
           </p>
         </div>
 
         {USE_MOCK && (
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            USE_MOCK = true (Simulated Engine)
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--accent-primary)] text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-primary)] animate-pulse" />
+            <span>Simulated Engine Active</span>
           </div>
         )}
       </div>
 
       {/* Loading Skeletons */}
       {loading && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border">
-                <div className="w-8 h-8 rounded-lg bg-border" />
-                <div className="h-4 bg-border rounded w-3/4" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div key={i} className="bg-[var(--bg-elevated)]/40 rounded-xl p-5 border border-[var(--divider)] animate-pulse">
+              <div className="h-4 bg-[var(--divider)] rounded w-1/2 mb-4" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[1, 2, 3].map(j => (
-                  <div key={j} className="h-32 bg-border/40 rounded-lg p-3 space-y-2">
-                    <div className="h-4 bg-border rounded w-20" />
-                    <div className="h-3 bg-border rounded w-full" />
-                    <div className="h-3 bg-border rounded w-4/5" />
-                  </div>
+                  <div key={j} className="h-28 bg-[var(--divider)]/40 rounded-lg p-3" />
                 ))}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
 
       {/* Error state */}
       {!loading && error && (
-        <Card className="border-danger/30">
-          <ErrorState
-            title="Failed to Load Recommendations"
-            message={error}
-            onRetry={fetchRecommendations}
-          />
-        </Card>
+        <ErrorState
+          title="Failed to Load Recommendations"
+          message={error}
+          onRetry={fetchRecommendations}
+        />
       )}
 
       {/* Recommendations List */}
       {!loading && !error && recommendations.length === 0 && (
-        <Card>
-          <EmptyState
-            title="No recommendations yet"
-            message="All mine operations are running within optimal parameters. No mitigation actions required."
-            tone="neutral"
-          />
-        </Card>
+        <EmptyState
+          title="No recommendations required"
+          message="All mine operations are running within optimal parameters. No mitigation actions required."
+          tone="positive"
+        />
       )}
 
       {!loading && !error && recommendations.length > 0 && (
-        <div className="space-y-5 stagger-children">
+        <div className="space-y-6">
           {recommendations.map((rec, idx) => (
             <RecommendationCard
               key={rec.risk_event_id ? `rec-${rec.risk_event_id}-${idx}` : `rec-${idx}`}
@@ -112,3 +100,5 @@ export default function Recommendations() {
     </div>
   );
 }
+
+

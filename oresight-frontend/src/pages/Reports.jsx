@@ -1,20 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Download, FileBarChart, Gauge, ShieldAlert, ClipboardCheck, FileQuestion } from 'lucide-react';
 import jsPDF from 'jspdf';
-// html2canvas 1.4.x can't parse the oklab()/oklch() colors Tailwind v4
-// emits, and throws instead of rendering — html2canvas-pro is a drop-in
-// fork that adds support for the modern CSS color syntax.
 import html2canvas from 'html2canvas-pro';
 import { Card, KPIStat, Badge, Button, SkeletonKPIRow, SkeletonCard, EmptyState, InlineError, SectionDivider } from '../components';
 import { getSites, getRiskEvents, getAllRecommendations, SITE_MAP, BASE_URL } from '../api/client';
+import { estimateReserveConfidence } from '../lib/metrics';
 
-// Mock getSites() returns string site ids ('balaghat'); mock getRiskEvents()
-// returns numeric ones (1). Compare through SITE_MAP's numeric ids so both
-// shapes match — a strict === here always misses and reports 0 risks.
 function toNumericSiteId(id) {
   return SITE_MAP[id] ?? Number(id);
 }
-import { estimateReserveConfidence } from '../lib/metrics';
 
 const ENDPOINT_LABELS = {
   sites: 'sites',
@@ -32,7 +26,7 @@ export default function Reports() {
   const [sites, setSites] = useState([]);
   const [riskEvents, setRiskEvents] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
-  const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'error'
+  const [status, setStatus] = useState('loading');
   const [failedEndpoints, setFailedEndpoints] = useState([]);
   const [exporting, setExporting] = useState(false);
   const reportRef = useRef(null);
@@ -50,13 +44,13 @@ export default function Reports() {
       if (cancelled) return;
 
       const failed = [];
-      if (sitesResult.status === 'fulfilled') setSites(sitesResult.value);
+      if (sitesResult.status === 'fulfilled') setSites(sitesResult.value || []);
       else failed.push(ENDPOINT_LABELS.sites);
 
-      if (riskResult.status === 'fulfilled') setRiskEvents(riskResult.value);
+      if (riskResult.status === 'fulfilled') setRiskEvents(riskResult.value || []);
       else failed.push(ENDPOINT_LABELS.riskEvents);
 
-      if (recResult.status === 'fulfilled') setRecommendations(recResult.value);
+      if (recResult.status === 'fulfilled') setRecommendations(recResult.value || []);
       else failed.push(ENDPOINT_LABELS.recommendations);
 
       setFailedEndpoints(failed);
@@ -78,11 +72,6 @@ export default function Reports() {
       const resolvedRiskIds = new Set(siteRisks.filter((e) => e.resolved === true).map((e) => e.id));
       const confidence = estimateReserveConfidence(site);
 
-      // A recommendation belongs to this site when the risk event it was
-      // generated for does. Both halves are already in hand — `recommendations`
-      // is GET /recommendations (trigger + options, keyed by risk_event_id) and
-      // `riskEvents` is GET /risk-events (which carries site_id and resolved) —
-      // so the join happens here rather than as another round trip.
       const siteRecommendations = recommendations
         .filter((r) => siteRiskIds.has(r.risk_event_id))
         .map((r) => ({
@@ -103,8 +92,6 @@ export default function Reports() {
     });
   }, [sites, riskEvents, recommendations]);
 
-  // Derived from siteSummaries so the headline row and the per-site rows can
-  // never disagree — the report's totals are the sum of what it lists below.
   const totals = useMemo(() => {
     return {
       siteCount: siteSummaries.length,
@@ -159,14 +146,15 @@ export default function Reports() {
 
   return (
     <div className="page-container flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+      {/* Page Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap mb-2">
         <div>
-          <h2 className="page-title">Reports &amp; Export</h2>
-          <p className="page-subtitle mb-0">Aggregated reserve intelligence and audit sheets across all sites, generated on demand.</p>
+          <h1 className="page-title">Reports &amp; Executive Export</h1>
+          <p className="page-subtitle">Aggregated reserve intelligence and audit sheets across all sites, generated on demand.</p>
         </div>
         <Button variant="primary" onClick={handleExportPdf} disabled={exporting || status === 'loading'}>
-          <Download size={16} />
-          {exporting ? 'Exporting…' : 'Export as PDF'}
+          <Download size={15} />
+          <span>{exporting ? 'Exporting…' : 'Export as PDF'}</span>
         </Button>
       </div>
 
@@ -176,119 +164,113 @@ export default function Reports() {
         />
       )}
 
-      <div ref={reportRef} className="flex flex-col gap-6 bg-bg-surface p-8">
-        {/* Report header */}
-        <div className="flex items-center justify-between border-b border-border pb-6">
+      {/* Printable Report Canvas */}
+      <div ref={reportRef} className="flex flex-col gap-8 bg-[var(--bg-primary)] p-4 sm:p-6">
+        {/* Report Header */}
+        <div className="flex items-center justify-between border-b border-[var(--divider)] pb-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-orange text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--accent-primary)] text-white">
               <FileBarChart size={20} strokeWidth={2.25} />
             </div>
             <div>
-              <div className="font-heading text-lg font-semibold text-navy leading-none">
+              <div className="text-base font-semibold text-[var(--text-primary)]">
                 OreSight — MOIL Reserve Intelligence
               </div>
-              <div className="mt-1 text-xs uppercase tracking-wide text-text-secondary">
+              <div className="text-xs text-[var(--text-muted)]">
                 Reserve &amp; Risk Summary Report
               </div>
             </div>
           </div>
-          <div className="text-right text-xs text-text-secondary">
-            <div className="font-semibold text-navy">Generated</div>
+          <div className="text-right text-xs text-[var(--text-muted)]">
+            <div className="font-semibold text-[var(--text-primary)]">Generated</div>
             <div>{generatedAt.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</div>
           </div>
         </div>
 
-        {/* Totals row */}
+        {/* Totals Stacked KPI Row */}
         {status === 'loading' ? (
           <SkeletonKPIRow count={4} />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <KPIStat
               icon={Gauge}
               value={kpiValue(`${(totals.avgConfidence * 100).toFixed(1)}%`)}
               label="Avg Reserve Confidence"
-              color="teal"
             />
             <KPIStat
               icon={ShieldAlert}
               value={kpiValue(String(totals.activeRiskCount).padStart(2, '0'))}
               label="Active Risk Events"
-              color="orange"
             />
             <KPIStat
               icon={ClipboardCheck}
               value={kpiValue(String(totals.resolvedRecCount).padStart(2, '0'))}
-              label="Recommendations on Resolved Risks"
-              color="navy"
+              label="Resolved Actions"
             />
             <KPIStat
               icon={FileBarChart}
               value={kpiValue(String(totals.siteCount).padStart(2, '0'))}
               label="Sites Covered"
-              color="teal"
             />
           </div>
         )}
 
-        {/* Per-site sections */}
         <SectionDivider label="SITE-BY-SITE AUDIT" />
-        <div className="flex flex-col gap-4">
+
+        {/* Per-site sections */}
+        <div className="space-y-6">
           {status === 'loading' && (
-            <>
+            <div className="space-y-4">
               <SkeletonCard />
               <SkeletonCard />
-              <SkeletonCard />
-            </>
+            </div>
           )}
 
           {status !== 'loading' && siteSummaries.length === 0 && (
-            <Card>
-              <EmptyState
-                icon={FileQuestion}
-                title="No sites reported"
-                message="No site data is available for this report yet."
-                tone="neutral"
-              />
-            </Card>
+            <EmptyState
+              icon={FileQuestion}
+              title="No sites reported"
+              message="No site data is available for this report yet."
+              tone="neutral"
+            />
           )}
 
           {siteSummaries.map((site) => (
-            <Card key={site.id} noPadding>
-              <div className="flex items-center justify-between p-5 pb-4 border-b border-border">
-                <h3 className="font-heading text-[15px] font-semibold text-navy">{site.name}</h3>
+            <div key={site.id} className="bg-[var(--bg-elevated)]/50 rounded-xl p-5 border border-[var(--divider)]">
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[var(--divider)]">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">{site.name}</h3>
                 <Badge variant={confidenceVariant(site.confidence)}>
                   {(site.confidence * 100).toFixed(0)}% Confidence
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 pb-3 text-sm">
+              <div className="grid grid-cols-2 gap-6 text-xs mb-4">
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-text-secondary">Active Risks</div>
-                  <div className="mt-1 font-heading text-xl font-semibold text-navy">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">Active Risks</div>
+                  <div className="text-xl font-semibold text-[var(--text-primary)] mt-0.5">
                     {String(site.activeRiskCount).padStart(2, '0')}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wide text-text-secondary">
-                    Recommendations on Resolved Risks
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                    Resolved Mitigations
                   </div>
-                  <div className="mt-1 font-heading text-xl font-semibold text-navy">
-                    {String(site.recCount).padStart(2, '0')} /{' '}
-                    {String(site.recommendations.length).padStart(2, '0')}
+                  <div className="text-xl font-semibold text-[var(--text-primary)] mt-0.5">
+                    {String(site.recCount).padStart(2, '0')} / {String(site.recommendations.length).padStart(2, '0')}
                   </div>
                 </div>
               </div>
 
               {site.recommendations.length > 0 && (
-                <div className="flex flex-col gap-2 p-5 pt-1">
+                <div className="space-y-2 pt-3 border-t border-[var(--divider)]">
                   {site.recommendations.map((rec, idx) => (
                     <div
                       key={rec.riskEventId ?? idx}
-                      className="flex items-center justify-between gap-3 rounded-sm border border-border px-3 py-2"
+                      className="flex items-center justify-between gap-3 text-xs p-2 rounded-lg bg-[var(--bg-primary)] border border-[var(--divider)]"
                     >
-                      <span className="text-xs text-navy">
+                      <span className="text-[var(--text-primary)]">
                         {rec.trigger}
-                        <span className="text-text-muted">
+                        <span className="text-[var(--text-muted)]">
                           {' '}
                           ({rec.optionCount} option{rec.optionCount === 1 ? '' : 's'})
                         </span>
@@ -300,10 +282,12 @@ export default function Reports() {
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           ))}
         </div>
       </div>
     </div>
   );
 }
+
+

@@ -1,10 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   ChevronDown,
   Mountain,
-  Search,
-  Bell,
   Map as MapIcon,
   Layers,
   MapPin,
@@ -14,9 +12,9 @@ import {
   Clock,
   Lightbulb,
   FileText,
+  Compass,
+  Radio,
 } from 'lucide-react';
-import { USE_MOCK, setUseMock, subscribeUseMock } from '../api/client';
-import toast from 'react-hot-toast';
 import ThemeToggle from './ThemeToggle';
 
 const NAV_STRUCTURE = [
@@ -37,7 +35,7 @@ const NAV_STRUCTURE = [
       },
       {
         to: '/geology',
-        label: 'Geological Structure & Cross-Section',
+        label: 'Geological Structure & Deposit Cross-Section',
         icon: Layers,
       },
     ],
@@ -48,12 +46,12 @@ const NAV_STRUCTURE = [
     items: [
       {
         to: '/site/balaghat',
-        label: 'Site Performance',
+        label: 'Site Performance Telemetry',
         icon: MapPin,
       },
       {
         to: '/data-input',
-        label: 'Field Data Entry',
+        label: 'Field Operations Data Entry',
         icon: ClipboardEdit,
       },
     ],
@@ -64,12 +62,12 @@ const NAV_STRUCTURE = [
     items: [
       {
         to: '/blasting',
-        label: 'Blast Schedule',
+        label: 'Blast Schedule & Planning',
         icon: Bomb,
       },
       {
         to: '/simulator',
-        label: 'Scenario Simulator',
+        label: 'Digital Twin Scenario Simulator',
         icon: FlaskRound,
       },
     ],
@@ -80,17 +78,17 @@ const NAV_STRUCTURE = [
     items: [
       {
         to: '/timeline',
-        label: 'Risk Timeline',
+        label: 'Risk Anomaly Timeline',
         icon: Clock,
       },
       {
         to: '/recommendations',
-        label: 'Corrective Actions',
+        label: 'AI Mitigation Recommendations',
         icon: Lightbulb,
       },
       {
         to: '/reports',
-        label: 'Reports & Export',
+        label: 'Geological Reports & Export',
         icon: FileText,
       },
     ],
@@ -105,13 +103,9 @@ const NAV_STRUCTURE = [
 export default function Navigation() {
   const location = useLocation();
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [selectedRegion, setSelectedRegion] = useState('All Sectors');
+  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const timeoutRef = useRef(null);
-  const [mockActive, setMockActive] = useState(USE_MOCK);
-  const [searchFocused, setSearchFocused] = useState(false);
-
-  useEffect(() => {
-    return subscribeUseMock(setMockActive);
-  }, []);
 
   const handleMouseEnter = (label) => {
     if (timeoutRef.current) {
@@ -127,20 +121,6 @@ export default function Navigation() {
     }, 120);
   };
 
-  const toggleMock = () => {
-    const nextState = !mockActive;
-    setUseMock(nextState);
-    toast(
-      <div>
-        <p className="font-semibold text-xs">{nextState ? 'Mock Engine Active' : 'Live API Mode Active'}</p>
-        <p className="text-[11px] opacity-80 mt-0.5">
-          {nextState ? 'Simulating backend responses offline.' : 'Connecting to live FastAPI at http://localhost:8000.'}
-        </p>
-      </div>,
-      { id: 'mode-toast' }
-    );
-  };
-
   const isCategoryActive = (category) => {
     if (category.type === 'link') {
       return category.exact ? location.pathname === category.to : location.pathname.startsWith(category.to);
@@ -154,20 +134,57 @@ export default function Navigation() {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[var(--charcoal)] text-white border-b border-[var(--border)] shadow-xs transition-colors duration-180">
-      <div className="max-w-[1560px] mx-auto px-6 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
-        <NavLink to="/" className="flex items-center gap-2.5 shrink-0 group">
-          <div className="w-8 h-8 rounded-[3px] bg-[var(--accent-primary)] flex items-center justify-center text-white shadow-xs group-hover:opacity-90 transition-opacity">
-            <Mountain size={18} strokeWidth={2} />
-          </div>
-          <div className="leading-tight">
-            <span className="font-heading font-bold text-base tracking-tight text-white block">OreSight</span>
-            <span className="text-[9.5px] uppercase tracking-wider text-[var(--border)] block -mt-0.5 opacity-80">MOIL Intelligence</span>
-          </div>
-        </NavLink>
+    <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/95 backdrop-blur-md text-[var(--text-primary)] border-b border-[var(--divider)] transition-colors duration-150">
+      <div className="max-w-[1600px] mx-auto px-8 h-[68px] flex items-center justify-between gap-6">
+        
+        {/* Left: Brand Identity + Region Selector */}
+        <div className="flex items-center gap-6 shrink-0">
+          <NavLink to="/" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-lg bg-[var(--forest-primary)] text-white flex items-center justify-center shadow-xs group-hover:opacity-90 transition-opacity">
+              <Mountain size={19} strokeWidth={2} />
+            </div>
+            <div className="leading-tight">
+              <span className="font-mono font-bold text-sm tracking-tight text-[var(--text-primary)] block">OreSight</span>
+              <span className="text-[10px] uppercase tracking-wider text-[var(--text-muted)] block font-medium">MOIL Intelligence</span>
+            </div>
+          </NavLink>
 
-        {/* Center 6-Item Navigation Bar */}
+          {/* Region Selector */}
+          <div className="relative hidden md:block border-l border-[var(--divider)] pl-6">
+            <button
+              type="button"
+              onClick={() => setShowRegionDropdown(!showRegionDropdown)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--bg-surface)] border border-[var(--border)] text-xs font-medium text-[var(--text-primary)] hover:border-[var(--forest-secondary)] transition-colors cursor-pointer"
+            >
+              <Compass size={14} className="text-[var(--forest-secondary)]" />
+              <span>{selectedRegion}</span>
+              <ChevronDown size={12} className="text-[var(--text-muted)]" />
+            </button>
+
+            {showRegionDropdown && (
+              <div className="absolute top-full left-6 mt-1 w-56 bg-[var(--bg-surface)] rounded-xl border border-[var(--border)] shadow-lg p-1.5 z-50 animate-fade-in">
+                {['All Sectors', 'Balaghat Manganese Belt', 'Nagpur-Bhandara Belt'].map((reg) => (
+                  <button
+                    key={reg}
+                    onClick={() => {
+                      setSelectedRegion(reg);
+                      setShowRegionDropdown(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                      selectedRegion === reg
+                        ? 'bg-[var(--accent-soft)] text-[var(--forest-primary)] font-semibold'
+                        : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                    }`}
+                  >
+                    {reg}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Center Navigation Links */}
         <nav className="hidden lg:flex items-center gap-1 h-full">
           {NAV_STRUCTURE.map((item) => {
             const active = isCategoryActive(item);
@@ -179,16 +196,16 @@ export default function Navigation() {
                   to={item.to}
                   end={item.exact}
                   className={({ isActive }) =>
-                    `relative px-4 py-2 text-xs font-semibold tracking-wide transition-colors flex items-center h-16 ${
+                    `relative px-3.5 py-2 text-xs font-medium transition-colors flex items-center h-[68px] ${
                       isActive || active
-                        ? 'text-white'
-                        : 'text-[#D5CFBF] hover:text-white'
+                        ? 'text-[var(--forest-primary)] font-semibold dark:text-[var(--forest-secondary)]'
+                        : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                     }`
                   }
                 >
                   <span>{item.label}</span>
                   {active && (
-                    <span className="absolute bottom-0 left-4 right-4 h-[2.5px] bg-[var(--accent-primary)]" />
+                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[var(--forest-primary)] dark:bg-[var(--forest-secondary)] rounded-full" />
                   )}
                 </NavLink>
               );
@@ -199,33 +216,35 @@ export default function Navigation() {
             return (
               <div
                 key={item.label}
-                className="relative h-16 flex items-center"
+                className="relative h-[68px] flex items-center"
                 onMouseEnter={() => handleMouseEnter(item.label)}
                 onMouseLeave={handleMouseLeave}
               >
                 <button
                   type="button"
-                  className={`relative px-4 py-2 text-xs font-semibold tracking-wide transition-colors flex items-center gap-1.5 h-16 cursor-pointer ${
-                    active || isOpen ? 'text-white' : 'text-[#D5CFBF] hover:text-white'
+                  className={`relative px-3.5 py-2 text-xs font-medium transition-colors flex items-center gap-1.5 h-[68px] cursor-pointer ${
+                    active || isOpen
+                      ? 'text-[var(--forest-primary)] font-semibold dark:text-[var(--forest-secondary)]'
+                      : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
                   }`}
                   aria-expanded={isOpen}
                 >
                   <span>{item.label}</span>
                   <ChevronDown
-                    size={12}
-                    className={`transition-transform duration-150 text-[#A5A096] ${
-                      isOpen ? 'rotate-180 text-white' : ''
+                    size={13}
+                    className={`transition-transform duration-150 text-[var(--text-muted)] ${
+                      isOpen ? 'rotate-180 text-[var(--text-primary)]' : ''
                     }`}
                   />
                   {active && (
-                    <span className="absolute bottom-0 left-4 right-4 h-[2.5px] bg-[var(--accent-primary)]" />
+                    <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-[var(--forest-primary)] dark:bg-[var(--forest-secondary)] rounded-full" />
                   )}
                 </button>
 
-                {/* Dropdown Menu (Label only, 12-16px breathing room, consistent 10px V / 16px H padding) */}
+                {/* Dropdown Menu */}
                 {isOpen && (
                   <div
-                    className="absolute top-full left-0 w-72 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-[3px] border border-[var(--border)] shadow-md p-3.5 z-50 animate-fade-in"
+                    className="absolute top-full left-0 w-72 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-xl border border-[var(--border)] shadow-xl p-2 z-50 animate-fade-in"
                     onMouseEnter={() => handleMouseEnter(item.label)}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -242,14 +261,19 @@ export default function Navigation() {
                             key={sub.label}
                             to={sub.to}
                             onClick={() => setOpenDropdown(null)}
-                            className={`flex items-center gap-3 px-4 py-2.5 h-10 min-h-[40px] rounded-[3px] text-xs font-semibold transition-colors duration-150 ${
+                            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-medium transition-colors ${
                               isSubActive
-                                ? 'bg-[var(--bg-primary)] text-[var(--accent-primary)] border-l-2 border-[var(--accent-primary)] font-bold'
-                                : 'text-[var(--text-primary)] hover:bg-[var(--bg-primary)] hover:text-[var(--accent-primary)] border-l-2 border-transparent'
+                                ? 'bg-[var(--accent-soft)] text-[var(--forest-primary)] font-semibold dark:text-[var(--forest-secondary)]'
+                                : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
                             }`}
                           >
-                            <Icon size={15} strokeWidth={1.75} className="shrink-0 text-[var(--text-muted)]" />
-                            <span className="truncate text-left">{sub.label}</span>
+                            <Icon
+                              size={16}
+                              className={`shrink-0 ${
+                                isSubActive ? 'text-[var(--forest-primary)] dark:text-[var(--forest-secondary)]' : 'text-[var(--text-muted)]'
+                              }`}
+                            />
+                            <span className="truncate">{sub.label}</span>
                           </NavLink>
                         );
                       })}
@@ -261,54 +285,20 @@ export default function Navigation() {
           })}
         </nav>
 
-        {/* Right Chrome / Controls */}
-        <div className="flex items-center gap-3">
-          {/* Search — collapsed pill, expands on focus */}
-          <div
-            className={`hidden md:flex items-center gap-2 bg-[var(--bg-surface)] rounded-[3px] px-2.5 py-1.5 border border-[var(--border)] transition-all duration-150 ${
-              searchFocused ? 'w-48' : 'w-8'
-            }`}
-          >
-            <Search size={13} className="text-[var(--text-muted)] shrink-0" />
-            <input
-              type="text"
-              placeholder="Search assets..."
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              className={`bg-transparent text-xs text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] transition-all duration-150 ${
-                searchFocused ? 'w-full opacity-100' : 'w-0 opacity-0'
-              }`}
-            />
+        {/* Right Controls: Freshness Indicator, Theme Toggle, User Profile */}
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="hidden xl:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--bg-secondary)] border border-[var(--border)] text-[11px] font-mono text-[var(--text-muted)]">
+            <Radio size={12} className="text-[var(--success)] animate-pulse" />
+            <span>Telemetry Active</span>
           </div>
-
-          {/* Theme Toggle (Light / Dark) */}
           <ThemeToggle />
-
-          {/* Data-source status: small dot, click to toggle mock/live */}
-          <button
-            onClick={toggleMock}
-            title={mockActive ? 'Mock data mode active — click to switch to live API' : 'Live API mode active — click to switch to mock data'}
-            className="p-2 flex items-center cursor-pointer"
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                mockActive ? 'bg-[var(--warning)]' : 'bg-[var(--success)] animate-pulse'
-              }`}
-            />
-          </button>
-
-          {/* Notifications */}
-          <button className="relative p-2 rounded-[3px] text-[#D5CFBF] hover:text-white transition-colors cursor-pointer">
-            <Bell size={16} strokeWidth={1.75} />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[var(--accent-primary)] rounded-full" />
-          </button>
-
-          {/* User Avatar */}
-          <div className="w-7 h-7 rounded-[3px] bg-[var(--accent-secondary)] flex items-center justify-center text-white text-xs font-bold font-mono">
-            TG
+          <div className="w-8 h-8 rounded-lg bg-[var(--forest-primary)] text-white flex items-center justify-center text-xs font-mono font-bold">
+            MO
           </div>
         </div>
+
       </div>
     </header>
   );
 }
+
