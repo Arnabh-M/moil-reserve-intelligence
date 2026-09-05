@@ -79,6 +79,15 @@ def test_weather_delay_scenario_has_a_real_neo4j_causal_graph(client):
     assert len(graph["nodes"]) > 1
 
 
+def test_equipment_down_scenario_has_a_real_neo4j_causal_graph(client):
+    """Targets the Haul Truck HT-302 risk event (scripts/enrich_risk_event_5.py),
+    not the Drill NAG-1 one, which still falls back to a single postgres node."""
+    scenario = next(s for s in client.get("/demo/scenarios").json() if s["key"] == "equipment-down")
+    graph = client.get(f"/risk-events/{scenario['risk_event_id']}/causal-graph").json()
+    assert graph["graph_source"] == "neo4j"
+    assert len(graph["nodes"]) > 1
+
+
 def test_does_not_touch_the_risk_events_contract(client):
     """GET /risk-events must be unchanged — no demo fields leaked in."""
     body = client.get("/risk-events").json()[0]

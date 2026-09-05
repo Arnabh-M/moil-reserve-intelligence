@@ -38,8 +38,14 @@ class _ScenarioSpec:
     expected_recommendation: str
 
 
-# The two scenarios seeded by scripts/seed_scenario_a.py and
-# scripts/seed_scenario_b.py. Add a row here to expose another.
+# The two scenarios seeded by scripts/seed_scenario_a.py, scripts/seed_scenario_b.py
+# and scripts/enrich_risk_event_5.py. Add a row here to expose another.
+#
+# equipment-down targets the Haul Truck HT-302 risk event (seed_dev.py), not
+# the Drill NAG-1 one (seed_scenario_b.py) — both resolve to a redeploy
+# recommendation, but only the Haul Truck event has a real Neo4j causal graph
+# (enrich_risk_event_5.py builds a 2-node/1-edge Equipment-CAUSES->RiskEvent
+# chain for it); the Drill event still falls back to postgres_fallback.
 _SCENARIOS: tuple[_ScenarioSpec, ...] = (
     _ScenarioSpec(
         key="weather-delay",
@@ -54,7 +60,7 @@ _SCENARIOS: tuple[_ScenarioSpec, ...] = (
         scenario_name="Equipment down -> redeploy (Nagpur)",
         site_district="nagpur",
         risk_type="equipment_failure",
-        description_like="%NAG-1 at Nagpur is down%",
+        description_like="%Haul Truck HT-302%",
         expected_recommendation="redeploy",
     ),
 )
