@@ -8,7 +8,7 @@ import { sites as mockSites } from '../data/mockData';
 
 export let USE_MOCK = false; // Default: attempt live backend, fallback seamlessly if offline
 
-const BASE_URL = 'http://localhost:8002';
+const BASE_URL = 'http://localhost:8000';
 
 // Global listeners for reactive UI mode toggling
 const mockListeners = new Set();
