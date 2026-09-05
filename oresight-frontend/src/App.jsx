@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
-import { Navigation } from './components';
+import { Navigation, ErrorBoundary } from './components';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
@@ -38,7 +38,11 @@ function Layout() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16, ease: 'easeInOut' }}
           >
-            <Outlet />
+            {/* Keyed by pathname so the boundary remounts (and clears) on
+                navigation — a broken page never strands the user on it. */}
+            <ErrorBoundary key={location.pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>
@@ -48,68 +52,70 @@ function Layout() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: 'var(--charcoal)',
-              color: 'var(--text-primary)',
-              fontSize: '13px',
-              borderRadius: '3px',
-              border: '1px solid var(--border)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              fontFamily: 'var(--font-body)',
-              padding: '12px 16px',
-            },
-            success: {
-              iconTheme: {
-                primary: 'var(--success)',
-                secondary: '#ffffff',
-              },
+    <ErrorBoundary fullPage title="OreSight failed to start">
+      <ThemeProvider>
+        <ToastProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
               style: {
-                borderLeft: '4px solid var(--success)',
+                background: 'var(--charcoal)',
+                color: 'var(--text-primary)',
+                fontSize: '13px',
+                borderRadius: '3px',
+                border: '1px solid var(--border)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                fontFamily: 'var(--font-body)',
+                padding: '12px 16px',
               },
-            },
-            error: {
-              iconTheme: {
-                primary: 'var(--warning)',
-                secondary: '#ffffff',
+              success: {
+                iconTheme: {
+                  primary: 'var(--success)',
+                  secondary: '#ffffff',
+                },
+                style: {
+                  borderLeft: '4px solid var(--success)',
+                },
               },
-              style: {
-                borderLeft: '4px solid var(--warning)',
+              error: {
+                iconTheme: {
+                  primary: 'var(--warning)',
+                  secondary: '#ffffff',
+                },
+                style: {
+                  borderLeft: '4px solid var(--warning)',
+                },
               },
-            },
-          }}
-        />
-        <BrowserRouter>
-          <Routes>
-            {/* Pre-auth: no topbar chrome */}
-            <Route path="/login" element={<Login />} />
+            }}
+          />
+          <BrowserRouter>
+            <Routes>
+              {/* Pre-auth: no topbar chrome */}
+              <Route path="/login" element={<Login />} />
 
-            <Route element={<Layout />}>
-              {/* Core Routes */}
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/production" element={<Production />} />
-              <Route path="/reserves" element={<Reserves />} />
-              <Route path="/equipment" element={<Equipment />} />
-              <Route path="/risks" element={<Risks />} />
-              <Route path="/simulator" element={<Simulator />} />
-              <Route path="/recommendations" element={<Recommendations />} />
-              <Route path="/timeline" element={<EventTimeline />} />
-              <Route path="/site/:id" element={<SiteDetail />} />
-              <Route path="/data-input" element={<DataInput />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/map" element={<MapPage />} />
-              <Route path="/blasting" element={<ComingSoon />} />
-              <Route path="/geology" element={<Reserves />} />
-              <Route path="/settings" element={<ComingSoon />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </ToastProvider>
-    </ThemeProvider>
+              <Route element={<Layout />}>
+                {/* Core Routes */}
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/production" element={<Production />} />
+                <Route path="/reserves" element={<Reserves />} />
+                <Route path="/equipment" element={<Equipment />} />
+                <Route path="/risks" element={<Risks />} />
+                <Route path="/simulator" element={<Simulator />} />
+                <Route path="/recommendations" element={<Recommendations />} />
+                <Route path="/timeline" element={<EventTimeline />} />
+                <Route path="/site/:id" element={<SiteDetail />} />
+                <Route path="/data-input" element={<DataInput />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/blasting" element={<ComingSoon />} />
+                <Route path="/geology" element={<Reserves />} />
+                <Route path="/settings" element={<ComingSoon />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }

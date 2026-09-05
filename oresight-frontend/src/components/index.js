@@ -13,4 +13,5 @@ export { default as CausalGraph } from './CausalGraph';
 export { default as RecentRiskEvents } from './RecentRiskEvents';
 export { default as EmptyState } from './EmptyState';
 export { default as ErrorState, InlineError } from './ErrorState';
+export { default as ErrorBoundary } from './ErrorBoundary';
 export { SkeletonBar, SkeletonCircle, SkeletonCard, SkeletonKPIRow, SkeletonRow } from './Skeleton';

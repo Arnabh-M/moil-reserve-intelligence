@@ -1,14 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────
 // OreSight API Client
 // Single constant USE_MOCK toggles between simulated responses and
-// real FastAPI calls at http://localhost:8002.
+// real FastAPI calls. The backend origin is the single source of truth
+// BASE_URL below — override it with VITE_API_URL (see .env).
 // ─────────────────────────────────────────────────────────────────────
 
+import toast from 'react-hot-toast';
 import { sites as mockSites } from '../data/mockData';
 
-export let USE_MOCK = false; // Default: attempt live backend, fallback seamlessly if offline
+export let USE_MOCK = false; // Default: attempt live backend, fall back to sample data if offline
 
-const BASE_URL = 'http://localhost:8000';
+
+// Single source of truth for the API origin. Set VITE_API_URL in the
+// environment (e.g. an .env file) to point at a non-default backend;
+// otherwise fall back to the local dev backend on :8000.
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 
 // Global listeners for reactive UI mode toggling
 const mockListeners = new Set();
@@ -21,6 +28,24 @@ export function setUseMock(val) {
 export function subscribeUseMock(cb) {
   mockListeners.add(cb);
   return () => mockListeners.delete(cb);
+}
+
+// When a live call fails and we serve bundled sample data instead, this
+// makes the fallback VISIBLE rather than console-only: it flips the global
+// mock flag (the TopBar badge and the per-page "USE_MOCK" banners already
+// subscribe to it) and shows a one-time toast. Mock data is fine for local
+// dev without a backend — it just must never be a silent swap.
+let mockFallbackNotified = false;
+export function announceMockFallback(reason) {
+  if (!USE_MOCK) setUseMock(true);
+  if (mockFallbackNotified) return;
+  mockFallbackNotified = true;
+  toast.error(
+    reason
+      ? `Live API unreachable — showing sample data. ${reason}`
+      : `Live API unreachable at ${BASE_URL} — showing sample data.`,
+    { id: 'mock-fallback', duration: 6000 },
+  );
 }
 
 // Site ID mapping (supports numeric 1,2,3 or string 'balaghat','nagpur','bhandara')
@@ -158,13 +183,20 @@ async function apiFetch(endpoint, options = {}) {
     });
 
     if (!res.ok) {
+      // Backend error shape: { detail, error_code }
       let detail = `HTTP Error ${res.status}`;
+      let errorCode = null;
       try {
         const json = await res.json();
         if (json.detail) detail = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail);
+        if (json.error_code) errorCode = json.error_code;
       } catch { /* not json */ }
       const err = new Error(detail);
       err.status = res.status;
+      err.errorCode = errorCode;
+      // Infra is down (503 / SERVICE_UNAVAILABLE) vs. a genuine request error —
+      // the UI shows a distinct "backend unavailable" banner for the former.
+      err.isServiceUnavailable = res.status === 503 || errorCode === 'SERVICE_UNAVAILABLE';
       throw err;
     }
     return await res.json();
@@ -172,6 +204,7 @@ async function apiFetch(endpoint, options = {}) {
     if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
       const netErr = new Error(`Cannot connect to live API at ${BASE_URL}. Ensure FastAPI backend is running.`);
       netErr.isNetworkError = true;
+      netErr.isServiceUnavailable = true;
       throw netErr;
     }
     throw err;
@@ -188,6 +221,7 @@ export async function getSites() {
       return await apiFetch('/sites');
     } catch (err) {
       console.warn('[API] getSites live failed, using mock:', err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -203,6 +237,7 @@ export async function getReserveZones(siteId) {
       return await apiFetch(`/reserve-zones${query}`);
     } catch (err) {
       console.warn('[API] getReserveZones live call failed, using fallback:', err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -256,6 +291,7 @@ export async function postSimulate({ scenario_type, site_id, duration_days }) {
     } catch (err) {
       console.warn('[API] /simulate live call failed, falling back to mock:', err.message);
       if (!err.isNetworkError && err.status !== 404 && err.status !== 500) throw err;
+      announceMockFallback(err.message);
     }
   }
 
@@ -352,6 +388,7 @@ export async function getRecommendations({ risk_event_id }) {
     } catch (err) {
       console.warn(`[API] /recommendations?risk_event_id=${risk_event_id} failed:`, err.message);
       if (!err.isNetworkError && err.status !== 404 && err.status !== 500) throw err;
+      announceMockFallback(err.message);
     }
   }
 
@@ -431,6 +468,7 @@ export async function getAllRecommendations() {
       }
     } catch (err) {
       console.warn('[API] getAllRecommendations failed, using fallback:', err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -522,6 +560,7 @@ export async function getCausalGraph(risk_event_id = 1) {
       return await apiFetch(`/risk-events/${risk_event_id}/causal-graph`);
     } catch (err) {
       console.warn(`[API] getCausalGraph(${risk_event_id}) failed:`, err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -560,6 +599,7 @@ export async function postEquipmentStatus(id, { status, reason }) {
     } catch (err) {
       console.warn('[API] postEquipmentStatus live failed:', err.message);
       if (!err.isNetworkError) throw err;
+      announceMockFallback(err.message);
     }
   }
 
@@ -592,6 +632,7 @@ export async function postProduction({ site_id, date, actual_output, target_outp
     } catch (err) {
       console.warn('[API] postProduction live failed:', err.message);
       if (!err.isNetworkError) throw err;
+      announceMockFallback(err.message);
     }
   }
 
@@ -623,6 +664,7 @@ export async function getProduction({ site_id, days = 30 } = {}) {
       return await apiFetch(`/production?${q.toString()}`);
     } catch (err) {
       console.warn('[API] getProduction live failed, using mock:', err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -644,6 +686,7 @@ export async function getEquipment(site_id = null) {
       return await apiFetch(`/equipment${q}`);
     } catch (err) {
       console.warn('[API] getEquipment live failed:', err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -662,6 +705,7 @@ export async function getRiskEvents({ site_id = null, resolved = null } = {}) {
       if (res && res.length > 0) return res;
     } catch (err) {
       console.warn('[API] getRiskEvents live failed:', err.message);
+      announceMockFallback(err.message);
     }
   }
 
@@ -684,7 +728,12 @@ export async function getRiskEvents({ site_id = null, resolved = null } = {}) {
 /**
  * Upload a geological report PDF for entity extraction.
  * POST /reports/upload (multipart/form-data, field: "file")
- * Returns { deposit_id, depth, grade, structure_type, site_id }
+ * Returns {
+ *   filename, text_extracted: bool, deposit_count: int,
+ *   deposits: [{ deposit_id, depth, grade, structure_type, belt_zone }],
+ *   nodes_created: [{ id, label, type }],
+ *   warnings: [string],
+ * }
  */
 export async function uploadReport(file) {
   const formData = new FormData();
@@ -699,13 +748,18 @@ export async function uploadReport(file) {
     });
 
     if (!res.ok) {
+      // Backend error shape: { detail, error_code }
       let detail = `HTTP Error ${res.status}`;
+      let errorCode = null;
       try {
         const json = await res.json();
         if (json.detail) detail = typeof json.detail === 'string' ? json.detail : JSON.stringify(json.detail);
+        if (json.error_code) errorCode = json.error_code;
       } catch { /* not json */ }
       const err = new Error(detail);
       err.status = res.status;
+      err.errorCode = errorCode;
+      err.isServiceUnavailable = res.status === 503 || errorCode === 'SERVICE_UNAVAILABLE';
       throw err;
     }
     return await res.json();
@@ -713,6 +767,7 @@ export async function uploadReport(file) {
     if (err.name === 'TypeError' && (err.message.includes('fetch') || err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
       const netErr = new Error(`Cannot connect to API at ${BASE_URL}. Ensure FastAPI backend is running.`);
       netErr.isNetworkError = true;
+      netErr.isServiceUnavailable = true;
       throw netErr;
     }
     throw err;
@@ -724,9 +779,10 @@ export async function uploadReport(file) {
 // ───────────────────────────────────────────────────────────────────────
 
 /**
- * Search site notes via RAG.
+ * Search site notes via vector similarity ("RAG").
  * GET /site-notes/search?q={query}&site_id={siteId}
- * Returns { results: [{ note_id, text, score, site_id }] }
+ * Returns a bare array of hits:
+ *   [{ id, site_id, text, created_at, relevance }]   (relevance is a 0-1 float)
  */
 export async function searchSiteNotes(query, siteId) {
   const q = new URLSearchParams();
@@ -734,6 +790,28 @@ export async function searchSiteNotes(query, siteId) {
   if (siteId != null) q.set('site_id', siteId);
 
   const data = await apiFetch(`/site-notes/search?${q.toString()}`);
-  // Handle both { results: [...] } wrapper and bare array
+  // Tolerate both a bare array and a { results: [...] } wrapper.
   return Array.isArray(data) ? data : (data?.results || []);
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// 7. DEMO SCENARIOS (GET /demo/scenarios)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve the seeded demo scenarios to their CURRENT risk_events.id
+ * (the id shifts on every demo DB rebuild, so consumers must not hardcode it).
+ * GET /demo/scenarios
+ * Returns [{ key, scenario_name, available, risk_event_id, site_id,
+ *            site_name, risk_type, description, expected_recommendation }]
+ * On any failure returns [] — callers fall back to their own risk-event pick.
+ */
+export async function getDemoScenarios() {
+  try {
+    const data = await apiFetch('/demo/scenarios');
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.warn('[API] getDemoScenarios failed:', err.message);
+    return [];
+  }
 }

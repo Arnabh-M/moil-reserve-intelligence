@@ -351,17 +351,7 @@ doesn't need this — just follow Setup above as written.
 
 ## For frontend teammates
 
-> **2026-08-31 note:** on the dev machine right now, port 8000 is stuck held
-> by a stale Docker Desktop/WSL2 port-forwarding proxy left over from an
-> unrelated, already-removed container (port 8001 got contaminated the same
-> way later in the day too) — this doesn't affect anyone else's machine or a
-> fresh clone. **Today's server is running on port 8002 instead**
-> (`uvicorn app.main:app --port 8002`, without `--reload` for stability).
-> Swap `8000` for `8002` in everything below until this is fixed. To fix it
-> properly: fully quit Docker Desktop, run `wsl --shutdown` in PowerShell,
-> then restart Docker Desktop — that clears the stuck proxy layer.
-
-- **Base URL:** `http://localhost:8000` (**`:8002` today** — see note above)
+- **Base URL:** `http://localhost:8000`
 - **Interactive API docs (Swagger UI):** `http://localhost:8000/docs`
   (also available as ReDoc at `/redoc`)
 - **Full contract with real examples:** [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)

@@ -45,5 +45,6 @@ def list_reserve_zones(
             "zone_name": z.zone_name,
             "confidence_score": z.confidence_score,
             "estimated_grade_pct": z.estimated_grade_pct,
+            "estimated_depth_m": z.estimated_depth_m,
         },
     )
