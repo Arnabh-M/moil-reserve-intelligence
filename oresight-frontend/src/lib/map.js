@@ -14,9 +14,36 @@ export const MAP_CENTER = {
 }
 
 export const SAMPLE_SITES = [
-  { id: 'balaghat', name: 'Balaghat', latitude: 21.8, longitude: 80.2 },
-  { id: 'nagpur', name: 'Nagpur', latitude: 21.1, longitude: 79.1 },
-  { id: 'bhandara', name: 'Bhandara', latitude: 21.2, longitude: 79.6 },
+  {
+    id: 'balaghat',
+    name: 'Balaghat',
+    latitude: 21.8,
+    longitude: 80.2,
+    bounds: [
+      [80.0988, 21.7095],
+      [80.2810, 21.8910],
+    ],
+  },
+  {
+    id: 'nagpur',
+    name: 'Nagpur',
+    latitude: 21.1,
+    longitude: 79.1,
+    bounds: [
+      [79.0085, 21.0691],
+      [79.1715, 21.2314],
+    ],
+  },
+  {
+    id: 'bhandara',
+    name: 'Bhandara',
+    latitude: 21.2,
+    longitude: 79.6,
+    bounds: [
+      [79.5791, 21.0993],
+      [79.7210, 21.2405],
+    ],
+  },
 ]
 
 export const MAP_LAYERS = [
@@ -128,17 +155,18 @@ export const CONFIDENCE_BAND_COLORS = {
   'Very High': '#3f8f5f',
 }
 
-// Part 7.3 — flat fill keyed off the discrete band, never an interpolation.
+// Continuous scientific color ramp communicating low → high prospectivity/confidence,
+// consistent with CONFIDENCE_COLOR_RAMP (#c0392b -> #e0793a -> #3f8f5f) and ConfidenceLegend.
 export const PROSPECTIVITY_FILL_PAINT = {
   'fill-color': [
-    'match',
-    ['get', 'confidence_band'],
-    'Very Low', CONFIDENCE_BAND_COLORS['Very Low'],
-    'Low', CONFIDENCE_BAND_COLORS['Low'],
-    'Moderate', CONFIDENCE_BAND_COLORS['Moderate'],
-    'High', CONFIDENCE_BAND_COLORS['High'],
-    'Very High', CONFIDENCE_BAND_COLORS['Very High'],
-    '#999999',
+    'interpolate',
+    ['linear'],
+    ['coalesce', ['get', 'ensemble_confidence_score'], ['get', 'confidence_score'], 0],
+    0.0, '#8c2f22',
+    0.15, '#c0392b',
+    0.30, '#e0793a',
+    0.45, '#7a9a52',
+    0.60, '#3f8f5f',
   ],
   'fill-opacity': 1,
   // MapLibre defaults `fill-outline-color` to `fill-color`, which strokes EVERY

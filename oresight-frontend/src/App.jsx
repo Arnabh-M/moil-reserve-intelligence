@@ -7,7 +7,7 @@ import 'reactflow/dist/style.css';
 import { api } from './api/client';
 import { previewNotice, localPreferences } from './api/placeholders';
 import { ErrorBoundary } from './components/error-boundary';
-import { SAMPLE_SITES, DEFAULT_RASTER_OPACITY, prospectivityUrl, prospectivityBandsUrl } from './lib/map';
+import { SAMPLE_SITES, DEFAULT_RASTER_OPACITY, MAP_CENTER, MAP_ZOOM, prospectivityUrl, prospectivityBandsUrl } from './lib/map';
 import LayerToggle from './components/map/LayerToggle';
 import MineMap from './components/map/MineMap';
 import ZoneDetailPanel from './components/map/ZoneDetailPanel';
@@ -195,10 +195,28 @@ function MapPage() {
 
   function handleSiteSelect(siteId) {
     setSelectedSiteIdForFlyTo(siteId);
-    if (!siteId) { setProspectivitySiteId(null); return; }
+    if (!siteId) {
+      setProspectivitySiteId(null);
+      setSelectedZone(null);
+      setSelectedCell(null);
+      setFlyToTarget({
+        id: null,
+        longitude: MAP_CENTER.longitude,
+        latitude: MAP_CENTER.latitude,
+        zoom: MAP_ZOOM,
+      });
+      return;
+    }
     const site = SAMPLE_SITES.find((s) => s.id === siteId);
     if (site) {
-      setFlyToTarget({ id: site.id, name: site.name, latitude: site.latitude, longitude: site.longitude, zoom: 11 });
+      setFlyToTarget({
+        id: site.id,
+        name: site.name,
+        latitude: site.latitude,
+        longitude: site.longitude,
+        bounds: site.bounds,
+        zoom: 11,
+      });
       setProspectivitySiteId(site.id);
     }
   }
@@ -231,6 +249,7 @@ function MapPage() {
         onNdviChange={setNdviVisible}
         rasterOpacity={rasterOpacity}
         onRasterOpacityChange={setRasterOpacity}
+        selectedSiteId={selectedSiteIdForFlyTo}
       />
       <div style={{ position: 'relative', minWidth: 0, flex: 1, height: '100%' }}>
         <div className="card" style={{ position: 'absolute', top: 16, right: 16, zIndex: 20, display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px' }}>
@@ -257,6 +276,7 @@ function MapPage() {
           onWeekChange={setSelectedWeek}
           onZoneSelect={setSelectedZone}
           flyToTarget={flyToTarget}
+          selectedSiteId={selectedSiteIdForFlyTo}
           crossSectionActive={crossSectionActive}
           onToggleCrossSection={() => setCrossSectionActive(!crossSectionActive)}
           onSelectCrossSectionPoint={handleSelectCrossSectionPoint}

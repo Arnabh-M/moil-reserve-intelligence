@@ -48,6 +48,7 @@ export default function MineMap({
   onWeekChange,
   onZoneSelect,
   flyToTarget = null,
+  selectedSiteId: selectedSiteIdProp = null,
   crossSectionActive = false,
   onToggleCrossSection,
   onSelectCrossSectionPoint,
@@ -58,13 +59,14 @@ export default function MineMap({
   onProspectivityCellSelect,
 }) {
   const mapRef = useRef(null)
-  const [selectedSiteId, setSelectedSiteId] = useState(null)
+  const [selectedSiteIdState, setSelectedSiteIdState] = useState(null)
+  const effectiveSiteId = selectedSiteIdProp ?? selectedSiteIdState
   const [popupCoord, setPopupCoord] = useState(null)
   const [reserveZones, setReserveZones] = useState(null)
   const [structuralLines, setStructuralLines] = useState(null)
   const [zonesStatus, setZonesStatus] = useState('loading')
 
-  const selectedSite = SAMPLE_SITES.find((site) => site.id === selectedSiteId)
+  const selectedSite = SAMPLE_SITES.find((site) => site.id === effectiveSiteId)
 
   // Load Reserve Zones GeoJSON
   useEffect(() => {
@@ -110,19 +112,30 @@ export default function MineMap({
     }
   }, [])
 
-  // Smooth Fly-To effect when flyToTarget changes (Day 4)
+  // Smooth Fly-To / Fit-Bounds effect when flyToTarget changes (Day 4 & P2 Single-Mine Focus)
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
-      // Part 7.2 — 1.2 s eased transition to the selected site's boundary.
-      mapRef.current.flyTo({
-        center: [flyToTarget.longitude, flyToTarget.latitude],
-        zoom: flyToTarget.zoom ?? 10.5,
-        duration: 1200,
-        essential: true,
-      })
+      if (flyToTarget.bounds) {
+        // Fit bounds for precise site extent
+        mapRef.current.fitBounds(flyToTarget.bounds, {
+          padding: 60,
+          duration: 1200,
+          essential: true,
+        })
+      } else {
+        // Fallback or regional reset flyTo
+        mapRef.current.flyTo({
+          center: [flyToTarget.longitude, flyToTarget.latitude],
+          zoom: flyToTarget.zoom ?? 10.5,
+          duration: 1200,
+          essential: true,
+        })
+      }
+      setSelectedSiteIdState(flyToTarget.id || null)
       if (flyToTarget.id) {
-        setSelectedSiteId(flyToTarget.id)
         setPopupCoord([flyToTarget.longitude, flyToTarget.latitude])
+      } else {
+        setPopupCoord(null)
       }
     }
   }, [flyToTarget])
@@ -173,7 +186,7 @@ export default function MineMap({
     const siteFeature = event.features?.find((f) => f.layer.id === UNCLUSTERED_POINT_LAYER_ID)
     if (siteFeature) {
       const siteId = siteFeature.properties.id
-      setSelectedSiteId(siteId)
+      setSelectedSiteIdState(siteId)
       setPopupCoord(siteFeature.geometry.coordinates)
       onZoneSelect(null)
       return
@@ -185,12 +198,12 @@ export default function MineMap({
     )
     if (zoneFeature && prospectivityVisible) {
       onZoneSelect(zoneFeature.properties)
-      setSelectedSiteId(null)
+      setSelectedSiteIdState(null)
       return
     }
 
     // Default: clear selection
-    setSelectedSiteId(null)
+    setSelectedSiteIdState(null)
     onZoneSelect(null)
   }
 
@@ -211,12 +224,39 @@ export default function MineMap({
     canvas.style.cursor = overInteractive ? 'pointer' : ''
   }
 
+  // Priority 3 & Final Polish: Overlay separation & visual hierarchy
+  // Balance raster opacity when multiple full-extent layers are active
+  const effectiveRasterOpacity = useMemo(() => {
+    if (spectralVisible && ndviVisible) {
+      return Math.max(0.2, rasterOpacity * 0.7)
+    }
+    return rasterOpacity
+  }, [spectralVisible, ndviVisible, rasterOpacity])
+
+  // Restrain supporting raster opacity so they serve as gentle background context without overpowering prospectivity
+  const supportingRasterOpacity = useMemo(() => {
+    // If primary prospectivity surface is active for a site, keep supporting rasters subtle (capped at 0.32)
+    if (prospectivityVisible && prospectivityData) {
+      const base =
+        spectralVisible && ndviVisible
+          ? Math.max(0.18, rasterOpacity * 0.42)
+          : Math.max(0.2, rasterOpacity * 0.48)
+      return Math.min(0.32, base)
+    }
+    return effectiveRasterOpacity
+  }, [spectralVisible, ndviVisible, prospectivityVisible, prospectivityData, rasterOpacity, effectiveRasterOpacity])
+
+  // Ensure primary prospectivity surface maintains prominent analytical visual weight
+  const prospectivityFillOpacity = useMemo(() => {
+    return Math.min(0.88, Math.max(0.65, rasterOpacity))
+  }, [rasterOpacity])
+
   const interactiveLayerIds = useMemo(() => {
     const ids = [CLUSTERS_LAYER_ID, UNCLUSTERED_POINT_LAYER_ID]
-    if (prospectivityVisible && reserveZones) {
+    if (prospectivityVisible && reserveZones && !prospectivityData) {
       ids.push(RESERVE_ZONES_FILL_LAYER_ID)
     }
-    if (prospectivityData) {
+    if (prospectivityVisible && prospectivityData) {
       ids.push(PROSPECTIVITY_FILL_LAYER_ID)
     }
     return ids
@@ -237,7 +277,7 @@ export default function MineMap({
         onClick={handleMapClick}
         onMouseMove={handleMouseMove}
       >
-        {/* Spectral Alteration ImageSource + Raster Layer */}
+        {/* Supporting Raster 1: Spectral Alteration (Restrained background when prospectivity is active) */}
         <Source
           id={SPECTRAL_LAYER_CONFIG.sourceId}
           type="image"
@@ -247,14 +287,18 @@ export default function MineMap({
           <Layer
             id={SPECTRAL_LAYER_CONFIG.layerId}
             type="raster"
-            paint={{ 'raster-opacity': rasterOpacity, 'raster-fade-duration': 200 }}
+            paint={{
+              'raster-opacity': supportingRasterOpacity,
+              'raster-resampling': 'linear',
+              'raster-fade-duration': 200,
+            }}
             layout={{
               visibility: spectralVisible ? 'visible' : 'none',
             }}
           />
         </Source>
 
-        {/* Drone DSM / UAV Orthomosaic ImageSource + Raster Layer */}
+        {/* Supporting Raster 2: Drone DSM (Spatially localized to Balaghat Bharweli pit) */}
         <Source
           id={DRONE_LAYER_CONFIG.sourceId}
           type="image"
@@ -264,14 +308,21 @@ export default function MineMap({
           <Layer
             id={DRONE_LAYER_CONFIG.layerId}
             type="raster"
-            paint={{ 'raster-opacity': rasterOpacity, 'raster-fade-duration': 200 }}
+            paint={{
+              'raster-opacity': rasterOpacity,
+              'raster-resampling': 'linear',
+              'raster-fade-duration': 200,
+            }}
             layout={{
-              visibility: droneVisible ? 'visible' : 'none',
+              visibility:
+                droneVisible && (!effectiveSiteId || effectiveSiteId === 'balaghat' || effectiveSiteId === 1)
+                  ? 'visible'
+                  : 'none',
             }}
           />
         </Source>
 
-        {/* 4 Weekly NDVI ImageSource + Raster Layers */}
+        {/* Supporting Raster 3: Weekly NDVI Timeseries (Restrained background when prospectivity is active) */}
         {NDVI_TIMESERIES_CONFIG.map((week) => (
           <Source
             key={week.id}
@@ -283,7 +334,11 @@ export default function MineMap({
             <Layer
               id={`layer-${week.id}`}
               type="raster"
-              paint={{ 'raster-opacity': rasterOpacity, 'raster-fade-duration': 200 }}
+              paint={{
+                'raster-opacity': supportingRasterOpacity,
+                'raster-resampling': 'linear',
+                'raster-fade-duration': 200,
+              }}
               layout={{
                 visibility:
                   ndviVisible && selectedWeek === week.week_index
@@ -294,35 +349,48 @@ export default function MineMap({
           </Source>
         ))}
 
-        {/* PART 7.2/7.3/7.4 — Per-site prospectivity surface. Rendered ONLY when a
-            site has been selected and its GeoJSON loaded (7.1 keeps the default
-            view free of any heatmap). */}
-        {prospectivityData && (
-          <Source id={PROSPECTIVITY_SOURCE_ID} type="geojson" data={prospectivityData}>
-            {/* 7.3 — flat discrete band colors, no gradient, no blur. Cells carry
-                the per-cell properties the 7.10 detail panel reads on click.
-                7.5 — opacity from the shared slider so the basemap's roads and
-                place names stay legible underneath. */}
+        {/* Fallback Regional Reserve Zones (Only rendered when per-site prospectivity is not yet loaded) */}
+        {reserveZones && (
+          <Source id={RESERVE_ZONES_SOURCE_ID} type="geojson" data={reserveZones}>
             <Layer
-              id={PROSPECTIVITY_FILL_LAYER_ID}
+              id={RESERVE_ZONES_FILL_LAYER_ID}
               type="fill"
-              paint={{ ...PROSPECTIVITY_FILL_PAINT, 'fill-opacity': rasterOpacity }}
+              paint={RESERVE_ZONE_FILL_PAINT}
+              filter={
+                effectiveSiteId
+                  ? [
+                      'any',
+                      ['==', ['get', 'site_id'], effectiveSiteId],
+                      [
+                        '==',
+                        ['get', 'site_id'],
+                        effectiveSiteId === 'balaghat' ? 1 : effectiveSiteId === 'nagpur' ? 2 : effectiveSiteId === 'bhandara' ? 3 : -1,
+                      ],
+                    ]
+                  : ['literal', true]
+              }
+              layout={{
+                visibility: prospectivityVisible && !prospectivityData ? 'visible' : 'none',
+              }}
             />
           </Source>
         )}
 
-        {/* Dissolved band polygons: outlines only. Kept in a separate source so
-            the hairline follows band boundaries rather than every cell edge. */}
-        {prospectivityBands && (
-          <Source id={PROSPECTIVITY_BANDS_SOURCE_ID} type="geojson" data={prospectivityBands}>
-            {/* 7.4 — blurred stroke along the dissolved outer ring only. */}
-            <Layer id={PROSPECTIVITY_EDGE_LAYER_ID} type="line" paint={PROSPECTIVITY_EDGE_PAINT} />
-            {/* 7.3 — crisp hairline where two bands meet. */}
-            <Layer id={PROSPECTIVITY_BOUNDARY_LAYER_ID} type="line" paint={PROSPECTIVITY_BOUNDARY_PAINT} />
+        {/* PRIMARY ANALYTICAL SURFACE: Per-site prospectivity surface */}
+        {prospectivityData && (
+          <Source id={PROSPECTIVITY_SOURCE_ID} type="geojson" data={prospectivityData}>
+            <Layer
+              id={PROSPECTIVITY_FILL_LAYER_ID}
+              type="fill"
+              paint={{ ...PROSPECTIVITY_FILL_PAINT, 'fill-opacity': prospectivityFillOpacity }}
+              layout={{
+                visibility: prospectivityVisible ? 'visible' : 'none',
+              }}
+            />
           </Source>
         )}
 
-        {/* Structural Lineament Vector Layer (Day 4) */}
+        {/* STRUCTURAL DATA: Structural Lineament Vector Layer (Rendered crisply across prospectivity) */}
         {structuralLines && (
           <Source id={STRUCTURAL_LINES_SOURCE_ID} type="geojson" data={structuralLines}>
             <Layer
@@ -339,13 +407,21 @@ export default function MineMap({
           </Source>
         )}
 
-        {/* Reserve Zones GeoJSON Heatmap Fill Layer */}
-        {reserveZones && (
-          <Source id={RESERVE_ZONES_SOURCE_ID} type="geojson" data={reserveZones}>
+        {/* Dissolved band polygons: subtle hairlines and outer edge feather */}
+        {prospectivityBands && (
+          <Source id={PROSPECTIVITY_BANDS_SOURCE_ID} type="geojson" data={prospectivityBands}>
             <Layer
-              id={RESERVE_ZONES_FILL_LAYER_ID}
-              type="fill"
-              paint={RESERVE_ZONE_FILL_PAINT}
+              id={PROSPECTIVITY_EDGE_LAYER_ID}
+              type="line"
+              paint={PROSPECTIVITY_EDGE_PAINT}
+              layout={{
+                visibility: prospectivityVisible ? 'visible' : 'none',
+              }}
+            />
+            <Layer
+              id={PROSPECTIVITY_BOUNDARY_LAYER_ID}
+              type="line"
+              paint={PROSPECTIVITY_BOUNDARY_PAINT}
               layout={{
                 visibility: prospectivityVisible ? 'visible' : 'none',
               }}
@@ -434,7 +510,7 @@ export default function MineMap({
             closeButton
             closeOnClick={false}
             onClose={() => {
-              setSelectedSiteId(null)
+              setSelectedSiteIdState(null)
               setPopupCoord(null)
             }}
           >
@@ -485,6 +561,7 @@ export default function MineMap({
             spectralVisible={spectralVisible}
             droneVisible={droneVisible}
             ndviVisible={ndviVisible}
+            selectedSiteId={effectiveSiteId}
           />
         </div>
       </div>

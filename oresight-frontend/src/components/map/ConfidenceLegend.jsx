@@ -9,18 +9,22 @@ export default function ConfidenceLegend({
   spectralVisible = false,
   droneVisible = false,
   ndviVisible = false,
+  selectedSiteId = null,
 }) {
   const [collapsed, setCollapsed] = useState(true);
 
   // Backward-compatibility: if `visible` prop is explicitly provided, treat it as prospectivityVisible
   const showProspectivity = prospectivityVisible || (visible && !lineamentVisible && !spectralVisible && !droneVisible && !ndviVisible);
 
+  // Task 4: Drone DSM is localized exclusively to the Balaghat open-cast pit
+  const showDrone = droneVisible && (!selectedSiteId || selectedSiteId === 'balaghat' || selectedSiteId === 1);
+
   // Count active layers that have legend representations
   const activeLayersCount = [
     showProspectivity,
     lineamentVisible,
     spectralVisible,
-    droneVisible,
+    showDrone,
     ndviVisible,
   ].filter(Boolean).length;
 
@@ -125,7 +129,7 @@ export default function ConfidenceLegend({
           )}
 
           {/* 4. Drone DSM */}
-          {droneVisible && (
+          {showDrone && (
             <div className="flex items-center justify-between pt-0.5">
               <div>
                 <span className="font-semibold text-navy text-[11px] block">Drone Orthomosaic</span>

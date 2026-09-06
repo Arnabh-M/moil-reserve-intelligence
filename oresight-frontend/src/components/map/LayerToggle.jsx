@@ -16,8 +16,10 @@ export default function LayerToggle({
   onNdviChange,
   rasterOpacity,
   onRasterOpacityChange,
+  selectedSiteId = null,
 }) {
-  const anyRasterLayerVisible = spectralVisible || droneVisible || ndviVisible
+  const anyRasterLayerVisible =
+    prospectivityVisible || spectralVisible || droneVisible || ndviVisible
   const [enabled, setEnabled] = useState(() =>
     Object.fromEntries(
       MAP_LAYERS.filter(
@@ -75,20 +77,31 @@ export default function LayerToggle({
 
       <div className="flex-1 overflow-y-auto p-4">
         <Card className="space-y-1 p-0" noPadding>
-          {MAP_LAYERS.map((layer) => (
-            <label
-              key={layer.id}
-              className="flex cursor-pointer items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 transition-colors duration-150 hover:bg-bg/60"
-            >
-              <input
-                type="checkbox"
-                checked={isLayerChecked(layer.id)}
-                onChange={() => handleToggle(layer.id)}
-                className="h-4 w-4 rounded-sm border-border text-orange focus:ring-orange/40"
-              />
-              <span className="text-sm font-medium text-navy">{layer.label}</span>
-            </label>
-          ))}
+          {MAP_LAYERS.map((layer) => {
+            const isDsmUnavailable =
+              layer.id === 'dsm' &&
+              Boolean(selectedSiteId && selectedSiteId !== 'balaghat' && selectedSiteId !== 1)
+
+            return (
+              <label
+                key={layer.id}
+                className="flex cursor-pointer items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 transition-colors duration-150 hover:bg-bg/60"
+              >
+                <input
+                  type="checkbox"
+                  checked={isLayerChecked(layer.id)}
+                  onChange={() => handleToggle(layer.id)}
+                  className="h-4 w-4 rounded-sm border-border text-orange focus:ring-orange/40"
+                />
+                <span className="text-sm font-medium text-navy">{layer.label}</span>
+                {isDsmUnavailable && (
+                  <span className="ml-auto text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                    Balaghat only
+                  </span>
+                )}
+              </label>
+            )
+          })}
         </Card>
 
         {anyRasterLayerVisible && (
