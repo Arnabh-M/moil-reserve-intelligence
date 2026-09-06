@@ -13,7 +13,11 @@ services:
       POSTGRES_PASSWORD: oresight
       POSTGRES_DB: oresight
     ports:
-      - "5432:5432"
+      # Host port kept at 5433 (not the default 5432) to match
+      # DATABASE_URL in .env, which was already set up against
+      # docker-compose.local.yml's mapping — changed here instead of in
+      # .env so this file, not the gitignored one, carries the fix.
+      - "5433:5432"
     volumes:
       - oresight_postgres_data:/var/lib/postgresql/data
     healthcheck:

@@ -15,3 +15,7 @@ dist/
 
 # Claude Code temporary worktrees
 .claude/worktrees/
+
+# Reference clone of the Replit-built frontend (own git history; kept locally
+# for comparison, not tracked in this repo — see oresight-frontend/ instead)
+/temp-replit-import/

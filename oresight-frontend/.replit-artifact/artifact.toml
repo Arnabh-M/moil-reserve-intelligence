@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "OreSight Mine Intelligence"
+description = "A frontend-only mine reserve intelligence console for production planners, combining risk triage, equipment operations, reserve zones, causal graphs, recommendations, field intake, and scenario simulation."
+version = "1.0.0"
+id = "artifacts/oresight"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19825
+
+[services.development]
+run = "pnpm --filter @workspace/oresight run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/oresight", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/oresight/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19825"
+BASE_PATH = "/"

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, ShieldAlert, Award, Layers, MapPin, Network, Loader2, AlertCircle, Activity } from 'lucide-react';
 import Badge from '../Badge';
 import CausalGraph from '../CausalGraph';
-import { getCausalGraph, getRiskEvents } from '../../api/client';
+import { api } from '../../api/client';
 
 export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCrossSection }) {
   const [graphState, setGraphState] = useState({
@@ -31,7 +31,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
       // 2. If not directly present, check if risk events exist for this zone's site
       if (!eventId && zone.site_id) {
         try {
-          const events = await getRiskEvents({ site_id: zone.site_id });
+          const events = await api.getRiskEvents(zone.site_id);
           if (events && events.length > 0) {
             // Pick active/unresolved event or fallback to the primary event
             const activeEvent = events.find((e) => !e.resolved) || events[0];
@@ -66,7 +66,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
       }
 
       try {
-        const graphData = await getCausalGraph(eventId);
+        const graphData = await api.getCausalGraph(eventId);
         if (!cancelled) {
           setGraphState({
             status: 'ready',

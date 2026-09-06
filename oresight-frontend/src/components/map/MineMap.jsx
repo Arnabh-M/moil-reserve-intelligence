@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, Loader2 } from 'lucide-react'
 import Map, { Layer, Marker, Popup, Source } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { getReserveZones } from '../../api/client'
+import { api } from '../../api/client'
 import {
   MAP_CENTER,
   MAP_STYLE,
@@ -72,7 +72,7 @@ export default function MineMap({
 
     async function loadReserveZones() {
       try {
-        const data = await getReserveZones()
+        const data = await api.getReserveZones()
         if (!cancelled) {
           setReserveZones(data)
           setZonesStatus('ready')
