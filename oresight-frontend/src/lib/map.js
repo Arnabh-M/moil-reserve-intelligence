@@ -5,12 +5,18 @@
 // bright/colorful basemap competes with the data layers drawn on top of it.
 export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
 
-export const MAP_ZOOM = 7
+export const MAP_ZOOM = 8.2
 
-// Centered on the Balaghat / Nagpur / Bhandara belt
+// 3-Area Regional Extent derived from the actual combined bounds of Balaghat, Nagpur, and Bhandara
+export const REGIONAL_BOUNDS = [
+  [79.0085, 21.0691], // Southwest [lng, lat] (Nagpur SW)
+  [80.2810, 21.8910], // Northeast [lng, lat] (Balaghat NE)
+]
+
+// Geographic midpoint of the 3 operational areas
 export const MAP_CENTER = {
-  latitude: 21.367,
-  longitude: 79.633,
+  latitude: 21.48,
+  longitude: 79.645,
 }
 
 export const SAMPLE_SITES = [

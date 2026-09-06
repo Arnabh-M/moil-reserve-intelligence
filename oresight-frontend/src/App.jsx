@@ -7,7 +7,7 @@ import 'reactflow/dist/style.css';
 import { api } from './api/client';
 import { previewNotice, localPreferences } from './api/placeholders';
 import { ErrorBoundary } from './components/error-boundary';
-import { SAMPLE_SITES, DEFAULT_RASTER_OPACITY, MAP_CENTER, MAP_ZOOM, prospectivityUrl, prospectivityBandsUrl } from './lib/map';
+import { SAMPLE_SITES, DEFAULT_RASTER_OPACITY, MAP_CENTER, MAP_ZOOM, REGIONAL_BOUNDS, prospectivityUrl, prospectivityBandsUrl } from './lib/map';
 import LayerToggle from './components/map/LayerToggle';
 import MineMap from './components/map/MineMap';
 import ZoneDetailPanel from './components/map/ZoneDetailPanel';
@@ -201,6 +201,7 @@ function MapPage() {
       setSelectedCell(null);
       setFlyToTarget({
         id: null,
+        bounds: REGIONAL_BOUNDS,
         longitude: MAP_CENTER.longitude,
         latitude: MAP_CENTER.latitude,
         zoom: MAP_ZOOM,
@@ -275,6 +276,7 @@ function MapPage() {
           selectedWeek={selectedWeek}
           onWeekChange={setSelectedWeek}
           onZoneSelect={setSelectedZone}
+          onSiteSelect={handleSiteSelect}
           flyToTarget={flyToTarget}
           selectedSiteId={selectedSiteIdForFlyTo}
           crossSectionActive={crossSectionActive}

@@ -7,6 +7,7 @@ import {
   MAP_CENTER,
   MAP_STYLE,
   MAP_ZOOM,
+  REGIONAL_BOUNDS,
   RESERVE_ZONES_FILL_LAYER_ID,
   RESERVE_ZONES_SOURCE_ID,
   RESERVE_ZONE_FILL_PAINT,
@@ -47,6 +48,7 @@ export default function MineMap({
   selectedWeek = 4,
   onWeekChange,
   onZoneSelect,
+  onSiteSelect = null,
   flyToTarget = null,
   selectedSiteId: selectedSiteIdProp = null,
   crossSectionActive = false,
@@ -67,6 +69,19 @@ export default function MineMap({
   const [zonesStatus, setZonesStatus] = useState('loading')
 
   const selectedSite = SAMPLE_SITES.find((site) => site.id === effectiveSiteId)
+
+  // On mount, frame the 3-area regional operational extent (Part 5)
+  const initialFramedRef = useRef(false)
+  const onMapLoad = () => {
+    if (!initialFramedRef.current && !flyToTarget?.id && mapRef.current) {
+      initialFramedRef.current = true
+      mapRef.current.fitBounds(REGIONAL_BOUNDS, {
+        padding: 60,
+        duration: 0,
+        essential: true,
+      })
+    }
+  }
 
   // Load Reserve Zones GeoJSON
   useEffect(() => {
@@ -182,13 +197,16 @@ export default function MineMap({
       return
     }
 
-    // 3. Click on Unclustered Site Marker: select site & open popup
+    // 3. Click on Unclustered Site Marker: select site & trigger single-mine focus (Part 6)
     const siteFeature = event.features?.find((f) => f.layer.id === UNCLUSTERED_POINT_LAYER_ID)
     if (siteFeature) {
       const siteId = siteFeature.properties.id
       setSelectedSiteIdState(siteId)
       setPopupCoord(siteFeature.geometry.coordinates)
       onZoneSelect(null)
+      if (onSiteSelect) {
+        onSiteSelect(siteId)
+      }
       return
     }
 
@@ -276,6 +294,7 @@ export default function MineMap({
         interactiveLayerIds={interactiveLayerIds}
         onClick={handleMapClick}
         onMouseMove={handleMouseMove}
+        onLoad={onMapLoad}
       >
         {/* Supporting Raster 1: Spectral Alteration (Restrained background when prospectivity is active) */}
         <Source
@@ -429,13 +448,13 @@ export default function MineMap({
           </Source>
         )}
 
-        {/* Clustered Site Markers (Day 4) */}
+        {/* Clustered Site Markers (Day 4 & Part 5 Operational Focus) */}
         <Source
           id={SITES_SOURCE_ID}
           type="geojson"
           data={SITES_GEOJSON}
           cluster={true}
-          clusterMaxZoom={8}
+          clusterMaxZoom={7}
           clusterRadius={45}
         >
           {/* Soft shadow beneath individual site markers for legibility over overlays */}
@@ -483,6 +502,25 @@ export default function MineMap({
               'circle-radius': 8,
               'circle-stroke-width': 2.5,
               'circle-stroke-color': '#ffffff',
+            }}
+          />
+
+          {/* Site Name Labels for the 3 Operational Areas (Part 5) */}
+          <Layer
+            id="site-labels"
+            type="symbol"
+            filter={['!', ['has', 'point_count']]}
+            layout={{
+              'text-field': '{name} Mine',
+              'text-size': 11,
+              'text-offset': [0, 1.2],
+              'text-anchor': 'top',
+              'text-allow-overlap': true,
+            }}
+            paint={{
+              'text-color': '#1a202c',
+              'text-halo-color': '#ffffff',
+              'text-halo-width': 2,
             }}
           />
         </Source>
