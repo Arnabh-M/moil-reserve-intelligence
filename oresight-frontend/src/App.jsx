@@ -425,7 +425,12 @@ function FieldIntakePageLegacy() {
 
 function FieldIntakePage() {
   const { data, loading, error, retry } = useAsync(() => api.getFieldWorkspace(), []);
-  const [active, setActive] = useState('equipment');
+  // Same ?tab= pattern as SitePage, so Field Intake also survives a hard
+  // refresh and back/forward navigation instead of always resetting to
+  // "Equipment".
+  const [searchParams, setSearchParams] = useSearchParams();
+  const active = searchParams.get('tab') || 'equipment';
+  const setActive = (next) => setSearchParams({ tab: next });
   const [equipmentRows, setEquipmentRows] = useState([]);
   const [note, setNote] = useState('');
   const [searchInput, setSearchInput] = useState('');
