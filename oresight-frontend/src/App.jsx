@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowUpRight, BarChart3, Bell, Check, ChevronRight, CircleHelp, ClipboardList, Database, Download, FileText, Gauge, GitBranch, Home, Layers3, MapPin, Loader2, Map as MapIcon, Menu, Moon, RefreshCw, Search, Settings as SettingsIcon, ShieldCheck, SlidersHorizontal, Sun, Truck, X, Zap } from 'lucide-react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, AreaChart, Area, BarChart, Bar, CartesianGrid } from 'recharts';
@@ -13,10 +13,14 @@ import MineMap from './components/map/MineMap';
 import ZoneDetailPanel from './components/map/ZoneDetailPanel';
 import CrossSectionDrawer from './components/map/CrossSectionDrawer';
 import ProspectivityCellPanel from './components/map/ProspectivityCellPanel';
-import EquipmentTab from './components/field-intake/EquipmentTab';
-import ProductionTab from './components/field-intake/ProductionTab';
-import GeologyTab from './components/field-intake/GeologyTab';
-import BlastLogTab from './components/field-intake/BlastLogTab';
+// Lazy-loaded: a missing/broken dependency in one Field Intake tab (see
+// react-window, which shipped in package.json without a matching install)
+// should only break that tab, not the whole router — every route used to
+// 500 because these were eager top-level imports in App.jsx.
+const EquipmentTab = lazy(() => import('./components/field-intake/EquipmentTab'));
+const ProductionTab = lazy(() => import('./components/field-intake/ProductionTab'));
+const GeologyTab = lazy(() => import('./components/field-intake/GeologyTab'));
+const BlastLogTab = lazy(() => import('./components/field-intake/BlastLogTab'));
 
 const navGroups = [
   { label: 'Command', links: [{ to: '/', label: 'Dashboard', icon: Home }, { to: '/map', label: 'Reserve map', icon: MapIcon }, { to: '/reports', label: 'Reports & insights', icon: BarChart3 }] },
@@ -43,6 +47,7 @@ function useAsync(load, deps = []) {
 
 function LoadingCard({ lines = 4 }) { return <div className="card section-card" aria-label="Loading"><div className="skeleton" style={{ width: '38%', marginBottom: 16 }} />{Array.from({ length: lines }).map((_, i) => <div className="skeleton" key={i} style={{ width: `${78 - i * 8}%`, marginBottom: 11 }} />)}</div>; }
 function ErrorState({ retry }) { return <div className="error-box"><strong>Could not load this view</strong><p className="subhead">The intelligence service did not return a usable response. Try again or keep working from the last known plan.</p><button className="btn small" onClick={retry} data-testid="button-retry"><RefreshCw size={13} /> Retry</button></div>; }
+function FieldIntakeTabFallback({ error, resetError }) { return <div className="error-box"><strong>This tab could not load</strong><p className="subhead">{error?.message || 'Something went wrong loading this Field Intake tab.'} The rest of the app is unaffected — try another tab or retry this one.</p><button className="btn small" onClick={resetError} data-testid="button-retry-field-intake-tab"><RefreshCw size={13} /> Retry</button></div>; }
 function EmptyState({ icon: Icon = ClipboardList, title = 'Nothing to show', children = 'No records match the current filters.' }) { return <div className="empty"><Icon size={25} /><strong>{title}</strong><div className="subhead">{children}</div></div>; }
 
 function Shell({ children }) {
@@ -377,10 +382,12 @@ function FieldIntakePage() {
   const saveNote = async () => { if (!note.trim()) { showToast('Validation: note text is required.'); return; } try { await api.createSiteNote({ site_id: 1, text: note }); setNote(''); showToast('Note added to Balaghat field log'); } catch (noteError) { showToast(noteError.status === 409 ? '409 conflict: the note was updated elsewhere.' : noteError.detail || 'Note save failed'); } };
   const notes = query ? searchedNotes : data.notes;
   return <main className="page"><div className="page-head"><div><div className="eyebrow">Field intake · operations loop</div><h1>Bring the shift into the model</h1><p className="subhead">Capture equipment status, production reality, geology documents, and the notes that explain the deviation.</p></div></div><div className="tabs">{['equipment', 'production', 'blasting', 'geology', 'notes'].map((item) => <button className={`tab ${active === item ? 'active' : ''}`} onClick={() => setActive(item)} key={item} data-testid={`tab-field-${item}`}>{item[0].toUpperCase() + item.slice(1)}</button>)}</div>
-    {active === 'equipment' && <EquipmentTab equipmentRows={equipmentRows} setEquipmentRows={setEquipmentRows} onStatusChange={onStatusChange} showToast={showToast} refetchAll={refetchEquipment} />}
-    {active === 'production' && <ProductionTab showToast={showToast} />}
-    {active === 'blasting' && <BlastLogTab showToast={showToast} />}
-    {active === 'geology' && <GeologyTab />}
+    {['equipment', 'production', 'blasting', 'geology'].includes(active) && <ErrorBoundary resetKey={active} FallbackComponent={FieldIntakeTabFallback}><Suspense fallback={<LoadingCard lines={6} />}>
+      {active === 'equipment' && <EquipmentTab equipmentRows={equipmentRows} setEquipmentRows={setEquipmentRows} onStatusChange={onStatusChange} showToast={showToast} refetchAll={refetchEquipment} />}
+      {active === 'production' && <ProductionTab showToast={showToast} />}
+      {active === 'blasting' && <BlastLogTab showToast={showToast} />}
+      {active === 'geology' && <GeologyTab />}
+    </Suspense></ErrorBoundary>}
     {active === 'notes' && <div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Site notes</div><div className="card-kicker">GET /site-notes/search · searchable field context</div></div><Search size={15} /></div><input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notes by keyword" data-testid="input-search-notes" />{notes.length ? notes.map((item) => <div className="risk-item" key={item.id}><div className="risk-marker medium" /><div className="risk-item-main"><div className="risk-title">{item.text}</div><div className="risk-meta">{dateLabel(item.created_at)} · relevance {percent(item.relevance)}</div></div></div>) : <EmptyState icon={Search} title="No notes found" />}</section><section className="card section-card"><div className="card-title">Add shift note</div><p className="subhead">Notes are local preview writes and are attached to Balaghat (site 1).</p><textarea className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Record a site observation…" style={{ width: '100%', marginTop: 14 }} data-testid="textarea-site-note" /><button className="btn primary" onClick={saveNote} style={{ marginTop: 10 }} data-testid="button-save-note"><Check size={13} /> Save note</button><div className="alert-strip" style={{ marginTop: 18 }}><CircleHelp size={15} /><span>Live API conflict responses (409) are shown inline so stale writes can be reviewed before retrying.</span></div></section></div>}
     {toast && <div className="toast">{toast}</div>}</main>;
 }
