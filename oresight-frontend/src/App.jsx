@@ -402,11 +402,16 @@ function FieldIntakePage() {
   const [active, setActive] = useState('equipment');
   const [equipmentRows, setEquipmentRows] = useState([]);
   const [note, setNote] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [query, setQuery] = useState('');
   const [searchedNotes, setSearchedNotes] = useState([]);
   const [toast, setToast] = useState('');
   useEffect(() => { if (data) setEquipmentRows(data.equipment); }, [data]);
-  useEffect(() => { if (data) api.searchSiteNotes(query, 1).then(setSearchedNotes).catch(() => setSearchedNotes([])); }, [query, data]);
+  // Debounce, and trim before checking length: the backend rejects both an
+  // empty `q` (min_length=1) and a whitespace-only one with a 400, and this
+  // used to fire on first paint with q='' before the user had typed anything.
+  useEffect(() => { const handle = setTimeout(() => setQuery(searchInput.trim()), 250); return () => clearTimeout(handle); }, [searchInput]);
+  useEffect(() => { if (data && query) api.searchSiteNotes(query, 1).then(setSearchedNotes).catch(() => setSearchedNotes([])); }, [query, data]);
   if (loading) return <main className="page"><LoadingCard lines={10} /></main>;
   if (error) return <main className="page"><ErrorState retry={retry} /></main>;
   const showToast = (message) => { setToast(message); setTimeout(() => setToast(''), 2600); };
@@ -421,7 +426,7 @@ function FieldIntakePage() {
       {active === 'blasting' && <BlastLogTab showToast={showToast} />}
       {active === 'geology' && <GeologyTab />}
     </Suspense></ErrorBoundary>}
-    {active === 'notes' && <div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Site notes</div><div className="card-kicker">GET /site-notes/search · searchable field context</div></div><Search size={15} /></div><input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notes by keyword" data-testid="input-search-notes" />{notes.length ? notes.map((item) => <div className="risk-item" key={item.id}><div className="risk-marker medium" /><div className="risk-item-main"><div className="risk-title">{item.text}</div><div className="risk-meta">{dateLabel(item.created_at)} · relevance {percent(item.relevance)}</div></div></div>) : <EmptyState icon={Search} title="No notes found" />}</section><section className="card section-card"><div className="card-title">Add shift note</div><p className="subhead">Notes are local preview writes and are attached to Balaghat (site 1).</p><textarea className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Record a site observation…" style={{ width: '100%', marginTop: 14 }} data-testid="textarea-site-note" /><button className="btn primary" onClick={saveNote} style={{ marginTop: 10 }} data-testid="button-save-note"><Check size={13} /> Save note</button><div className="alert-strip" style={{ marginTop: 18 }}><CircleHelp size={15} /><span>Live API conflict responses (409) are shown inline so stale writes can be reviewed before retrying.</span></div></section></div>}
+    {active === 'notes' && <div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Site notes</div><div className="card-kicker">GET /site-notes/search · searchable field context</div></div><Search size={15} /></div><input className="input" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search notes by keyword" data-testid="input-search-notes" />{notes.length ? notes.map((item) => <div className="risk-item" key={item.id}><div className="risk-marker medium" /><div className="risk-item-main"><div className="risk-title">{item.text}</div><div className="risk-meta">{dateLabel(item.created_at)} · relevance {percent(item.relevance)}</div></div></div>) : <EmptyState icon={Search} title="No notes found" />}</section><section className="card section-card"><div className="card-title">Add shift note</div><p className="subhead">Notes are local preview writes and are attached to Balaghat (site 1).</p><textarea className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Record a site observation…" style={{ width: '100%', marginTop: 14 }} data-testid="textarea-site-note" /><button className="btn primary" onClick={saveNote} style={{ marginTop: 10 }} data-testid="button-save-note"><Check size={13} /> Save note</button><div className="alert-strip" style={{ marginTop: 18 }}><CircleHelp size={15} /><span>Live API conflict responses (409) are shown inline so stale writes can be reviewed before retrying.</span></div></section></div>}
     {toast && <div className="toast">{toast}</div>}</main>;
 }
 
