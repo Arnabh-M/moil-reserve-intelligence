@@ -71,20 +71,42 @@ function ErrorState({ retry }) { return <div className="error-box"><strong>Could
 function FieldIntakeTabFallback({ error, resetError }) { return <div className="error-box"><strong>This tab could not load</strong><p className="subhead">{error?.message || 'Something went wrong loading this Field Intake tab.'} The rest of the app is unaffected — try another tab or retry this one.</p><button className="btn small" onClick={resetError} data-testid="button-retry-field-intake-tab"><RefreshCw size={13} /> Retry</button></div>; }
 function EmptyState({ icon: Icon = ClipboardList, title = 'Nothing to show', children = 'No records match the current filters.' }) { return <div className="empty"><Icon size={25} /><strong>{title}</strong><div className="subhead">{children}</div></div>; }
 
+// No sidebar entry points at /site/:id directly (site pages are reached by
+// drilling into a Dashboard site card), so treat it as belonging under
+// Dashboard for nav highlighting, and resolve the real site name for the
+// breadcrumb independently -- Shell renders outside SitePage's own data
+// fetch, so it needs its own light-weight lookup rather than reading
+// SitePage's state.
+function useSiteBreadcrumbName(siteId) {
+  const [state, setState] = useState({ status: 'idle', name: null });
+  useEffect(() => {
+    if (!siteId) { setState({ status: 'idle', name: null }); return; }
+    let active = true;
+    setState({ status: 'loading', name: null });
+    api.getSite(siteId).then((site) => { if (active) setState({ status: 'ready', name: site?.name || null }); }).catch(() => { if (active) setState({ status: 'error', name: null }); });
+    return () => { active = false; };
+  }, [siteId]);
+  return state;
+}
+
 function Shell({ children }) {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem('oresight-theme') === 'dark');
   const location = useLocation();
+  const siteMatch = location.pathname.match(/^\/site\/([^/]+)$/);
+  const siteId = siteMatch ? siteMatch[1] : null;
+  const siteBreadcrumb = useSiteBreadcrumbName(siteId);
   const current = navGroups.flatMap((g) => g.links).find((link) => link.to === location.pathname || (link.to !== '/' && location.pathname.startsWith(link.to)));
+  const breadcrumbLabel = siteId ? (siteBreadcrumb.status === 'ready' && siteBreadcrumb.name ? siteBreadcrumb.name : siteBreadcrumb.status === 'loading' ? 'Loading site…' : 'Site intelligence') : (current?.label || 'Workspace');
   useEffect(() => { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('oresight-theme', dark ? 'dark' : 'light'); }, [dark]);
   return <div className="app-shell">
     <aside className={`sidebar ${open ? 'open' : ''}`}>
       <div className="brand"><div className="brand-mark">O</div><div><div className="brand-word">OreSight</div><span className="brand-sub">mine intelligence</span></div></div>
-      {navGroups.map((group) => <div className="nav-group" key={group.label}><div className="nav-label">{group.label}</div>{group.links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `nav-link ${isActive || (to !== '/' && location.pathname.startsWith(to)) ? 'active' : ''}`} data-testid={`link-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={15} strokeWidth={1.8} /><span>{label}</span>{label === 'Dashboard' && <span style={{ marginLeft: 'auto', font: '9px var(--app-font-mono)', color: 'hsl(var(--primary))' }}>04</span>}</NavLink>)}</div>)}
+      {navGroups.map((group) => <div className="nav-group" key={group.label}><div className="nav-label">{group.label}</div>{group.links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => `nav-link ${isActive || (to !== '/' && location.pathname.startsWith(to)) || (to === '/' && Boolean(siteId)) ? 'active' : ''}`} data-testid={`link-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={15} strokeWidth={1.8} /><span>{label}</span>{label === 'Dashboard' && <span style={{ marginLeft: 'auto', font: '9px var(--app-font-mono)', color: 'hsl(var(--primary))' }}>04</span>}</NavLink>)}</div>)}
       <div className="sidebar-footer"><div className="user-chip"><div className="avatar">AK</div><div><div className="user-name">Anika Kulkarni</div><div className="user-role">Planning lead · IN-WEST</div></div></div></div>
     </aside>
     <div className="main-col">
-      <header className="topbar"><div className="breadcrumb"><button className="btn ghost mobile-toggle" onClick={() => setOpen(!open)} aria-label="Open navigation" data-testid="button-open-navigation"><Menu size={17} /></button><span>OreSight</span><ChevronRight size={13} /><strong>{current?.label || 'Workspace'}</strong></div><div className="top-actions"><button className="btn ghost small" title="Toggle theme" onClick={() => setDark(!dark)} data-testid="button-toggle-theme">{dark ? <Sun size={15} /> : <Moon size={15} />}</button><button className="btn ghost small" title="Notifications" data-testid="button-notifications"><Bell size={15} /></button></div></header>
+      <header className="topbar"><div className="breadcrumb"><button className="btn ghost mobile-toggle" onClick={() => setOpen(!open)} aria-label="Open navigation" data-testid="button-open-navigation"><Menu size={17} /></button><span>OreSight</span><ChevronRight size={13} /><strong>{breadcrumbLabel}</strong></div><div className="top-actions"><button className="btn ghost small" title="Toggle theme" onClick={() => setDark(!dark)} data-testid="button-toggle-theme">{dark ? <Sun size={15} /> : <Moon size={15} />}</button><button className="btn ghost small" title="Notifications" data-testid="button-notifications"><Bell size={15} /></button></div></header>
       {children}
     </div>
   </div>;
