@@ -132,7 +132,7 @@ export default function ConfidenceLegend({
           {showDrone && (
             <div className="flex items-center justify-between pt-0.5">
               <div>
-                <span className="font-semibold text-navy text-[11px] block">Drone Orthomosaic</span>
+                <span className="font-semibold text-navy text-[11px] block">Drone / UAV Orthomosaic</span>
                 <span className="text-[10px] text-slate-500">UAV RGB · {DRONE_LAYER_CONFIG.date}</span>
               </div>
               <span className="text-[10px] font-mono font-medium text-teal bg-teal/10 px-1.5 py-0.5 rounded">

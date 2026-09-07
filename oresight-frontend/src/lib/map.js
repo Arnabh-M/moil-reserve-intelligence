@@ -3,7 +3,29 @@
 // Muted, low-saturation basemap so semi-transparent data overlays (NDVI,
 // spectral alteration, reserve confidence) stay legible against it — a
 // bright/colorful basemap competes with the data layers drawn on top of it.
-export const MAP_STYLE = 'https://tiles.openfreemap.org/styles/positron'
+export const BASEMAP_STYLES = {
+  light: 'https://tiles.openfreemap.org/styles/positron',
+  terrain: 'https://tiles.openfreemap.org/styles/liberty',
+}
+
+export const MAP_STYLE = BASEMAP_STYLES.light
+
+// AWS Open Data Terrain Tiles (SRTM / GMTED composite processed by Mapzen/Tilezen)
+// Free, unauthenticated global elevation source with native MapLibre 'terrarium' encoding support
+export const TERRAIN_DEM_SOURCE = {
+  id: 'aws-terrain-dem',
+  type: 'raster-dem',
+  tiles: ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+  encoding: 'terrarium',
+  tileSize: 256,
+  maxzoom: 15,
+}
+
+// Required legal attribution strings
+export const MAP_ATTRIBUTION = {
+  light: '© OpenStreetMap contributors, OpenFreeMap',
+  terrain: 'Map: © OpenStreetMap contributors, OpenFreeMap · Elevation: AWS Open Data (SRTM/Mapzen)',
+}
 
 export const MAP_ZOOM = 8.2
 
@@ -56,7 +78,7 @@ export const MAP_LAYERS = [
   { id: 'prospectivity', label: 'Prospectivity Heatmap' },
   { id: 'spectral', label: 'Spectral Alteration' },
   { id: 'lineament', label: 'Structural Lineament' },
-  { id: 'dsm', label: 'Drone DSM' },
+  { id: 'dsm', label: 'Drone / UAV Orthomosaic' },
   { id: 'ndvi', label: 'NDVI Time-Series' },
 ]
 

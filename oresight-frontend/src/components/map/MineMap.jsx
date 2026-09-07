@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, Loader2 } from 'lucide-react'
+import { Activity, Loader2, Mountain, Sun } from 'lucide-react'
 import Map, { Layer, Marker, Popup, Source } from 'react-map-gl/maplibre'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { api } from '../../api/client'
 import {
   MAP_CENTER,
   MAP_STYLE,
+  BASEMAP_STYLES,
+  TERRAIN_DEM_SOURCE,
+  MAP_ATTRIBUTION,
   MAP_ZOOM,
   REGIONAL_BOUNDS,
   RESERVE_ZONES_FILL_LAYER_ID,
@@ -59,8 +62,18 @@ export default function MineMap({
   prospectivityData = null,
   prospectivityBands = null,
   onProspectivityCellSelect,
+  basemapMode: basemapModeProp = null,
+  onBasemapModeChange = null,
 }) {
   const mapRef = useRef(null)
+  const [internalBasemapMode, setInternalBasemapMode] = useState('light')
+  const basemapMode = basemapModeProp ?? internalBasemapMode
+
+  function handleBasemapChange(mode) {
+    setInternalBasemapMode(mode)
+    if (onBasemapModeChange) onBasemapModeChange(mode)
+  }
+
   const [selectedSiteIdState, setSelectedSiteIdState] = useState(null)
   const effectiveSiteId = selectedSiteIdProp ?? selectedSiteIdState
   const [popupCoord, setPopupCoord] = useState(null)
@@ -290,12 +303,36 @@ export default function MineMap({
           zoom: MAP_ZOOM,
         }}
         style={{ width: '100%', height: '100%' }}
-        mapStyle={MAP_STYLE}
+        mapStyle={BASEMAP_STYLES[basemapMode] || MAP_STYLE}
+        attributionControl={false}
         interactiveLayerIds={interactiveLayerIds}
         onClick={handleMapClick}
         onMouseMove={handleMouseMove}
         onLoad={onMapLoad}
       >
+        {/* Real Terrain DEM Hillshade (AWS Open Data Terrarium, active in Terrain mode) */}
+        {basemapMode === 'terrain' && (
+          <Source
+            id={TERRAIN_DEM_SOURCE.id}
+            type={TERRAIN_DEM_SOURCE.type}
+            tiles={TERRAIN_DEM_SOURCE.tiles}
+            encoding={TERRAIN_DEM_SOURCE.encoding}
+            tileSize={TERRAIN_DEM_SOURCE.tileSize}
+            maxzoom={TERRAIN_DEM_SOURCE.maxzoom}
+          >
+            <Layer
+              id="terrain-hillshade"
+              type="hillshade"
+              paint={{
+                'hillshade-exaggeration': 0.35,
+                'hillshade-shadow-color': '#1e293b',
+                'hillshade-highlight-color': '#ffffff',
+                'hillshade-accent-color': '#475569',
+              }}
+            />
+          </Source>
+        )}
+
         {/* Supporting Raster 1: Spectral Alteration (Restrained background when prospectivity is active) */}
         <Source
           id={SPECTRAL_LAYER_CONFIG.sourceId}
@@ -563,7 +600,7 @@ export default function MineMap({
         )}
       </Map>
 
-      {/* Floating Cross-Section Tool Button (Day 4) */}
+      {/* Floating Map Controls (Top-Left) */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
         <button
           type="button"
@@ -577,6 +614,40 @@ export default function MineMap({
           <Activity size={15} className={crossSectionActive ? 'text-white' : 'text-teal'} />
           <span>{crossSectionActive ? 'Cross-Section Active: Click Map' : 'Cross-Section Tool'}</span>
         </button>
+
+        {/* Basemap Toggle (Light / Terrain) */}
+        <div
+          className="flex items-center rounded-[3px] border border-border bg-bg-surface p-0.5 shadow-xs"
+          role="group"
+          aria-label="Basemap style"
+        >
+          <button
+            type="button"
+            onClick={() => handleBasemapChange('light')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] text-xs font-semibold transition-all duration-150 cursor-pointer ${
+              basemapMode === 'light'
+                ? 'bg-teal text-white shadow-xs'
+                : 'text-slate-600 hover:text-navy hover:bg-bg'
+            }`}
+            title="Analytical Light Basemap (OpenFreeMap Positron)"
+          >
+            <Sun size={13} />
+            <span>Light</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleBasemapChange('terrain')}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] text-xs font-semibold transition-all duration-150 cursor-pointer ${
+              basemapMode === 'terrain'
+                ? 'bg-teal text-white shadow-xs'
+                : 'text-slate-600 hover:text-navy hover:bg-bg'
+            }`}
+            title="Topographic Terrain Basemap (OpenFreeMap Liberty + AWS Open Data Hillshade)"
+          >
+            <Mountain size={13} />
+            <span>Terrain</span>
+          </button>
+        </div>
       </div>
 
       {/* Legend + NDVI time slider share one bottom row via flexbox so they can
@@ -602,6 +673,11 @@ export default function MineMap({
             selectedSiteId={effectiveSiteId}
           />
         </div>
+      </div>
+
+      {/* Required Data Source Attribution */}
+      <div className="pointer-events-auto absolute bottom-1 right-4 z-10 select-none rounded-[3px] border border-border/60 bg-bg-surface/90 px-2 py-0.5 text-[10px] text-slate-500 shadow-xs backdrop-blur-xs">
+        {MAP_ATTRIBUTION[basemapMode] || MAP_ATTRIBUTION.light}
       </div>
 
       {zonesStatus === 'loading' && (
