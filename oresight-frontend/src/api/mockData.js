@@ -96,6 +96,9 @@ export const mockData = {
   graph,
   kpi: { active_risk_events: 4, avg_reserve_confidence: 0.813, sites_under_watch: 2, twin_last_updated: '2026-09-05T14:56:16.402871Z' },
   simulation,
+  // Matches the real POST /reports/upload response shape exactly -- a
+  // fixture richer than the API (site/author/mineral_candidates/etc.) is
+  // what caused GeologyTab to render fields the live backend never sends.
   upload: {
     filename: 'sample_survey.pdf',
     text_extracted: true,
@@ -103,16 +106,6 @@ export const mockData = {
     deposits: [{ deposit_id: 'BAL-D1', depth: 145.2, grade: 38.5, structure_type: 'fold_axis', belt_zone: 'Balaghat-Manganese Belt' }, { deposit_id: 'BAL-D2', depth: 176.4, grade: 30.0, structure_type: 'shear_contact', belt_zone: 'Balaghat-Manganese Belt' }],
     nodes_created: [{ id: 'oz_upload_bal_d1', label: 'BAL-D1', type: 'OreZone' }, { id: 'oz_upload_bal_d2', label: 'BAL-D2', type: 'OreZone' }],
     warnings: ['One appendix table was below extraction confidence and needs a manual check.'],
-    site: 'Balaghat',
-    report_date: '2026-08-14',
-    author: 'R. Deshmukh, Field Geologist',
-    report_type: 'Geological Survey Report',
-    page_count: 18,
-    mineral_candidates: [{ name: 'Manganese', confidence: 0.92 }, { name: 'Iron ore', confidence: 0.67 }, { name: 'Copper', confidence: 0.31 }],
-    locations: ['Zone A', 'Zone B', 'North Pit'],
-    estimated_grade_summary: 'Mn — 30.0%',
-    geological_observations: 'Quartz vein observed in Zone B with moderate fracture density; the fold-axis structure is consistent with the historical Balaghat sequence. Recommend infill drilling along the eastern contact to confirm continuity.',
-    extracted_text_preview: 'SURVEY REPORT — BALAGHAT MANGANESE BELT\n\nSection 1: Site overview\nThe surveyed area covers the northern extension of the Balaghat belt, spanning Zones A and B and the North Pit sector. Historical drilling indicates a fold-axis structure trending north-northeast, with manganese mineralisation concentrated along the contact zone.\n\nSection 2: Structural observations\nA quartz vein was logged in Zone B at approximately 145 m depth, associated with moderate fracture density. Core recovery was consistent with prior surveys of the belt.\n\nSection 3: Recommendation\nInfill drilling is recommended along the eastern contact to confirm grade continuity ahead of the next reserve estimate.',
   },
   notes,
   health: { status: 'ok', service: 'oresight-api', db: 'connected', neo4j: 'connected' },

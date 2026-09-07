@@ -4,7 +4,6 @@ import { api } from '../../api/client';
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const PROCESSING_MIN_MS = 450;
-const TEXT_PREVIEW_CHARS = 260;
 
 function formatBytes(bytes) {
   if (bytes == null) return null;
@@ -20,12 +19,24 @@ function relativeUpload(date) {
   return `Uploaded ${minutes} min${minutes === 1 ? '' : 's'} ago`;
 }
 
+// Real POST /reports/upload response is exactly {filename, text_extracted,
+// deposit_count, deposits[], nodes_created[], warnings[]} -- group
+// nodes_created by its `type` field (OreZone / StructuralFeature / ...) for
+// a slightly more readable list than one flat dump.
+function groupNodesByType(nodes) {
+  const groups = new Map();
+  for (const node of nodes || []) {
+    if (!groups.has(node.type)) groups.set(node.type, []);
+    groups.get(node.type).push(node);
+  }
+  return Array.from(groups.entries());
+}
+
 export default function GeologyTab() {
   const [stage, setStage] = useState('empty');
   const [result, setResult] = useState(null);
   const [fileMeta, setFileMeta] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showFullText, setShowFullText] = useState(false);
   const inputRef = useRef(null);
   const dragCounter = useRef(0);
 
@@ -38,7 +49,6 @@ export default function GeologyTab() {
     const localUrl = URL.createObjectURL(file);
     setFileMeta({ name: file.name, size: file.size, localUrl, uploadedAt: new Date() });
     setResult(null);
-    setShowFullText(false);
     setStage('uploading');
     try {
       const uploaded = await api.uploadReport(file);
@@ -76,9 +86,9 @@ export default function GeologyTab() {
   const ZoneTag = zoneClickable ? 'label' : 'div';
   const zoneClass = `geo-dropzone ${stage === 'dragging' ? 'dragging' : ''} ${stage === 'error' ? 'error' : ''} ${!zoneClickable ? 'busy' : ''}`;
 
-  const extractionOk = result && result.text_extracted && (!result.warnings || result.warnings.length === 0);
-  const extractedText = result?.extracted_text_preview;
-  const truncatedText = extractedText && extractedText.length > TEXT_PREVIEW_CHARS ? `${extractedText.slice(0, TEXT_PREVIEW_CHARS)}…` : extractedText;
+  const hasWarnings = result?.warnings?.length > 0;
+  const extractionOk = result && result.text_extracted && !hasWarnings;
+  const nodeGroups = groupNodesByType(result?.nodes_created);
 
   return (
     <section className="card section-card">
@@ -163,45 +173,16 @@ export default function GeologyTab() {
 
             <div className="geo-info-grid">
               <div className="geo-info-row"><span className="geo-info-label">Document</span><span>{result.filename}</span></div>
-              {result.site && <div className="geo-info-row"><span className="geo-info-label">Site</span><span>{result.site}</span></div>}
-              {result.report_date && <div className="geo-info-row"><span className="geo-info-label">Report date</span><span className="mono">{result.report_date}</span></div>}
-              {result.author && <div className="geo-info-row"><span className="geo-info-label">Author</span><span>{result.author}</span></div>}
-              {result.report_type && <div className="geo-info-row"><span className="geo-info-label">Report type</span><span>{result.report_type}</span></div>}
-              {result.page_count && <div className="geo-info-row"><span className="geo-info-label">Pages</span><span>{result.page_count}</span></div>}
+              <div className="geo-info-row"><span className="geo-info-label">Deposits found</span><span>{result.deposit_count}</span></div>
               <div className="geo-info-row"><span className="geo-info-label">Upload date</span><span className="mono">{relativeUpload(fileMeta?.uploadedAt)}</span></div>
             </div>
 
-            {result.mineral_candidates?.length > 0 && (
+            {nodeGroups.length > 0 && (
               <div style={{ marginTop: 16 }}>
-                <div className="field-label-heading">Deposit candidates</div>
-                {result.mineral_candidates.map((candidate) => (
-                  <div className="geo-candidate-row" key={candidate.name}>
-                    <span className="geo-candidate-name">{candidate.name}</span>
-                    <span className="geo-candidate-bar"><span style={{ width: `${Math.round(candidate.confidence * 100)}%` }} /></span>
-                    <span className="geo-candidate-pct">{Math.round(candidate.confidence * 100)}%</span>
-                  </div>
+                <div className="field-label-heading">Causal graph nodes created</div>
+                {nodeGroups.map(([type, nodes]) => (
+                  <div className="geo-info-row" key={type}><span className="geo-info-label">{type}</span><span>{nodes.map((node) => node.label).join(', ')}</span></div>
                 ))}
-              </div>
-            )}
-
-            {result.locations?.length > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <div className="field-label-heading">Locations</div>
-                <div className="geo-locations">{result.locations.map((loc) => <span className="pill neutral" key={loc}>{loc}</span>)}</div>
-              </div>
-            )}
-
-            {result.estimated_grade_summary && (
-              <div style={{ marginTop: 16 }}>
-                <div className="field-label-heading">Estimated grade</div>
-                <div style={{ fontSize: 12, fontWeight: 700 }}>{result.estimated_grade_summary}</div>
-              </div>
-            )}
-
-            {result.geological_observations && (
-              <div style={{ marginTop: 16 }}>
-                <div className="field-label-heading">Geological observations</div>
-                <p className="subhead" style={{ marginTop: 6 }}>{result.geological_observations}</p>
               </div>
             )}
           </div>
@@ -215,11 +196,10 @@ export default function GeologyTab() {
             </div>
           )}
 
-          {extractedText && (
-            <div>
-              <div className="field-label-heading">Extracted text</div>
-              <div className={`geo-extract-text ${showFullText ? '' : 'collapsed'}`}>{showFullText ? extractedText : truncatedText}</div>
-              {extractedText.length > TEXT_PREVIEW_CHARS && <button type="button" className="geo-view-full" onClick={() => setShowFullText((v) => !v)} data-testid="button-view-full-extraction">{showFullText ? 'Show less' : 'View full extraction'}</button>}
+          {hasWarnings && (
+            <div className="alert-strip danger" data-testid="extraction-warnings">
+              <AlertTriangle size={15} color="hsl(var(--destructive))" />
+              <span>{result.warnings.join(' ')}</span>
             </div>
           )}
         </div>
