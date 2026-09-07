@@ -28,6 +28,18 @@ const query = (params) => {
 const bySite = (records, siteId) => records.filter((record) => Number(record.site_id) === Number(siteId));
 const delay = (value) => useMock ? wait(value) : value;
 
+// Blast-event mock rows live here rather than in mockData.js so the mock
+// fallback stays functional without editing the shared fixture module.
+const mockBlastEvents = [
+  { id: 9001, site_id: 1, reserve_zone_id: null, planned_date: '2026-09-04', actual_date: null, status: 'delayed', delay_reason: 'permit_pending', expected_yield_tonnes: 1800, actual_yield_tonnes: null, notes: 'District explosives permit still with the controller.', created_at: '2026-09-01T09:00:00Z', updated_at: '2026-09-04T11:00:00Z' },
+  { id: 9002, site_id: 1, reserve_zone_id: null, planned_date: '2026-09-02', actual_date: '2026-09-02', status: 'completed', delay_reason: null, expected_yield_tonnes: 1500, actual_yield_tonnes: 1462, notes: null, created_at: '2026-08-30T09:00:00Z', updated_at: '2026-09-02T17:00:00Z' },
+  { id: 9003, site_id: 2, reserve_zone_id: null, planned_date: '2026-08-29', actual_date: null, status: 'cancelled', delay_reason: 'weather_hold', expected_yield_tonnes: 1200, actual_yield_tonnes: null, notes: 'Monsoon cell over the bench all shift.', created_at: '2026-08-26T09:00:00Z', updated_at: '2026-08-29T08:00:00Z' },
+];
+const mockBlastSummary = [
+  { delay_reason: 'permit_pending', event_count: 1, expected_yield_tonnes: 1800, actual_yield_tonnes: 0, tonnes_lost: 1800 },
+  { delay_reason: 'weather_hold', event_count: 1, expected_yield_tonnes: 1200, actual_yield_tonnes: 0, tonnes_lost: 1200 },
+];
+
 export const api = {
   isMock: useMock,
   async getKpiSummary() { return useMock ? delay(mockData.kpi) : request('/kpi/summary'); },
@@ -77,6 +89,24 @@ export const api = {
     const body = { site_id: Number(payload.site_id), date: payload.date, actual_output: Number(payload.actual_output), target_output: Number(payload.target_output) };
     if (useMock) { if (body.actual_output < 0 || body.target_output <= 0) throw contractError(422, { detail: 'Output must be non-negative and target must be greater than zero.', error_code: 'VALIDATION_ERROR' }); if (mockData.production.some((row) => row.site_id === body.site_id && row.date === body.date)) throw contractError(409, { detail: 'A production record already exists for this site and date.', error_code: 'PRODUCTION_CONFLICT' }); const row = { id: Date.now(), ...body, variance_pct: Number((((body.actual_output - body.target_output) / body.target_output) * 100).toFixed(1)) }; mockData.production.unshift(row); return delay(row); }
     return request('/production', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  },
+  async listBlastEvents({ site_id, status } = {}) {
+    if (useMock) return delay(mockBlastEvents.filter((row) => (site_id === undefined || row.site_id === Number(site_id)) && (!status || row.status === status)));
+    return request(`/blast-events${query({ site_id: site_id === undefined ? undefined : Number(site_id), status })}`);
+  },
+  async createBlastEvent(payload) {
+    const body = { site_id: Number(payload.site_id), reserve_zone_id: payload.reserve_zone_id ? Number(payload.reserve_zone_id) : null, planned_date: payload.planned_date, expected_yield_tonnes: Number(payload.expected_yield_tonnes), notes: payload.notes || null };
+    if (useMock) { const row = { id: Date.now(), ...body, actual_date: null, status: 'planned', delay_reason: null, actual_yield_tonnes: null, created_at: '2026-09-07T09:00:00Z', updated_at: '2026-09-07T09:00:00Z' }; mockBlastEvents.unshift(row); return delay(row); }
+    return request('/blast-events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  },
+  async updateBlastEvent(id, payload) {
+    const body = { status: payload.status, actual_date: payload.actual_date || null, delay_reason: payload.delay_reason || null, actual_yield_tonnes: payload.actual_yield_tonnes === '' || payload.actual_yield_tonnes === undefined ? null : Number(payload.actual_yield_tonnes), notes: payload.notes ?? null };
+    if (useMock) { const row = mockBlastEvents.find((item) => item.id === Number(id)); if (row) Object.assign(row, body, { updated_at: '2026-09-07T11:00:00Z' }); return delay(row); }
+    return request(`/blast-events/${Number(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  },
+  async getBlastEventSummary({ site_id, from, to } = {}) {
+    if (useMock) return delay(mockBlastSummary);
+    return request(`/blast-events/summary${query({ site_id: site_id === undefined ? undefined : Number(site_id), from, to })}`);
   },
   async getHealth() { return useMock ? delay(mockData.health) : request('/health'); },
   async getAdminJobs() { return useMock ? delay(mockData.jobs) : request('/admin/jobs'); },

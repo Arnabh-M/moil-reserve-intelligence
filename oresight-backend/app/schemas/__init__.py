@@ -1,6 +1,12 @@
 """Pydantic schemas package — import every schema so `from app.schemas import X` works."""
 
 from app.schemas.admin import JobStatusOut
+from app.schemas.blasting import (
+    BlastDelaySummaryRow,
+    BlastEventCreate,
+    BlastEventOut,
+    BlastEventUpdate,
+)
 from app.schemas.causal_graph import CausalGraphOut, GraphEdge, GraphNode
 from app.schemas.demo import DemoScenarioOut
 from app.schemas.equipment import EquipmentOut, EquipmentStatusUpdate
@@ -15,6 +21,10 @@ from app.schemas.site_note import SiteNoteCreate, SiteNoteOut, SiteNoteSearchHit
 
 __all__ = [
     "JobStatusOut",
+    "BlastDelaySummaryRow",
+    "BlastEventCreate",
+    "BlastEventOut",
+    "BlastEventUpdate",
     "CausalGraphOut",
     "GraphEdge",
     "GraphNode",

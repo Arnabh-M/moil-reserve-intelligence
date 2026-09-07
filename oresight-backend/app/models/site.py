@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db import Base
 
 if TYPE_CHECKING:
+    from app.models.blast_event import BlastEvent
     from app.models.equipment import Equipment
     from app.models.production_record import ProductionRecord
     from app.models.reserve_zone import ReserveZone
@@ -46,3 +47,4 @@ class Site(Base):
     site_notes: Mapped[list["SiteNote"]] = relationship(
         back_populates="site", cascade="all, delete-orphan"
     )
+    blast_events: Mapped[list["BlastEvent"]] = relationship(back_populates="site")
