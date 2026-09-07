@@ -1,7 +1,9 @@
 import { mockData, findSite } from './mockData';
 
-const useMock = String(import.meta.env.VITE_USE_MOCK ?? 'true') !== 'false';
-const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+// Live API is the default path; mock is the offline/venue-wifi fallback,
+// opted into explicitly with VITE_USE_MOCK=true when the backend isn't reachable.
+const useMock = String(import.meta.env.VITE_USE_MOCK ?? 'false') !== 'false';
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const wait = (value, delay = 160) => new Promise((resolve) => setTimeout(() => resolve(value), delay));
 
 function contractError(status, body) {
