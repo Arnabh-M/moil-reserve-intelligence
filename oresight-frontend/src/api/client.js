@@ -42,6 +42,22 @@ const mockBlastSummary = [
   { delay_reason: 'weather_hold', event_count: 1, expected_yield_tonnes: 1200, actual_yield_tonnes: 0, tonnes_lost: 1200 },
 ];
 
+const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
+
+// Picking "the" risk event for a site used to just take risks[0] (API insertion
+// order), which for Nagpur meant the Drill NAG-1 event (no Neo4j graph yet,
+// renders as the flat postgres_fallback) instead of the Haul Truck HT-302 event
+// that /demo/scenarios and the whole equipment-down demo path are built around.
+// Prefer whichever risk the demo-scenarios endpoint names for this site; only
+// fall back to the highest-severity unresolved event when no demo scenario
+// applies (a real site with no scripted scenario, or the endpoint unavailable).
+function pickPrimaryRisk(risks, demoScenarios, siteId) {
+  if (!risks.length) return null;
+  const scenarioMatch = demoScenarios.find((scenario) => scenario.available && Number(scenario.site_id) === Number(siteId) && risks.some((risk) => Number(risk.id) === Number(scenario.risk_event_id)));
+  if (scenarioMatch) return risks.find((risk) => Number(risk.id) === Number(scenarioMatch.risk_event_id));
+  return [...risks].sort((a, b) => (SEVERITY_RANK[b.severity] || 0) - (SEVERITY_RANK[a.severity] || 0) || (b.score || 0) - (a.score || 0))[0];
+}
+
 export const api = {
   isMock: useMock,
   async getKpiSummary() { return useMock ? delay(mockData.kpi) : request('/kpi/summary'); },
@@ -55,6 +71,10 @@ export const api = {
     return request(`/reserve-zones${query({ site_id: siteId === undefined ? undefined : Number(siteId) })}`);
   },
   async getCausalGraph(riskId) { return useMock ? delay(mockData.graph) : request(`/risk-events/${Number(riskId)}/causal-graph`); },
+  // Soft-fail to [] rather than reject: this only affects which risk event's
+  // graph is shown "primary" for a site (see pickPrimaryRisk) -- the rest of
+  // the site workspace shouldn't break if this endpoint is ever unavailable.
+  async getDemoScenarios() { if (useMock) return delay([]); try { return await request('/demo/scenarios'); } catch { return []; } },
   async getRecommendations(riskId) {
     if (riskId !== undefined && riskId !== null) return useMock ? delay(mockData.recommendations.filter((item) => Number(item.risk_event_id) === Number(riskId))) : request(`/recommendations${query({ risk_event_id: Number(riskId) })}`);
     const events = await this.getRiskEvents(undefined, false);
@@ -119,11 +139,12 @@ export const api = {
   },
   async getSiteWorkspace(id) {
     const siteId = Number(id);
-    const [site, equipmentForSite, productionForSite, risks, zones, recommendationsForSite] = await Promise.all([
-      this.getSite(siteId), this.getEquipment(siteId), this.getProduction(siteId, 30), this.getRiskEvents(siteId, false), this.getReserveZones(siteId), this.getRecommendations(),
+    const [site, equipmentForSite, productionForSite, risks, zones, recommendationsForSite, demoScenarios] = await Promise.all([
+      this.getSite(siteId), this.getEquipment(siteId), this.getProduction(siteId, 30), this.getRiskEvents(siteId, false), this.getReserveZones(siteId), this.getRecommendations(), this.getDemoScenarios(),
     ]);
+    const primaryRisk = pickPrimaryRisk(risks, demoScenarios, siteId);
     // Guard: with no open risk this became /risk-events/NaN/causal-graph -> 422 and failed the page.
-    const graph = risks[0] ? await this.getCausalGraph(risks[0].id) : { nodes: [], edges: [], graph_source: 'neo4j', note: null };
+    const graph = primaryRisk ? await this.getCausalGraph(primaryRisk.id) : { nodes: [], edges: [], graph_source: 'neo4j', note: null };
     return { site, equipment: equipmentForSite, production: productionForSite, risks, zones: zones.features || [], recommendations: recommendationsForSite.filter((item) => risks.some((risk) => Number(risk.id) === Number(item.risk_event_id))), graph };
   },
   async getMapWorkspace() {
