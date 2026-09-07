@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "cross-env PORT=5173 BASE_PATH=/ vite --config vite.config.ts --host 0.0.0.0",
     "build": "cross-env PORT=5173 BASE_PATH=/ vite build --config vite.config.ts",
