@@ -57,11 +57,19 @@ function layoutNodes(nodes, edges, rootId) {
       }
     }
   }
-  // Any node unreachable from the root (disconnected graph fragment)
-  // still needs a column so it isn't dropped from the view.
-  let maxDepth = Math.max(0, ...depth.values());
+  // Nodes unreachable from the root (disconnected fragments) still need a
+  // slot so they aren't dropped. Pack them a few per column just past the
+  // connected layout rather than one-per-column, so a graph with many
+  // LOCATED_IN-only nodes (e.g. Balaghat's uploaded ore zones) doesn't
+  // stretch into a thin unreadable strip.
+  const ORPHANS_PER_COLUMN = 4;
+  const firstOrphanDepth = Math.max(0, ...depth.values()) + 1;
+  let orphanIndex = 0;
   nodes.forEach((n) => {
-    if (!depth.has(n.id)) depth.set(n.id, ++maxDepth);
+    if (!depth.has(n.id)) {
+      depth.set(n.id, firstOrphanDepth + Math.floor(orphanIndex / ORPHANS_PER_COLUMN));
+      orphanIndex += 1;
+    }
   });
 
   const byDepth = new Map();
