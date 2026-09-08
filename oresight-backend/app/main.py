@@ -32,6 +32,7 @@ from app.routers import (
     simulate,
     site_notes,
     sites,
+    weather,
 )
 from app.services.scheduler import start_scheduler, stop_scheduler
 
@@ -213,6 +214,7 @@ def create_app() -> FastAPI:
     app.include_router(blasting.router)
     app.include_router(demo.router)
     app.include_router(admin.router)
+    app.include_router(weather.router)
 
     return app
 
