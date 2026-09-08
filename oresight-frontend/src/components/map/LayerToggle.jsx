@@ -80,7 +80,7 @@ export default function LayerToggle({
           {MAP_LAYERS.map((layer) => {
             const isDsmUnavailable =
               layer.id === 'dsm' &&
-              Boolean(selectedSiteId && selectedSiteId !== 'balaghat' && selectedSiteId !== 1)
+              Boolean(selectedSiteId && selectedSiteId !== 1)
 
             return (
               <label

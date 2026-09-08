@@ -205,9 +205,9 @@ function MapPage() {
     if (!selectedZone) return null;
     const siteId = selectedZone.site_id;
     if (siteNameById[siteId]) return siteNameById[siteId];
-    if (siteId === 'balaghat' || siteId === 1) return 'Balaghat Mine';
-    if (siteId === 'nagpur' || siteId === 2) return 'Nagpur Mine';
-    if (siteId === 'bhandara' || siteId === 3) return 'Bhandara Mine';
+    if (siteId === 1) return 'Balaghat Mine';
+    if (siteId === 2) return 'Nagpur Mine';
+    if (siteId === 3) return 'Bhandara Mine';
     return siteId ? String(siteId) : null;
   }, [selectedZone, siteNameById]);
 
@@ -246,9 +246,11 @@ function MapPage() {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [prospectivitySiteId]);
 
-  function handleSiteSelect(siteId) {
-    setSelectedSiteIdForFlyTo(siteId);
-    if (!siteId) {
+  function handleSiteSelect(rawSiteId) {
+    // rawSiteId arrives as a string from the dropdown's e.target.value, or
+    // already numeric from a map marker click (SITES_GEOJSON's properties.id).
+    setSelectedSiteIdForFlyTo(rawSiteId ? Number(rawSiteId) : '');
+    if (!rawSiteId) {
       setProspectivitySiteId(null);
       setSelectedZone(null);
       setSelectedCell(null);
@@ -261,7 +263,7 @@ function MapPage() {
       });
       return;
     }
-    const site = SAMPLE_SITES.find((s) => s.id === siteId);
+    const site = SAMPLE_SITES.find((s) => s.id === Number(rawSiteId));
     if (site) {
       setFlyToTarget({
         id: site.id,
@@ -271,7 +273,7 @@ function MapPage() {
         bounds: site.bounds,
         zoom: 11,
       });
-      setProspectivitySiteId(site.id);
+      setProspectivitySiteId(site.slug);
     }
   }
 
@@ -282,8 +284,8 @@ function MapPage() {
 
   function handleInspectZoneCrossSection() {
     if (!selectedZone) return;
-    const lat = selectedZone.latitude ?? (selectedZone.site_id === 'balaghat' ? 21.8 : selectedZone.site_id === 'nagpur' ? 21.1 : 21.2);
-    const lng = selectedZone.longitude ?? (selectedZone.site_id === 'balaghat' ? 80.2 : selectedZone.site_id === 'nagpur' ? 79.1 : 79.6);
+    const lat = selectedZone.latitude ?? (selectedZone.site_id === 1 ? 21.8 : selectedZone.site_id === 2 ? 21.1 : 21.2);
+    const lng = selectedZone.longitude ?? (selectedZone.site_id === 1 ? 80.2 : selectedZone.site_id === 2 ? 79.1 : 79.6);
     setCrossSectionPoint({ lat, lng, zoneName: selectedZone.zone_name, site_id: selectedZone.site_id, siteName: selectedSiteName });
     setCrossSectionDrawerOpen(true);
   }

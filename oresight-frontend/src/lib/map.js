@@ -41,9 +41,16 @@ export const MAP_CENTER = {
   longitude: 79.645,
 }
 
+// `id` matches the real numeric /sites id (stable across this deployment);
+// `slug` is only for the static per-site prospectivity GeoJSON filenames
+// (prospectivity/<slug>.geojson), which have no live API equivalent. These
+// used to be the same string ('balaghat' etc. as `id`), disconnected from
+// the numeric site_id every other API response uses -- callers had to
+// dual-check both forms wherever a selected site crossed into map filtering.
 export const SAMPLE_SITES = [
   {
-    id: 'balaghat',
+    id: 1,
+    slug: 'balaghat',
     name: 'Balaghat',
     latitude: 21.8,
     longitude: 80.2,
@@ -53,7 +60,8 @@ export const SAMPLE_SITES = [
     ],
   },
   {
-    id: 'nagpur',
+    id: 2,
+    slug: 'nagpur',
     name: 'Nagpur',
     latitude: 21.1,
     longitude: 79.1,
@@ -63,7 +71,8 @@ export const SAMPLE_SITES = [
     ],
   },
   {
-    id: 'bhandara',
+    id: 3,
+    slug: 'bhandara',
     name: 'Bhandara',
     latitude: 21.2,
     longitude: 79.6,
