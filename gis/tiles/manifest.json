@@ -84,38 +84,6 @@
         "#d7191c"
       ],
       "description": "Red/Blue spectral alteration ratio highlighting manganese and iron gossan signatures."
-    },
-    "drone_orthophoto": {
-      "id": "odm-drone-orthophoto",
-      "name": "UAV High-Resolution Mine Orthomosaic",
-      "file": "odm_orthophoto.png",
-      "date": "2026-08-30",
-      "bbox": [
-        80.215,
-        21.865,
-        80.235,
-        21.885
-      ],
-      "maplibre_coordinates": [
-        [
-          80.215,
-          21.885
-        ],
-        [
-          80.235,
-          21.885
-        ],
-        [
-          80.235,
-          21.865
-        ],
-        [
-          80.215,
-          21.865
-        ]
-      ],
-      "type": "raster",
-      "description": "High-resolution OpenDroneMap photogrammetry for Bharweli open-cast pit."
     }
   },
   "timeseries_ndvi": [

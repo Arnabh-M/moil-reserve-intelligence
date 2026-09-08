@@ -5,8 +5,7 @@ Orchestrates:
   1. 4 Weekly NDVI PNG tiles (gis/tiles/ndvi_week_1.png .. ndvi_week_4.png)
   2. Single-date Iron-Oxide Alteration Index PNG (gis/tiles/iron_oxide_latest.png)
   3. Single-date NDVI PNG (gis/tiles/ndvi_latest.png)
-  4. OpenDroneMap high-res UAV orthomosaic PNG (gis/tiles/odm_orthophoto.png)
-  5. Consolidated `gis/tiles/manifest.json` for frontend MapLibre GL integration.
+  4. Consolidated `gis/tiles/manifest.json` for frontend MapLibre GL integration.
 
 Validates:
   - manifest.json is valid JSON
@@ -21,7 +20,6 @@ import argparse
 # Import local GIS modules
 from gis.ndvi_pull import pull_single_layers, MOIL_BBOX
 from gis.ndvi_timeseries import generate_ndvi_timeseries_tiles
-from gis.odm_to_tile import convert_odm_to_tile
 
 
 def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
@@ -36,18 +34,12 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
     print("=" * 70)
 
     # 1. Generate Single-Date NDVI and Iron-Oxide Alteration tiles
-    print("\n[STEP 1/3] Generating Single-Date Spectral Index Tiles (NDVI & Iron Oxide)...")
+    print("\n[STEP 1/2] Generating Single-Date Spectral Index Tiles (NDVI & Iron Oxide)...")
     single_layers_meta = pull_single_layers(tiles_dir=tiles_dir, dry_run=dry_run)
 
     # 2. Generate 4-Week NDVI Time-Series Tiles for MapLibre Time-Slider
-    print("\n[STEP 2/3] Generating 4-Week Weekly NDVI Time-Series Tiles...")
+    print("\n[STEP 2/2] Generating 4-Week Weekly NDVI Time-Series Tiles...")
     timeseries_meta = generate_ndvi_timeseries_tiles(tiles_dir=tiles_dir, num_weeks=4, interval_days=7, dry_run=dry_run)
-
-    # 3. Convert OpenDroneMap Orthophoto GeoTIFF
-    print("\n[STEP 3/3] Processing OpenDroneMap UAV Orthophoto Tile...")
-    odm_tif = os.path.join(data_dir, "odm_orthophoto.tif")
-    odm_png = os.path.join(tiles_dir, "odm_orthophoto.png")
-    odm_meta = convert_odm_to_tile(input_tif_path=odm_tif, output_png_path=odm_png)
 
     # Helper function to convert [west, south, east, north] to MapLibre 4-point coordinates
     def to_maplibre_coords(bbox):
@@ -87,16 +79,6 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
                 "type": "raster",
                 "palette_legend": ["#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"],
                 "description": "Red/Blue spectral alteration ratio highlighting manganese and iron gossan signatures."
-            },
-            "drone_orthophoto": {
-                "id": "odm-drone-orthophoto",
-                "name": "UAV High-Resolution Mine Orthomosaic",
-                "file": "odm_orthophoto.png",
-                "date": "2026-08-30",
-                "bbox": odm_meta["bbox"],
-                "maplibre_coordinates": odm_meta["maplibre_coordinates"],
-                "type": "raster",
-                "description": "High-resolution OpenDroneMap photogrammetry for Bharweli open-cast pit."
             }
         },
         "timeseries_ndvi": []

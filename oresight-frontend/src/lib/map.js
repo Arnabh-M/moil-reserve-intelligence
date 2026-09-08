@@ -87,7 +87,6 @@ export const MAP_LAYERS = [
   { id: 'prospectivity', label: 'Prospectivity Heatmap' },
   { id: 'spectral', label: 'Spectral Alteration' },
   { id: 'lineament', label: 'Structural Lineament' },
-  { id: 'dsm', label: 'Drone / UAV Orthomosaic' },
   { id: 'ndvi', label: 'NDVI Time-Series' },
 ]
 
@@ -270,19 +269,6 @@ export const SPECTRAL_LAYER_CONFIG = {
     [80.8, 22.25],
     [80.8, 20.9],
     [78.5, 20.9],
-  ],
-}
-
-export const DRONE_LAYER_CONFIG = {
-  sourceId: 'drone-dsm-source',
-  layerId: 'drone-dsm-layer',
-  url: '/tiles/odm_orthophoto.png',
-  date: '2026-08-30',
-  coordinates: [
-    [80.215, 21.885],
-    [80.235, 21.885],
-    [80.235, 21.865],
-    [80.215, 21.865],
   ],
 }
 

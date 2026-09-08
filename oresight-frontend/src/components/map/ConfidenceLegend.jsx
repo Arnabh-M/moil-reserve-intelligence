@@ -1,30 +1,25 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
-import { CONFIDENCE_COLOR_RAMP, STRUCTURAL_LINE_COLORS, SPECTRAL_LAYER_CONFIG, DRONE_LAYER_CONFIG } from '../../lib/map';
+import { CONFIDENCE_COLOR_RAMP, STRUCTURAL_LINE_COLORS, SPECTRAL_LAYER_CONFIG } from '../../lib/map';
 
 export default function ConfidenceLegend({
   visible,
   prospectivityVisible = false,
   lineamentVisible = false,
   spectralVisible = false,
-  droneVisible = false,
   ndviVisible = false,
   selectedSiteId = null,
 }) {
   const [collapsed, setCollapsed] = useState(true);
 
   // Backward-compatibility: if `visible` prop is explicitly provided, treat it as prospectivityVisible
-  const showProspectivity = prospectivityVisible || (visible && !lineamentVisible && !spectralVisible && !droneVisible && !ndviVisible);
-
-  // Task 4: Drone DSM is localized exclusively to the Balaghat open-cast pit
-  const showDrone = droneVisible && (!selectedSiteId || selectedSiteId === 1);
+  const showProspectivity = prospectivityVisible || (visible && !lineamentVisible && !spectralVisible && !ndviVisible);
 
   // Count active layers that have legend representations
   const activeLayersCount = [
     showProspectivity,
     lineamentVisible,
     spectralVisible,
-    showDrone,
     ndviVisible,
   ].filter(Boolean).length;
 
@@ -128,18 +123,6 @@ export default function ConfidenceLegend({
             </div>
           )}
 
-          {/* 4. Drone DSM */}
-          {showDrone && (
-            <div className="flex items-center justify-between pt-0.5">
-              <div>
-                <span className="font-semibold text-navy text-[11px] block">Drone / UAV Orthomosaic</span>
-                <span className="text-[10px] text-slate-500">UAV RGB · {DRONE_LAYER_CONFIG.date}</span>
-              </div>
-              <span className="text-[10px] font-mono font-medium text-teal bg-teal/10 px-1.5 py-0.5 rounded">
-                10cm/px
-              </span>
-            </div>
-          )}
 
           {/* 5. NDVI Time-Series */}
           {ndviVisible && (

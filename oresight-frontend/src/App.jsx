@@ -195,12 +195,11 @@ function GraphView({ graph }) { return <div className="two-col"><section classNa
 
 function MapPage() {
   // Ported from the pre-Replit oresight-frontend (git 230f49a) — real MapLibre
-  // layers (prospectivity heatmap, spectral alteration, drone DSM, NDVI
+  // layers (prospectivity heatmap, spectral alteration, NDVI
   // time-series, structural lineaments) instead of the Replit import's
   // schematic placeholder map. See components/map/* and lib/map.js.
   const [prospectivityVisible, setProspectivityVisible] = useState(false);
   const [spectralVisible, setSpectralVisible] = useState(false);
-  const [droneVisible, setDroneVisible] = useState(false);
   const [ndviVisible, setNdviVisible] = useState(false);
   const [lineamentVisible, setLineamentVisible] = useState(false);
   const [rasterOpacity, setRasterOpacity] = useState(DEFAULT_RASTER_OPACITY);
@@ -328,8 +327,6 @@ function MapPage() {
         onSpectralChange={setSpectralVisible}
         lineamentVisible={lineamentVisible}
         onLineamentChange={setLineamentVisible}
-        droneVisible={droneVisible}
-        onDroneChange={setDroneVisible}
         ndviVisible={ndviVisible}
         onNdviChange={setNdviVisible}
         rasterOpacity={rasterOpacity}
@@ -354,7 +351,6 @@ function MapPage() {
         <MineMap
           prospectivityVisible={prospectivityVisible}
           spectralVisible={spectralVisible}
-          droneVisible={droneVisible}
           ndviVisible={ndviVisible}
           lineamentVisible={lineamentVisible}
           selectedWeek={selectedWeek}
