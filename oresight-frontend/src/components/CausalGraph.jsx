@@ -12,6 +12,7 @@ const TYPE_STYLES = {
   OreZone: { bg: '#22c55e', border: '#16a34a' }, // success
   RiskEvent: { bg: '#e0793a', border: '#c9662c' }, // orange (roadmap)
   WeatherEvent: { bg: '#f59e0b', border: '#d97706' }, // warning
+  StructuralFeature: { bg: '#6366f1', border: '#4f46e5' }, // indigo (geology)
   ProductionForecast: { bg: '#5a6577', border: '#454e5d' }, // text-secondary
   MineSite: { bg: '#8896a8', border: '#6b7889' }, // text-muted
 };

@@ -202,13 +202,6 @@ tr:last-child td { border-bottom: 0; }
 .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .input, .select { background: hsl(var(--card)); border: 1px solid hsl(var(--input)); border-radius: 5px; color: hsl(var(--foreground)); font-size: 11px; padding: 9px 10px; outline: 0; }
 .input:focus, .select:focus { border-color: hsl(var(--primary)); box-shadow: 0 0 0 2px hsl(var(--primary) / .13); }
-.graph-panel { min-height: 420px; position: relative; overflow: hidden; background: hsl(var(--secondary) / .42); border-radius: 6px; border: 1px dashed hsl(var(--border)); }
-.graph-lines { position: absolute; inset: 0; background-image: radial-gradient(hsl(var(--muted-foreground) / .16) 1px, transparent 1px); background-size: 18px 18px; }
-.graph-node { position: absolute; padding: 12px 14px; border: 1px solid hsl(var(--border)); background: hsl(var(--card)); box-shadow: 0 4px 13px hsl(218 30% 15% / .1); border-radius: 7px; min-width: 145px; z-index: 2; }
-.graph-node strong { display: block; font-size: 11px; }
-.graph-node small { display: block; margin-top: 4px; color: hsl(var(--muted-foreground)); font: 9px var(--app-font-mono); }
-.graph-node.alert { border-color: hsl(var(--destructive) / .6); }
-.connector { position: absolute; height: 2px; background: hsl(var(--primary) / .7); transform-origin: left center; z-index: 1; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
 .field { display: grid; gap: 6px; }
 .field.full { grid-column: 1 / -1; }
