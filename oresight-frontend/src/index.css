@@ -276,6 +276,17 @@ tr:last-child td { border-bottom: 0; }
 .bulk-fail-names { max-width: 320px; }
 @media (max-width: 760px) { .eq-toolbar .filter-row { flex-direction: column; align-items: stretch; } .eq-toolbar .filter-row > * { width: 100%; } }
 
+.icon-btn { border: 0; background: transparent; color: hsl(var(--muted-foreground)); padding: 2px; margin-left: 6px; border-radius: 4px; display: inline-flex; align-items: center; cursor: pointer; }
+.icon-btn:hover { color: hsl(var(--primary)); background: hsl(var(--secondary) / .5); }
+.flap-badge { color: hsl(39 85% 45%); font-size: 12px; line-height: 1; }
+.dark .flap-badge { color: hsl(39 85% 68%); }
+.eq-history-overlay { position: fixed; inset: 0; background: hsl(218 30% 15% / .35); z-index: 40; display: flex; justify-content: flex-end; }
+.eq-history-panel { width: 340px; max-width: 90vw; height: 100%; border-radius: 0; border-left: 1px solid hsl(var(--border)); overflow-y: auto; padding: 18px; box-shadow: -8px 0 26px hsl(218 30% 15% / .18); }
+.eq-history-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.eq-history-item { padding: 10px 0; border-bottom: 1px solid hsl(var(--border)); font-size: 11px; }
+.eq-history-item:last-child { border-bottom: 0; }
+.eq-history-empty { padding: 24px 0; text-align: center; color: hsl(var(--muted-foreground)); font-size: 12px; }
+
 .field-error { color: hsl(var(--destructive)); font-size: 10px; margin-top: 5px; display: block; }
 .field-label-heading { font: 10px var(--app-font-mono); text-transform: uppercase; color: hsl(var(--muted-foreground)); letter-spacing: .05em; margin-bottom: 8px; }
 .alert-strip.danger { background: hsl(var(--destructive) / .07); border-left-color: hsl(var(--destructive)); }

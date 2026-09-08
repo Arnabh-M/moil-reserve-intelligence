@@ -9,9 +9,20 @@ from app.schemas.blasting import (
 )
 from app.schemas.causal_graph import CausalGraphOut, GraphEdge, GraphNode
 from app.schemas.demo import DemoScenarioOut
-from app.schemas.equipment import EquipmentOut, EquipmentStatusUpdate
+from app.schemas.equipment import (
+    EquipmentHistoryPage,
+    EquipmentOut,
+    EquipmentStatusLogOut,
+    EquipmentStatusUpdate,
+)
 from app.schemas.kpi import KPISummaryOut
-from app.schemas.production import ProductionRecordCreate, ProductionRecordOut
+from app.schemas.production import (
+    ProductionRecordCreate,
+    ProductionRecordOut,
+    ProductionRecordUpdate,
+    ProductionThresholdsOut,
+    ShortfallReasonOut,
+)
 from app.schemas.recommendation import RecommendationOption, RecommendationOut
 from app.schemas.report import ExtractedDeposit, ReportUploadOut
 from app.schemas.risk_event import RiskEventOut
@@ -29,11 +40,16 @@ __all__ = [
     "GraphEdge",
     "GraphNode",
     "DemoScenarioOut",
+    "EquipmentHistoryPage",
     "EquipmentOut",
+    "EquipmentStatusLogOut",
     "EquipmentStatusUpdate",
     "KPISummaryOut",
     "ProductionRecordCreate",
     "ProductionRecordOut",
+    "ProductionRecordUpdate",
+    "ProductionThresholdsOut",
+    "ShortfallReasonOut",
     "RecommendationOption",
     "RecommendationOut",
     "ExtractedDeposit",

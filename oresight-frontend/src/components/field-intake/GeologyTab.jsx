@@ -1,8 +1,11 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, CloudUpload, Download, Eye, FileText, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { api } from '../../api/client';
 
-const MAX_BYTES = 25 * 1024 * 1024;
+// Fallback only — the real limit is fetched from GET /config/upload-limits
+// so this never drifts from what POST /reports/upload actually enforces
+// (10 MB server-side; this file used to hardcode a stale 25 MB).
+const FALLBACK_MAX_BYTES = 10 * 1024 * 1024;
 const PROCESSING_MIN_MS = 450;
 const TEXT_PREVIEW_CHARS = 260;
 
@@ -26,14 +29,21 @@ export default function GeologyTab() {
   const [fileMeta, setFileMeta] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [showFullText, setShowFullText] = useState(false);
+  const [maxBytes, setMaxBytes] = useState(FALLBACK_MAX_BYTES);
   const inputRef = useRef(null);
   const dragCounter = useRef(0);
+
+  useEffect(() => {
+    api.getUploadLimits()
+      .then((limits) => setMaxBytes(limits.max_report_bytes || FALLBACK_MAX_BYTES))
+      .catch(() => setMaxBytes(FALLBACK_MAX_BYTES));
+  }, []);
 
   const handleFile = async (file) => {
     if (!file) return;
     const looksLikePdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
     if (!looksLikePdf) { setErrorMessage('Please upload a PDF file.'); setStage('error'); return; }
-    if (file.size > MAX_BYTES) { setErrorMessage('File is larger than 25 MB.'); setStage('error'); return; }
+    if (file.size > maxBytes) { setErrorMessage(`File is larger than ${formatBytes(maxBytes)}.`); setStage('error'); return; }
 
     const localUrl = URL.createObjectURL(file);
     setFileMeta({ name: file.name, size: file.size, localUrl, uploadedAt: new Date() });
@@ -100,7 +110,7 @@ export default function GeologyTab() {
             <div className="geo-dropzone-icon"><Upload size={22} /></div>
             <div className="geo-dropzone-title">Upload geological PDF</div>
             <div className="geo-dropzone-sub">Drag &amp; drop your PDF here, or <span className="link">Browse files</span></div>
-            <div className="geo-dropzone-caption">PDF · Max 25 MB</div>
+            <div className="geo-dropzone-caption">PDF, up to {formatBytes(maxBytes)}</div>
             <input ref={inputRef} type="file" accept="application/pdf" onChange={onInputChange} data-testid="input-geology-upload" />
           </>
         )}
@@ -198,10 +208,12 @@ export default function GeologyTab() {
               </div>
             )}
 
-            {result.geological_observations && (
+            {result.geological_observations?.length > 0 && (
               <div style={{ marginTop: 16 }}>
                 <div className="field-label-heading">Geological observations</div>
-                <p className="subhead" style={{ marginTop: 6 }}>{result.geological_observations}</p>
+                {result.geological_observations.map((observation, index) => (
+                  <p className="subhead" style={{ marginTop: 6 }} key={index}>{observation}</p>
+                ))}
               </div>
             )}
           </div>

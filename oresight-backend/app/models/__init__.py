@@ -2,7 +2,9 @@
 
 from app.models.blast_event import BlastDelayReason, BlastEvent, BlastStatus
 from app.models.equipment import Equipment, EquipmentStatus
+from app.models.equipment_status_log import EquipmentStatusLog
 from app.models.production_record import ProductionRecord
+from app.models.production_record_audit import ProductionRecordAudit
 from app.models.reserve_zone import ReserveZone
 from app.models.risk_event import RiskEvent, RiskSeverity
 from app.models.site import Site
@@ -14,7 +16,9 @@ __all__ = [
     "BlastStatus",
     "Equipment",
     "EquipmentStatus",
+    "EquipmentStatusLog",
     "ProductionRecord",
+    "ProductionRecordAudit",
     "ReserveZone",
     "RiskEvent",
     "RiskSeverity",

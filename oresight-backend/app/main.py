@@ -20,6 +20,7 @@ from app.graph_db import close_graph_driver, graph_health, init_graph_driver
 from app.routers import (
     admin,
     blasting,
+    config,
     demo,
     equipment,
     kpi,
@@ -41,6 +42,7 @@ settings = get_settings()
 
 _ERROR_CODES_BY_STATUS = {
     400: "BAD_REQUEST",
+    403: "FORBIDDEN",
     404: "NOT_FOUND",
     409: "CONFLICT",
     413: "PAYLOAD_TOO_LARGE",
@@ -211,6 +213,7 @@ def create_app() -> FastAPI:
     app.include_router(blasting.router)
     app.include_router(demo.router)
     app.include_router(admin.router)
+    app.include_router(config.router)
 
     return app
 

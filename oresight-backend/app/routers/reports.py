@@ -22,14 +22,26 @@ from neo4j.exceptions import Neo4jError, ServiceUnavailable
 from app.graph_db import get_graph_driver
 from app.schemas import GraphNode, ReportUploadOut
 from app.schemas.report import ExtractedDeposit
-from app.services.extraction import get_extractor
-from app.services.pdf_text import extract_pdf_text
+from app.services.extraction import (
+    estimate_grade_summary,
+    extract_geological_observations,
+    extract_locations,
+    extract_mineral_candidates,
+    extract_report_type,
+    get_extractor,
+)
+from app.services.pdf_text import extract_pdf_metadata, extract_pdf_text
 
 logger = logging.getLogger("oresight.reports")
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB — survey PDFs are text, not imagery
+ALLOWED_UPLOAD_MIME = ["application/pdf"]
+# How much of the extracted text the frontend's "extracted text" preview
+# panel gets, before the user expands it. Matches TEXT_PREVIEW_CHARS in
+# GeologyTab.jsx's own truncation, just applied server-side too.
+TEXT_PREVIEW_CHARS = 2000
 
 
 def _slug(value: str) -> str:
@@ -129,6 +141,34 @@ def _write_graph(
     return nodes, warnings
 
 
+def _get_sites(driver: Driver) -> list[dict]:
+    """Best-effort MineSite list for `_match_site`/`_site_display_name`.
+    Returns `[]` (not an exception) if Neo4j is unreachable — the `site`
+    display field on the response is allowed to just come back `None` in
+    that case, same degrade-to-200 pattern as everything else here.
+    """
+    try:
+        with driver.session() as session:
+            return session.run(
+                "MATCH (s:MineSite) RETURN s.id AS id, s.name AS name, s.belt_name AS belt_name"
+            ).data()
+    except (ServiceUnavailable, Neo4jError, OSError):
+        return []
+
+
+def _site_display_name(deposits: list[ExtractedDeposit], sites: list[dict]) -> str | None:
+    """The human-readable site name (e.g. "Balaghat") for the first deposit
+    whose belt_zone matches a known site, or `None` if none matched.
+    """
+    for deposit in deposits:
+        site_id = _match_site(deposit.belt_zone, sites)
+        if site_id is not None:
+            match = next((s for s in sites if s["id"] == site_id), None)
+            if match and match.get("name"):
+                return match["name"]
+    return None
+
+
 @router.post("/upload", response_model=ReportUploadOut, summary="Upload a survey PDF for extraction")
 async def upload_report(
     file: UploadFile = File(..., description="A geological survey report, PDF"),
@@ -159,6 +199,8 @@ async def upload_report(
             detail=f"File is {len(data) // 1024} KB; limit is {MAX_UPLOAD_BYTES // 1024} KB.",
         )
 
+    metadata = extract_pdf_metadata(data)
+
     text = extract_pdf_text(data)
     if not text:
         return ReportUploadOut(
@@ -168,6 +210,10 @@ async def upload_report(
             deposits=[],
             nodes_created=[],
             warnings=["No extractable text found in the uploaded PDF (it may be scanned images or empty)."],
+            page_count=metadata.page_count,
+            author=metadata.author,
+            report_date=metadata.report_date,
+            extraction_method="none",
         )
 
     deposits = get_extractor().extract(text)
@@ -185,11 +231,24 @@ async def upload_report(
     else:
         warnings.append("No deposit entities could be extracted from the report text.")
 
+    sites = _get_sites(driver)
+
     return ReportUploadOut(
         filename=filename,
         text_extracted=True,
         deposit_count=len(deposits),
         deposits=deposits,
+        site=_site_display_name(deposits, sites),
+        report_date=metadata.report_date,
+        author=metadata.author,
+        report_type=extract_report_type(text),
+        page_count=metadata.page_count,
+        mineral_candidates=extract_mineral_candidates(text),
+        locations=extract_locations(text, deposits),
+        estimated_grade_summary=estimate_grade_summary(deposits),
+        geological_observations=extract_geological_observations(text),
+        extracted_text_preview=text[:TEXT_PREVIEW_CHARS],
+        extraction_method="pypdf",
         nodes_created=nodes,
         warnings=warnings,
     )

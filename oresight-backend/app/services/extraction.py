@@ -231,6 +231,136 @@ class RegexDepositExtractor:
         return None
 
 
+# --- Field Intake Hardening §5.4 (Option A): the extra descriptive fields
+# the frontend has always rendered but the real endpoint never populated.
+# Everything below is deterministic keyword/regex heuristics over the same
+# extracted text `RegexDepositExtractor` already parses — no OCR, no LLM.
+# Each function returns an empty result (never raises) when it finds
+# nothing, so the router can pass that straight through as null/[] and the
+# frontend hides the corresponding block. ---------------------------------
+
+_MINERAL_KEYWORDS = [
+    "Manganese", "Iron ore", "Iron", "Copper", "Bauxite", "Chromite", "Zinc", "Lead", "Silica",
+]
+
+# Scoped (?i:...) case-insensitivity on the keyword only — the zone-code
+# part must start uppercase (e.g. "Zone A", "Zone B12") so a global re.I
+# doesn't let this match ordinary lowercase prose like "zone with".
+_LOCATION_RE = re.compile(
+    r"\b(?:(?i:Zone)\s+[A-Z][A-Za-z0-9]{0,3}\b"
+    r"|(?i:North|South|East|West|Central)\s+(?i:Pit|Block|Bench|Extension|Ramp)\b)"
+)
+
+_REPORT_TYPE_RE = re.compile(
+    r"\b(Geological\s+Survey\s+Report|Exploration\s+Report|Geotechnical\s+Report|"
+    r"Resource\s+Estimate\s+Report|Feasibility\s+Report|Assessment\s+Report)\b",
+    re.I,
+)
+
+_OBSERVATION_KEYWORDS_RE = re.compile(
+    r"\b(observ|recommend|vein|fracture|fold|fault|shear|drilling|infill|continuity)",
+    re.I,
+)
+_MAX_OBSERVATIONS = 3
+_MIN_OBSERVATION_CHARS = 25
+
+
+def extract_mineral_candidates(text: str) -> list[dict]:
+    """Keyword-frequency scan, not a real mineralogy classifier: each known
+    mineral name's mention count is normalised against the most-mentioned
+    hit to produce a confidence in [0.3, 0.95]. Returns `[]` if nothing
+    matched, sorted highest-confidence first, capped at 5.
+    """
+    if not text:
+        return []
+    counts: dict[str, int] = {}
+    for name in _MINERAL_KEYWORDS:
+        count = len(re.findall(re.escape(name), text, re.I))
+        if count:
+            counts[name] = count
+    if not counts:
+        return []
+    peak = max(counts.values())
+    candidates = [
+        {"name": name, "confidence": round(min(0.95, 0.3 + 0.65 * count / peak), 2)}
+        for name, count in counts.items()
+    ]
+    candidates.sort(key=lambda c: -c["confidence"])
+    return candidates[:5]
+
+
+def extract_locations(text: str, deposits: list[ExtractedDeposit]) -> list[str]:
+    """Distinct zone/block/pit-style tokens: from the survey text directly
+    (e.g. "Zone A", "North Pit"), plus any deposits' belt/zone strings
+    (already parsed by `RegexDepositExtractor`). Order-preserving de-dupe,
+    capped at 8.
+    """
+    found: list[str] = []
+    seen: set[str] = set()
+
+    def _add(value: str | None) -> None:
+        if not value:
+            return
+        key = value.strip()
+        if not key or key.lower() in seen:
+            return
+        seen.add(key.lower())
+        found.append(key)
+
+    for match in _LOCATION_RE.finditer(text or ""):
+        _add(match.group(0))
+    for deposit in deposits:
+        _add(deposit.belt_zone)
+
+    return found[:8]
+
+
+def estimate_grade_summary(deposits: list[ExtractedDeposit]) -> str | None:
+    """`"Mn — {avg:.1f}%"` across every deposit with a parsed grade, or
+    `None` if no deposit had one.
+    """
+    grades = [d.grade for d in deposits if d.grade is not None]
+    if not grades:
+        return None
+    # — (em dash) spelled as an escape, not a literal character: a
+    # literal em dash here was observed coming back mojibake'd
+    # (UTF-8 bytes reinterpreted as cp1252) over the HTTP response on this
+    # Windows dev box, even though the bytes on disk were correct UTF-8.
+    # The escape sidesteps whatever in the chain was responsible.
+    return f"Mn \u2014 {sum(grades) / len(grades):.1f}%"
+
+
+def extract_geological_observations(text: str) -> list[str]:
+    """Sentences from the survey text that mention a structural/geological
+    keyword (vein, fracture, fold, recommend, …) — a cheap proxy for
+    "observations" without running an LLM over the document. Capped at 3,
+    short fragments filtered out.
+    """
+    if not text:
+        return []
+    sentences = re.split(r"(?<=[.!?])\s+", text)
+    observations: list[str] = []
+    for sentence in sentences:
+        cleaned = " ".join(sentence.split())
+        if len(cleaned) < _MIN_OBSERVATION_CHARS:
+            continue
+        if _OBSERVATION_KEYWORDS_RE.search(cleaned):
+            observations.append(cleaned)
+        if len(observations) >= _MAX_OBSERVATIONS:
+            break
+    return observations
+
+
+def extract_report_type(text: str) -> str | None:
+    """The first recognised report-type phrase (e.g. "Geological Survey
+    Report"), title-cased, or `None` if the text names none of them.
+    """
+    if not text:
+        return None
+    match = _REPORT_TYPE_RE.search(text)
+    return match.group(1).title() if match else None
+
+
 def get_extractor() -> DepositExtractor:
     """Return the active deposit extractor.
 

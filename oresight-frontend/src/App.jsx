@@ -359,6 +359,15 @@ function FieldIntakePageLegacy() {
   return <main className="page"><div className="page-head"><div><div className="eyebrow">Field intake · legacy preview</div><h1>Bring the shift into the model</h1></div><span className="pill mock">Contract surface below</span></div></main>;
 }
 
+// Same hardcoded 3-site list every other Field Intake tab (Equipment,
+// Production, Blasting) already uses — reused here rather than introducing
+// a new site-fetching pattern for just the Notes tab.
+const FIELD_INTAKE_SITE_OPTIONS = [
+  { id: 1, name: 'Balaghat' },
+  { id: 2, name: 'Nagpur' },
+  { id: 3, name: 'Bhandara' },
+];
+
 function FieldIntakePage() {
   const { data, loading, error, retry } = useAsync(() => api.getFieldWorkspace(), []);
   const [active, setActive] = useState('equipment');
@@ -366,22 +375,46 @@ function FieldIntakePage() {
   const [note, setNote] = useState('');
   const [query, setQuery] = useState('');
   const [searchedNotes, setSearchedNotes] = useState([]);
+  // Defaults to Balaghat (site 1) — same site getFieldWorkspace() preloads
+  // notes for, so the default view needs no extra round trip.
+  const [noteSiteId, setNoteSiteId] = useState(FIELD_INTAKE_SITE_OPTIONS[0].id);
   const [toast, setToast] = useState('');
   useEffect(() => { if (data) setEquipmentRows(data.equipment); }, [data]);
-  useEffect(() => { if (data) api.searchSiteNotes(query, 1).then(setSearchedNotes).catch(() => setSearchedNotes([])); }, [query, data]);
+  useEffect(() => {
+    if (!data) return;
+    // The workspace load already fetched site 1's notes for an empty query —
+    // reuse that instead of re-querying when nothing has changed from the
+    // default. Any other site, or a non-empty query, needs its own fetch.
+    if (!query && noteSiteId === FIELD_INTAKE_SITE_OPTIONS[0].id) { setSearchedNotes(data.notes); return; }
+    const loader = query ? api.searchSiteNotes(query, noteSiteId) : api.getSiteNotes(noteSiteId);
+    loader.then(setSearchedNotes).catch(() => setSearchedNotes([]));
+  }, [query, data, noteSiteId]);
   if (loading) return <main className="page"><LoadingCard lines={10} /></main>;
   if (error) return <main className="page"><ErrorState retry={retry} /></main>;
   const showToast = (message) => { setToast(message); setTimeout(() => setToast(''), 2600); };
   const onStatusChange = async (item, status) => { try { const updated = await api.updateEquipmentStatus(item.id, { status, status_reason: status === 'up' ? 'Returned to service from field intake' : 'Marked down from field intake' }); setEquipmentRows((rows) => rows.map((row) => row.id === item.id ? updated : row)); showToast(`${item.name} marked ${status}`); } catch (statusError) { showToast(statusError.status === 409 ? '409 conflict: equipment changed elsewhere; reload before retrying.' : statusError.detail || 'Status update failed'); } };
   const refetchEquipment = async () => { try { const fresh = await api.getFieldWorkspace(); setEquipmentRows(fresh.equipment); } catch { /* keep current rows; bulk summary already reflects per-item results */ } };
-  const saveNote = async () => { if (!note.trim()) { showToast('Validation: note text is required.'); return; } try { await api.createSiteNote({ site_id: 1, text: note }); setNote(''); showToast('Note added to Balaghat field log'); } catch (noteError) { showToast(noteError.status === 409 ? '409 conflict: the note was updated elsewhere.' : noteError.detail || 'Note save failed'); } };
-  const notes = query ? searchedNotes : data.notes;
+  const noteSiteName = FIELD_INTAKE_SITE_OPTIONS.find((s) => s.id === noteSiteId)?.name || 'the selected site';
+  const saveNote = async () => {
+    if (!note.trim()) { showToast('Validation: note text is required.'); return; }
+    try {
+      await api.createSiteNote({ site_id: noteSiteId, text: note });
+      setNote('');
+      showToast(`Note added to ${noteSiteName} field log`);
+      // Refresh the visible list so the new note shows up immediately.
+      const loader = query ? api.searchSiteNotes(query, noteSiteId) : api.getSiteNotes(noteSiteId);
+      loader.then(setSearchedNotes).catch(() => {});
+    } catch (noteError) {
+      showToast(noteError.status === 409 ? '409 conflict: the note was updated elsewhere.' : noteError.detail || 'Note save failed');
+    }
+  };
+  const notes = searchedNotes;
   return <main className="page"><div className="page-head"><div><div className="eyebrow">Field intake · operations loop</div><h1>Bring the shift into the model</h1><p className="subhead">Capture equipment status, production reality, geology documents, and the notes that explain the deviation.</p></div></div><div className="tabs">{['equipment', 'production', 'blasting', 'geology', 'notes'].map((item) => <button className={`tab ${active === item ? 'active' : ''}`} onClick={() => setActive(item)} key={item} data-testid={`tab-field-${item}`}>{item[0].toUpperCase() + item.slice(1)}</button>)}</div>
     {active === 'equipment' && <EquipmentTab equipmentRows={equipmentRows} setEquipmentRows={setEquipmentRows} onStatusChange={onStatusChange} showToast={showToast} refetchAll={refetchEquipment} />}
     {active === 'production' && <ProductionTab showToast={showToast} />}
     {active === 'blasting' && <BlastLogTab showToast={showToast} />}
     {active === 'geology' && <GeologyTab />}
-    {active === 'notes' && <div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Site notes</div><div className="card-kicker">GET /site-notes/search · searchable field context</div></div><Search size={15} /></div><input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notes by keyword" data-testid="input-search-notes" />{notes.length ? notes.map((item) => <div className="risk-item" key={item.id}><div className="risk-marker medium" /><div className="risk-item-main"><div className="risk-title">{item.text}</div><div className="risk-meta">{dateLabel(item.created_at)} · relevance {percent(item.relevance)}</div></div></div>) : <EmptyState icon={Search} title="No notes found" />}</section><section className="card section-card"><div className="card-title">Add shift note</div><p className="subhead">Notes are local preview writes and are attached to Balaghat (site 1).</p><textarea className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Record a site observation…" style={{ width: '100%', marginTop: 14 }} data-testid="textarea-site-note" /><button className="btn primary" onClick={saveNote} style={{ marginTop: 10 }} data-testid="button-save-note"><Check size={13} /> Save note</button><div className="alert-strip" style={{ marginTop: 18 }}><CircleHelp size={15} /><span>Live API conflict responses (409) are shown inline so stale writes can be reviewed before retrying.</span></div></section></div>}
+    {active === 'notes' && <div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Site notes</div><div className="card-kicker">GET /site-notes/search · searchable field context</div></div><Search size={15} /></div><div className="filter-row" style={{ marginBottom: 10 }}><select className="select" value={noteSiteId} onChange={(e) => setNoteSiteId(Number(e.target.value))} data-testid="select-notes-site">{FIELD_INTAKE_SITE_OPTIONS.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}</select></div><input className="input" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notes by keyword" data-testid="input-search-notes" />{notes.length ? notes.map((item) => <div className="risk-item" key={item.id}><div className="risk-marker medium" /><div className="risk-item-main"><div className="risk-title">{item.text}</div><div className="risk-meta">{dateLabel(item.created_at)} · relevance {percent(item.relevance)}</div></div></div>) : <EmptyState icon={Search} title="No notes found" />}</section><section className="card section-card"><div className="card-title">Add shift note</div><p className="subhead">Notes are local preview writes and are attached to {noteSiteName} (site {noteSiteId}).</p><textarea className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Record a site observation…" style={{ width: '100%', marginTop: 14 }} data-testid="textarea-site-note" /><button className="btn primary" onClick={saveNote} style={{ marginTop: 10 }} data-testid="button-save-note"><Check size={13} /> Save note</button><div className="alert-strip" style={{ marginTop: 18 }}><CircleHelp size={15} /><span>Live API conflict responses (409) are shown inline so stale writes can be reviewed before retrying.</span></div></section></div>}
     {toast && <div className="toast">{toast}</div>}</main>;
 }
 

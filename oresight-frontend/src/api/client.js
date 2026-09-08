@@ -40,6 +40,13 @@ const mockBlastSummary = [
   { delay_reason: 'weather_hold', event_count: 1, expected_yield_tonnes: 1200, actual_yield_tonnes: 0, tonnes_lost: 1200 },
 ];
 
+// Equipment status-change history, mirroring backend `equipment_status_log`
+// (Field Intake Hardening Phase 4). Lives here for the same reason as the
+// blast-event mocks above — newest-first via unshift, never re-sorted.
+const mockEquipmentStatusLog = [];
+const EQUIPMENT_FLAP_WINDOW_HOURS = 24;
+const EQUIPMENT_FLAP_THRESHOLD = 4;
+
 export const api = {
   isMock: useMock,
   async getKpiSummary() { return useMock ? delay(mockData.kpi) : request('/kpi/summary'); },
@@ -82,13 +89,102 @@ export const api = {
     return request('/site-notes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ site_id: Number(payload.site_id), text: payload.text }) });
   },
   async updateEquipmentStatus(id, payload) {
-    if (useMock) { const item = mockData.equipment.find((equipment) => equipment.id === Number(id)); if (item) Object.assign(item, { status: payload.status, status_reason: payload.status_reason || item.status_reason, last_status_change: '2026-09-05T15:20:00Z' }); return delay(item); }
-    return request(`/equipment/${Number(id)}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: payload.status, reason: payload.status_reason || null }) });
+    const source = payload.source || 'manual';
+    if (useMock) {
+      const item = mockData.equipment.find((equipment) => equipment.id === Number(id));
+      const oldStatus = item?.status ?? null;
+      const changedAt = new Date().toISOString();
+      if (item) Object.assign(item, { status: payload.status, status_reason: payload.status_reason || item.status_reason, last_status_change: changedAt });
+      mockEquipmentStatusLog.unshift({
+        id: Date.now(),
+        equipment_id: Number(id),
+        site_id: item?.site_id ?? null,
+        old_status: oldStatus,
+        new_status: payload.status,
+        reason: payload.status_reason || null,
+        changed_by: 'system',
+        changed_at: changedAt,
+        source,
+      });
+      const windowStart = Date.now() - EQUIPMENT_FLAP_WINDOW_HOURS * 3600 * 1000;
+      const recentCount = mockEquipmentStatusLog.filter((row) => row.equipment_id === Number(id) && new Date(row.changed_at).getTime() >= windowStart).length;
+      const flapping = recentCount > EQUIPMENT_FLAP_THRESHOLD;
+      if (item) item.flapping = flapping;
+      return delay(item ? { ...item, flapping } : { flapping });
+    }
+    return request(`/equipment/${Number(id)}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: payload.status, reason: payload.status_reason || null, source }) });
+  },
+  async getEquipmentHistory(id, { limit = 50, before } = {}) {
+    if (useMock) {
+      let rows = mockEquipmentStatusLog.filter((row) => row.equipment_id === Number(id));
+      if (before) rows = rows.filter((row) => new Date(row.changed_at).getTime() < new Date(before).getTime());
+      const page = rows.slice(0, limit);
+      const nextCursor = page.length === limit ? page[page.length - 1].changed_at : null;
+      return delay({ items: page, next_cursor: nextCursor });
+    }
+    return request(`/equipment/${Number(id)}/history${query({ limit, before })}`);
+  },
+  async getEquipmentSiteHistory({ site_id, since, limit = 100 } = {}) {
+    if (useMock) {
+      let rows = mockEquipmentStatusLog;
+      if (site_id !== undefined) rows = rows.filter((row) => Number(row.site_id) === Number(site_id));
+      if (since) rows = rows.filter((row) => new Date(row.changed_at).getTime() >= new Date(since).getTime());
+      return delay(rows.slice(0, limit));
+    }
+    return request(`/equipment/history${query({ site_id, since, limit })}`);
   },
   async createProduction(payload) {
-    const body = { site_id: Number(payload.site_id), date: payload.date, actual_output: Number(payload.actual_output), target_output: Number(payload.target_output) };
-    if (useMock) { if (body.actual_output < 0 || body.target_output <= 0) throw contractError(422, { detail: 'Output must be non-negative and target must be greater than zero.', error_code: 'VALIDATION_ERROR' }); if (mockData.production.some((row) => row.site_id === body.site_id && row.date === body.date)) throw contractError(409, { detail: 'A production record already exists for this site and date.', error_code: 'PRODUCTION_CONFLICT' }); const row = { id: Date.now(), ...body, variance_pct: Number((((body.actual_output - body.target_output) / body.target_output) * 100).toFixed(1)) }; mockData.production.unshift(row); return delay(row); }
+    const body = {
+      site_id: Number(payload.site_id),
+      date: payload.date,
+      shift: payload.shift || 'general',
+      actual_output: Number(payload.actual_output),
+      target_output: Number(payload.target_output),
+      operating_hours: payload.operating_hours === '' || payload.operating_hours === undefined ? null : Number(payload.operating_hours),
+      downtime_hours: payload.downtime_hours === '' || payload.downtime_hours === undefined ? null : Number(payload.downtime_hours),
+      material_processed: payload.material_processed === '' || payload.material_processed === undefined ? null : Number(payload.material_processed),
+      quality_grade: payload.quality_grade === '' || payload.quality_grade === undefined ? null : Number(payload.quality_grade),
+      shortfall_reasons: payload.shortfall_reasons || [],
+      shortfall_other_note: payload.shortfall_other_note || null,
+    };
+    if (useMock) {
+      if (body.actual_output < 0 || body.target_output <= 0) throw contractError(422, { detail: 'Output must be non-negative and target must be greater than zero.', error_code: 'VALIDATION_ERROR' });
+      if (body.operating_hours !== null && body.downtime_hours !== null && body.operating_hours + body.downtime_hours > 24) throw contractError(422, { detail: 'operating_hours + downtime_hours must not exceed 24.', error_code: 'VALIDATION_ERROR' });
+      const variancePct = Number((((body.actual_output - body.target_output) / body.target_output) * 100).toFixed(1));
+      const varianceClass = variancePct >= -3 ? 'on_target' : variancePct >= -12 ? 'slightly_below' : 'significantly_below';
+      if (varianceClass === 'significantly_below' && body.shortfall_reasons.length === 0) throw contractError(422, { detail: 'shortfall_reasons must include at least one reason when significantly below target.', error_code: 'VALIDATION_ERROR' });
+      if (body.shortfall_reasons.includes('other') && !body.shortfall_other_note) throw contractError(422, { detail: "shortfall_other_note is required when shortfall_reasons includes 'other'.", error_code: 'VALIDATION_ERROR' });
+      if (mockData.production.some((row) => row.site_id === body.site_id && row.date === body.date && (row.shift || 'general') === body.shift)) throw contractError(409, { detail: 'A production record already exists for this site, date, and shift.', error_code: 'CONFLICT' });
+      const now = new Date().toISOString();
+      const row = { id: Date.now(), ...body, variance_pct: variancePct, variance_class: varianceClass, created_at: now, updated_at: null, created_by: 'system', updated_by: null };
+      mockData.production.unshift(row);
+      return delay(row);
+    }
     return request('/production', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  },
+  async updateProduction(id, payload) {
+    const body = {};
+    for (const key of ['actual_output', 'target_output', 'operating_hours', 'downtime_hours', 'material_processed', 'quality_grade', 'shortfall_reasons', 'shortfall_other_note']) {
+      if (payload[key] !== undefined) body[key] = payload[key] === '' ? null : (['shortfall_reasons', 'shortfall_other_note'].includes(key) ? payload[key] : Number(payload[key]));
+    }
+    if (useMock) {
+      const row = mockData.production.find((item) => item.id === Number(id));
+      if (!row) throw contractError(404, { detail: `Production record ${id} not found`, error_code: 'NOT_FOUND' });
+      Object.assign(row, body, { updated_at: new Date().toISOString(), updated_by: 'system' });
+      const variancePct = row.target_output ? Number((((row.actual_output - row.target_output) / row.target_output) * 100).toFixed(1)) : null;
+      row.variance_pct = variancePct;
+      row.variance_class = variancePct === null ? null : variancePct >= -3 ? 'on_target' : variancePct >= -12 ? 'slightly_below' : 'significantly_below';
+      return delay(row);
+    }
+    return request(`/production/${Number(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  },
+  async getShortfallReasons() {
+    if (useMock) return delay(mockData.shortfallReasons);
+    return request('/production/shortfall-reasons');
+  },
+  async getProductionThresholds() {
+    if (useMock) return delay(mockData.productionThresholds);
+    return request('/production/thresholds');
   },
   async listBlastEvents({ site_id, status } = {}) {
     if (useMock) return delay(mockBlastEvents.filter((row) => (site_id === undefined || row.site_id === Number(site_id)) && (!status || row.status === status)));
@@ -107,6 +203,10 @@ export const api = {
   async getBlastEventSummary({ site_id, from, to } = {}) {
     if (useMock) return delay(mockBlastSummary);
     return request(`/blast-events/summary${query({ site_id: site_id === undefined ? undefined : Number(site_id), from, to })}`);
+  },
+  async getUploadLimits() {
+    if (useMock) return delay({ max_report_bytes: 10 * 1024 * 1024, allowed_mime: ['application/pdf'] });
+    return request('/config/upload-limits');
   },
   async getHealth() { return useMock ? delay(mockData.health) : request('/health'); },
   async getAdminJobs() { return useMock ? delay(mockData.jobs) : request('/admin/jobs'); },

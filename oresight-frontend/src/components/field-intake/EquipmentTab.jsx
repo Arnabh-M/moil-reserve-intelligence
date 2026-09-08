@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FixedSizeList } from 'react-window';
-import { Check, ChevronDown, ChevronRight, Loader2, Truck, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, History, Loader2, Truck, X } from 'lucide-react';
 import { api } from '../../api/client';
 
 const ROW_HEIGHT = 42;
@@ -63,7 +63,7 @@ function MultiSelectFilter({ label, options, selected, onChange, testId }) {
   );
 }
 
-function EquipmentRow({ row, selected, onToggleSelect, onStatusChange, onReasonChange }) {
+function EquipmentRow({ row, selected, onToggleSelect, onStatusChange, onReasonChange, onOpenHistory }) {
   return (
     <div className={`eq-row ${row.status === 'down' ? 'eq-row-down' : ''}`} style={{ display: 'grid', gridTemplateColumns: GRID_TEMPLATE, height: '100%' }} data-testid={`row-equipment-${row.id}`}>
       <span className="eq-cell eq-cell-check"><input type="checkbox" checked={selected} onChange={() => onToggleSelect(row.id)} aria-label={`Select ${row.name}`} data-testid={`checkbox-equipment-${row.id}`} /></span>
@@ -71,11 +71,15 @@ function EquipmentRow({ row, selected, onToggleSelect, onStatusChange, onReasonC
       <span className="eq-cell muted">{row.equipment_type}</span>
       <span className="eq-cell eq-cell-status">
         <span className={`pill ${row.status === 'up' ? 'good' : 'critical'}`}>{row.status}</span>
+        {row.flapping && <span className="flap-badge" title="Flapping: frequent status changes detected" data-testid={`badge-flapping-${row.id}`}>⚠</span>}
         <select className="select" value={row.status} onChange={(event) => onStatusChange(row, event.target.value)} data-testid={`select-equipment-status-${row.id}`}>
           <option value="up">up</option><option value="down">down</option>
         </select>
       </span>
-      <span className="eq-cell mono">{timeLabel(row.last_status_change)}</span>
+      <span className="eq-cell mono">
+        {timeLabel(row.last_status_change)}
+        <button type="button" className="icon-btn" onClick={() => onOpenHistory(row)} title="View status history" aria-label={`View status history for ${row.name}`} data-testid={`button-history-${row.id}`}><History size={12} /></button>
+      </span>
       <span className="eq-cell">
         <input className="input" style={{ width: '100%' }} value={row.status_reason || ''} placeholder="Required if down" onChange={(event) => onReasonChange(row.id, event.target.value)} aria-label={`Reason for ${row.name}`} />
       </span>
@@ -96,7 +100,7 @@ function GroupHeader({ item, onToggle }) {
 function ListRow({ index, style, data }) {
   const item = data.items[index];
   if (item.type === 'header') return <div style={style}><GroupHeader item={item} onToggle={data.onToggleGroup} /></div>;
-  return <div style={style}><EquipmentRow row={item.row} selected={data.selectedIds.has(item.row.id)} onToggleSelect={data.onToggleSelect} onStatusChange={data.onStatusChange} onReasonChange={data.onReasonChange} /></div>;
+  return <div style={style}><EquipmentRow row={item.row} selected={data.selectedIds.has(item.row.id)} onToggleSelect={data.onToggleSelect} onStatusChange={data.onStatusChange} onReasonChange={data.onReasonChange} onOpenHistory={data.onOpenHistory} /></div>;
 }
 
 export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatusChange, showToast, refetchAll }) {
@@ -110,6 +114,10 @@ export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatus
   const [bulkState, setBulkState] = useState(null);
   const [bulkConfirmingDown, setBulkConfirmingDown] = useState(false);
   const [bulkReasonDraft, setBulkReasonDraft] = useState('');
+  const [historyRow, setHistoryRow] = useState(null);
+  const [historyItems, setHistoryItems] = useState([]);
+  const [historyCursor, setHistoryCursor] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const lastBulkRef = useRef(null);
   const selectAllRef = useRef(null);
 
@@ -178,6 +186,26 @@ export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatus
   const toggleRowSelected = (id) => setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const onReasonChange = (id, value) => setEquipmentRows((rows) => rows.map((row) => row.id === id ? { ...row, status_reason: value } : row));
 
+  const openHistory = (row) => {
+    setHistoryRow(row);
+    setHistoryItems([]);
+    setHistoryCursor(null);
+    setHistoryLoading(true);
+    api.getEquipmentHistory(row.id, { limit: 20 })
+      .then((page) => { setHistoryItems(page.items); setHistoryCursor(page.next_cursor); })
+      .catch(() => showToast('Could not load status history.'))
+      .finally(() => setHistoryLoading(false));
+  };
+  const closeHistory = () => { setHistoryRow(null); setHistoryItems([]); setHistoryCursor(null); };
+  const loadMoreHistory = () => {
+    if (!historyRow || !historyCursor || historyLoading) return;
+    setHistoryLoading(true);
+    api.getEquipmentHistory(historyRow.id, { limit: 20, before: historyCursor })
+      .then((page) => { setHistoryItems((prev) => [...prev, ...page.items]); setHistoryCursor(page.next_cursor); })
+      .catch(() => showToast('Could not load more status history.'))
+      .finally(() => setHistoryLoading(false));
+  };
+
   const runBulkUpdate = async (targetStatus, reasonText, idsOverride) => {
     const ids = idsOverride || Array.from(selectedIds);
     if (!ids.length) return;
@@ -190,6 +218,7 @@ export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatus
     await runPool(items, (item) => api.updateEquipmentStatus(item.id, {
       status: targetStatus,
       status_reason: targetStatus === 'up' ? (item.status_reason || 'Returned to service from field intake') : reasonText,
+      source: 'bulk',
     }), BULK_CONCURRENCY, (item, result) => {
       if (result.ok) { succeeded.push(item.id); setEquipmentRows((rows) => rows.map((row) => row.id === item.id ? result.value : row)); }
       else failed.push({ id: item.id, name: item.name, error: result.error });
@@ -252,7 +281,7 @@ export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatus
             itemCount={flatItems.length}
             itemSize={itemSize()}
             itemKey={(index) => flatItems[index].key}
-            itemData={{ items: flatItems, selectedIds, onToggleSelect: toggleRowSelected, onToggleGroup: toggleGroup, onStatusChange, onReasonChange }}
+            itemData={{ items: flatItems, selectedIds, onToggleSelect: toggleRowSelected, onToggleGroup: toggleGroup, onStatusChange, onReasonChange, onOpenHistory: openHistory }}
           >
             {ListRow}
           </FixedSizeList>
@@ -270,7 +299,7 @@ export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatus
               ) : (
                 <>
                   <input className="input" style={{ minWidth: 200 }} placeholder="Reason (required)" value={bulkReasonDraft} onChange={(event) => setBulkReasonDraft(event.target.value)} data-testid="input-bulk-reason" />
-                  <button className="btn small primary" onClick={() => runBulkUpdate('down', bulkReasonDraft)} data-testid="button-bulk-down-confirm">Confirm</button>
+                  <button className="btn small primary" onClick={() => runBulkUpdate('down', bulkReasonDraft)} data-testid="button-bulk-down-confirm">Confirm {selectedIds.size} unit{selectedIds.size === 1 ? '' : 's'} down</button>
                   <button className="btn small ghost" onClick={() => { setBulkConfirmingDown(false); setBulkReasonDraft(''); }} data-testid="button-bulk-down-cancel">Cancel</button>
                 </>
               )}
@@ -293,6 +322,34 @@ export default function EquipmentTab({ equipmentRows, setEquipmentRows, onStatus
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {historyRow && (
+        <div className="eq-history-overlay" onClick={closeHistory}>
+          <div className="card eq-history-panel" onClick={(event) => event.stopPropagation()} data-testid="panel-equipment-history">
+            <div className="eq-history-head">
+              <div><div className="card-title">{historyRow.name}</div><div className="card-kicker">status change history</div></div>
+              <button type="button" className="btn ghost small" onClick={closeHistory} aria-label="Close history panel" data-testid="button-close-history"><X size={14} /></button>
+            </div>
+            {historyItems.length === 0 && !historyLoading && (
+              <div className="eq-history-empty">No status changes recorded yet.</div>
+            )}
+            {historyItems.map((item) => (
+              <div className="eq-history-item" key={item.id}>
+                <div>
+                  <span className={`pill ${item.new_status === 'up' ? 'good' : 'critical'}`}>{item.old_status || '—'} → {item.new_status}</span>
+                  <span className="pill neutral" style={{ marginLeft: 6 }}>{item.source}</span>
+                </div>
+                {item.reason && <div className="muted" style={{ marginTop: 6 }}>{item.reason}</div>}
+                <div className="muted mono" style={{ marginTop: 6, fontSize: 10 }}>{new Date(item.changed_at).toLocaleString()} · {item.changed_by || 'system'}</div>
+              </div>
+            ))}
+            {historyLoading && <div className="eq-history-empty"><Loader2 size={14} className="spin" /></div>}
+            {!historyLoading && historyCursor && (
+              <button type="button" className="btn small" style={{ marginTop: 10, width: '100%' }} onClick={loadMoreHistory} data-testid="button-history-load-more">Load more</button>
+            )}
+          </div>
         </div>
       )}
     </section>

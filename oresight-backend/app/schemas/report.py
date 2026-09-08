@@ -9,6 +9,8 @@ one later must keep returning exactly this.
 
 from __future__ import annotations
 
+from datetime import date
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.causal_graph import GraphNode
@@ -37,6 +39,11 @@ class ExtractedDeposit(BaseModel):
     belt_zone: str | None = Field(
         None, description="Manganese belt / zone the deposit sits in, as written in the source"
     )
+
+
+class MineralCandidate(BaseModel):
+    name: str
+    confidence: float
 
 
 class ReportUploadOut(BaseModel):
@@ -80,3 +87,21 @@ class ReportUploadOut(BaseModel):
     # {id,label,type} shape the causal-graph endpoints use.
     nodes_created: list[GraphNode]
     warnings: list[str] = []
+
+    # -- Field Intake Hardening §5.4 (Option A): additive fields the
+    # frontend has always rendered from mock data; now genuinely populated
+    # where derivable (PDF metadata + deterministic text heuristics), null
+    # otherwise. See app.services.extraction for how each is derived. --
+    site: str | None = None
+    report_date: date | None = None
+    author: str | None = None
+    report_type: str | None = None
+    page_count: int | None = None
+    mineral_candidates: list[MineralCandidate] = []
+    locations: list[str] = []
+    estimated_grade_summary: str | None = None
+    geological_observations: list[str] = []
+    extracted_text_preview: str | None = None
+    # "pypdf" (text layer read directly) or "none" (no extractable text).
+    # OCR fallback ("ocr") is Phase 6 / not implemented yet.
+    extraction_method: str = "none"
