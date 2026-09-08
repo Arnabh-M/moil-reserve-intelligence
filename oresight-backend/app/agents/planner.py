@@ -87,6 +87,14 @@ _MODEL_SIGNAL_BONUS_MAX = 12  # points of headroom the live simulated risk delta
 _MODEL_SIGNAL_SATURATION = 0.05  # a 0.05 risk-score-point delta counts as "fully meaningful"
 
 
+def _shorten(text: str, limit: int = 90) -> str:
+    """Collapse whitespace and clip to `limit` chars for embedding a risk
+    event's trigger inside a recommendation description.
+    """
+    text = " ".join(text.split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "..."
+
+
 class PlannerAgent:
     """Finds and ranks mitigation options for a risk event."""
 
@@ -111,14 +119,22 @@ class PlannerAgent:
         site = risk_event.site
         trigger = self._build_trigger_description(risk_event, site)
 
+        # Resolve the BlastPlan on THIS risk event's own Neo4j causal chain
+        # once, up front, and thread it (plus the trigger text) into the
+        # reschedule / adjust-plan searches. Without this those two searches
+        # are purely site-scoped, so two different risk events at the same
+        # site come back with byte-identical options whenever redeploy has
+        # no candidate for either.
+        chain_blast = self._causal_chain_blast_plan(risk_event)
+
         candidates = []
         redeploy = self._find_redeploy_candidate(risk_event, site)
         if redeploy is not None:
             candidates.append(redeploy)
-        reschedule = self._find_reschedule_candidate(site)
+        reschedule = self._find_reschedule_candidate(site, trigger, chain_blast)
         if reschedule is not None:
             candidates.append(reschedule)
-        adjust_plan = self._find_adjust_plan_candidate(site)
+        adjust_plan = self._find_adjust_plan_candidate(site, trigger, chain_blast)
         if adjust_plan is not None:
             candidates.append(adjust_plan)
 
@@ -165,6 +181,35 @@ class PlannerAgent:
         # degrade to Postgres fields only, matching the real stub's own
         # fallback in app/routers/recommendations.py.
         return risk_event.description or f"{risk_event.risk_type} at {site.name}"
+
+    def _causal_chain_blast_plan(self, risk_event: RiskEvent) -> dict | None:
+        """The BlastPlan on THIS risk event's own Neo4j causal chain, if any.
+
+        Located the same way as `_build_trigger_description`: match the
+        RiskEvent node by `external_ref` (the Postgres id), then walk up to
+        3 undirected hops to the nearest planned/delayed BlastPlan. Returns
+        None when the risk event has no Neo4j node (seed data older than the
+        Watcher) or nothing blast-shaped sits in its chain — callers then
+        fall back to the site-scoped search.
+
+        This is what makes reschedule/adjust-plan risk-event-aware: two
+        events at the same site that each trace to a *different* BlastPlan
+        no longer collapse onto whichever one merely sorts first for the
+        site.
+        """
+        with self.neo4j_driver.session() as session:
+            row = session.run(
+                """
+                MATCH (r:RiskEvent {external_ref: $ref})
+                MATCH path = (r)-[*1..3]-(b:BlastPlan)
+                WHERE b.status IN ['planned', 'delayed']
+                RETURN b.id AS id, length(path) AS hops
+                ORDER BY hops ASC, b.id ASC
+                LIMIT 1
+                """,
+                ref=str(risk_event.id),
+            ).single()
+        return {"id": row["id"]} if row is not None else None
 
     # -- candidate search -----------------------------------------------------
 
@@ -227,18 +272,39 @@ class PlannerAgent:
             "equipment_id": down_equipment.id if down_equipment else None,
         }
 
-    def _find_reschedule_candidate(self, site: Site) -> dict | None:
+    def _find_reschedule_candidate(
+        self, site: Site, trigger: str, chain_blast: dict | None
+    ) -> dict | None:
+        """Move this site's most pressing blast to the nearest clear date.
+
+        Risk-event-aware, not purely site-scoped:
+
+        - when the triggering risk event's causal chain names a BlastPlan
+          (`chain_blast`, resolved once in `get_recommendations`),
+          reschedule THAT one — so two different risk events at the same
+          site don't both land on whichever blast plan happens to sort
+          first;
+        - only when the risk event has no chain (pre-Watcher seed data) do
+          we fall back to the site's nearest open blast plan — and even
+          then the option text is grounded in this risk's own trigger, so a
+          same-site pair that shares the fallback blast still doesn't come
+          back byte-identical.
+        """
         neo4j_site_id = pg_site_to_neo4j_id(site)
         today = datetime.now(timezone.utc).date()
 
         with self.neo4j_driver.session() as session:
-            blast_row = session.run(
-                "MATCH (b:BlastPlan {site_id: $site_id}) WHERE b.status IN ['planned', 'delayed'] "
-                "RETURN b.id AS id ORDER BY b.scheduled_date ASC LIMIT 1",
-                site_id=neo4j_site_id,
-            ).single()
-            if blast_row is None:
-                return None
+            if chain_blast is not None:
+                blast_id = chain_blast["id"]
+            else:
+                blast_row = session.run(
+                    "MATCH (b:BlastPlan {site_id: $site_id}) WHERE b.status IN ['planned', 'delayed'] "
+                    "RETURN b.id AS id ORDER BY b.scheduled_date ASC LIMIT 1",
+                    site_id=neo4j_site_id,
+                ).single()
+                if blast_row is None:
+                    return None
+                blast_id = blast_row["id"]
 
             for offset in range(1, RESCHEDULE_SEARCH_DAYS + 1):
                 candidate_date = (today + timedelta(days=offset)).isoformat()
@@ -254,15 +320,18 @@ class PlannerAgent:
                     return {
                         "type": "reschedule",
                         "description": (
-                            f"Reschedule {blast_row['id']} at {site.name} to {candidate_date} "
-                            "— the nearest date with no severity >= 3 weather event on record."
+                            f"Reschedule {blast_id} at {site.name} to {candidate_date} to relieve "
+                            f"'{_shorten(trigger)}' — the nearest date with no severity >= 3 "
+                            "weather event on record."
                         ),
-                        "target_id": blast_row["id"],
+                        "target_id": blast_id,
                         "days_out": offset,
                     }
         return None
 
-    def _find_adjust_plan_candidate(self, site: Site) -> dict | None:
+    def _find_adjust_plan_candidate(
+        self, site: Site, trigger: str, chain_blast: dict | None
+    ) -> dict | None:
         cutoff = datetime.now(timezone.utc).date() - timedelta(days=ADJUST_PLAN_LOOKBACK_DAYS)
         other_sites = self.db.scalars(select(Site).where(Site.id != site.id)).all()
 
@@ -283,14 +352,21 @@ class PlannerAgent:
             # can still net negative overall (a few bad days outweighing
             # many small-surplus ones), which isn't genuine surplus capacity.
             if surplus_days / len(rows) >= 0.7 and avg_surplus_pct > 0:
+                # Anchor the reallocation to THIS risk event — to its
+                # causal-chain blast plan when it has one, else at least
+                # name its trigger — so two risk events at the same site
+                # don't emit an identical "reallocate {site}'s shortfall"
+                # line.
+                target_id = chain_blast["id"] if chain_blast is not None else str(other.id)
                 return {
                     "type": "adjust_plan",
                     "description": (
                         f"{other.name} has run above target every day for the last "
                         f"{ADJUST_PLAN_LOOKBACK_DAYS} days (avg +{avg_surplus_pct:.0%}) — "
-                        f"reallocate some of {site.name}'s shortfall there."
+                        f"reallocate part of the shortfall behind '{_shorten(trigger)}' "
+                        f"at {site.name} there."
                     ),
-                    "target_id": str(other.id),
+                    "target_id": target_id,
                 }
         return None
 
@@ -355,19 +431,46 @@ if __name__ == "__main__":
 
     try:
         agent = PlannerAgent(db_session, driver)
-        # risk_id 9: Scenario B regression check — Nagpur's Drill down,
-        # matched case-insensitively against Bhandara's idle Drill despite
-        # Postgres storing equipment_type as Title Case (see the case-
-        # sensitivity fix in _find_redeploy_candidate).
-        for risk_id in [1, 3, 5, 7, 9]:
-            result = agent.get_recommendations(risk_id)
-            print(f"\n=== risk_event_id={risk_id} ===")
+        # EVERY seeded Postgres risk event, not a hand-picked subset: the
+        # regression this guards against is two events at the SAME site
+        # coming back with byte-identical options because the reschedule /
+        # adjust-plan search was site-scoped only. The Scenario B event
+        # (Drill NAG-1 down) is still in here as the redeploy check —
+        # case-insensitively matched against Bhandara's idle Drill despite
+        # Postgres storing equipment_type as Title Case.
+        risk_events = db_session.scalars(
+            select(RiskEvent).order_by(RiskEvent.site_id, RiskEvent.id)
+        ).all()
+
+        fingerprints_by_site: dict[int, list[tuple[int, tuple]]] = {}
+        for risk in risk_events:
+            result = agent.get_recommendations(risk.id)
+            flag = " [resolved]" if risk.resolved else ""
+            print(f"\n=== risk_event_id={risk.id}  site={risk.site_id}  {risk.risk_type}{flag} ===")
             print("trigger:", result["trigger"])
             if not result["options"]:
                 print("  (no viable options found)")
+            option_fp = []
             for opt in result["options"]:
                 print(f"  [{opt['type']}] impact={opt['projected_impact']} confidence={opt['confidence']} "
                       f"target={opt['target_id']} - {opt['description']}")
+                option_fp.append((opt["type"], opt["projected_impact"], opt["description"]))
+            fingerprints_by_site.setdefault(risk.site_id, []).append((risk.id, tuple(option_fp)))
+
+        print("\n=== same-site identical-options check ===")
+        collisions = 0
+        for site_id, entries in sorted(fingerprints_by_site.items()):
+            for i in range(len(entries)):
+                for j in range(i + 1, len(entries)):
+                    if entries[i][1] and entries[i][1] == entries[j][1]:
+                        collisions += 1
+                        print(f"  site {site_id}: risk_event {entries[i][0]} and "
+                              f"{entries[j][0]} return IDENTICAL options")
+        print(
+            "  OK — no two risk events at the same site share an options list"
+            if collisions == 0
+            else f"  {collisions} collision(s) still present"
+        )
     finally:
         driver.close()
         db_session.close()

@@ -15,6 +15,7 @@ from app.schemas.production import ProductionRecordCreate, ProductionRecordOut
 from app.schemas.recommendation import RecommendationOption, RecommendationOut
 from app.schemas.report import ExtractedDeposit, ReportUploadOut
 from app.schemas.risk_event import RiskEventOut
+from app.schemas.shift_plan import ShiftPlanEntryCreate, ShiftPlanEntryOut
 from app.schemas.simulation import SimStateSnapshot, SimulateRequest, SimulateResponse
 from app.schemas.site import SiteOut
 from app.schemas.site_note import SiteNoteCreate, SiteNoteOut, SiteNoteSearchHit
@@ -39,6 +40,8 @@ __all__ = [
     "ExtractedDeposit",
     "ReportUploadOut",
     "RiskEventOut",
+    "ShiftPlanEntryCreate",
+    "ShiftPlanEntryOut",
     "SimStateSnapshot",
     "SimulateRequest",
     "SimulateResponse",

@@ -28,6 +28,7 @@ from app.routers import (
     reports,
     reserve_zones,
     risk_events,
+    shift_plan,
     simulate,
     site_notes,
     sites,
@@ -205,6 +206,7 @@ def create_app() -> FastAPI:
     app.include_router(reserve_zones.router)
     app.include_router(recommendations.router)
     app.include_router(reports.router)
+    app.include_router(shift_plan.router)
     app.include_router(simulate.router)
     app.include_router(kpi.router)
     app.include_router(site_notes.router)

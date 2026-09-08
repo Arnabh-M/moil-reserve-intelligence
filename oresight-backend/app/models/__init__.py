@@ -5,6 +5,7 @@ from app.models.equipment import Equipment, EquipmentStatus
 from app.models.production_record import ProductionRecord
 from app.models.reserve_zone import ReserveZone
 from app.models.risk_event import RiskEvent, RiskSeverity
+from app.models.shift_plan_entry import ShiftPlanEntry
 from app.models.site import Site
 from app.models.site_note import SiteNote
 
@@ -18,6 +19,7 @@ __all__ = [
     "ReserveZone",
     "RiskEvent",
     "RiskSeverity",
+    "ShiftPlanEntry",
     "Site",
     "SiteNote",
 ]

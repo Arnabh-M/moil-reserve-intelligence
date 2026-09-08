@@ -42,6 +42,9 @@ const mockBlastSummary = [
   { delay_reason: 'weather_hold', event_count: 1, expected_yield_tonnes: 1200, actual_yield_tonnes: 0, tonnes_lost: 1200 },
 ];
 
+// Shift-plan rows persist in-memory for the mock fallback, same as mockBlastEvents.
+const mockShiftPlan = [];
+
 const SEVERITY_RANK = { critical: 4, high: 3, medium: 2, low: 1 };
 
 // Picking "the" risk event for a site used to just take risks[0] (API insertion
@@ -98,6 +101,22 @@ export const api = {
     const results = [];
     for (const batch of batches) results.push(...(await Promise.all(batch.map((event) => this.getRecommendations(event.id)))));
     return results.flat();
+  },
+  async addToShiftPlan(payload) {
+    const body = {
+      risk_event_id: Number(payload.risk_event_id),
+      option_type: payload.option_type,
+      description: payload.description,
+      target_id: payload.target_id ?? null,
+      projected_impact: Number(payload.projected_impact),
+      confidence: Number(payload.confidence),
+    };
+    if (useMock) { const row = { id: Date.now(), site_id: null, created_at: new Date().toISOString(), ...body }; mockShiftPlan.unshift(row); return delay(row); }
+    return request('/shift-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  },
+  async getShiftPlan(siteId) {
+    if (useMock) return delay(mockShiftPlan.filter((row) => siteId === undefined || Number(row.site_id) === Number(siteId)));
+    return request(`/shift-plan${query({ site_id: siteId === undefined ? undefined : Number(siteId) })}`);
   },
   async simulate({ scenario_type, site_id, duration_days }) {
     const payload = { scenario_type, site_id: Number(site_id), duration_days: Number(duration_days) };
