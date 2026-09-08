@@ -10,8 +10,6 @@ export default function LayerToggle({
   onSpectralChange,
   lineamentVisible = false,
   onLineamentChange,
-  droneVisible = false,
-  onDroneChange,
   ndviVisible = false,
   onNdviChange,
   rasterOpacity,
@@ -19,11 +17,11 @@ export default function LayerToggle({
   selectedSiteId = null,
 }) {
   const anyRasterLayerVisible =
-    prospectivityVisible || spectralVisible || droneVisible || ndviVisible
+    prospectivityVisible || spectralVisible || ndviVisible
   const [enabled, setEnabled] = useState(() =>
     Object.fromEntries(
       MAP_LAYERS.filter(
-        (layer) => !['prospectivity', 'spectral', 'lineament', 'dsm', 'ndvi'].includes(layer.id)
+        (layer) => !['prospectivity', 'spectral', 'lineament', 'ndvi'].includes(layer.id)
       ).map((layer) => [layer.id, false])
     )
   )
@@ -36,7 +34,6 @@ export default function LayerToggle({
     if (id === 'prospectivity') return Boolean(prospectivityVisible)
     if (id === 'spectral') return Boolean(spectralVisible)
     if (id === 'lineament') return Boolean(lineamentVisible)
-    if (id === 'dsm') return Boolean(droneVisible)
     if (id === 'ndvi') return Boolean(ndviVisible)
     return Boolean(enabled[id])
   }
@@ -52,10 +49,6 @@ export default function LayerToggle({
     }
     if (id === 'lineament' && onLineamentChange) {
       onLineamentChange(!lineamentVisible)
-      return
-    }
-    if (id === 'dsm' && onDroneChange) {
-      onDroneChange(!droneVisible)
       return
     }
     if (id === 'ndvi' && onNdviChange) {
@@ -77,31 +70,20 @@ export default function LayerToggle({
 
       <div className="flex-1 overflow-y-auto p-4">
         <Card className="space-y-1 p-0" noPadding>
-          {MAP_LAYERS.map((layer) => {
-            const isDsmUnavailable =
-              layer.id === 'dsm' &&
-              Boolean(selectedSiteId && selectedSiteId !== 1)
-
-            return (
-              <label
-                key={layer.id}
-                className="flex cursor-pointer items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 transition-colors duration-150 hover:bg-bg/60"
-              >
-                <input
-                  type="checkbox"
-                  checked={isLayerChecked(layer.id)}
-                  onChange={() => handleToggle(layer.id)}
-                  className="h-4 w-4 rounded-sm border-border text-orange focus:ring-orange/40"
-                />
-                <span className="text-sm font-medium text-navy">{layer.label}</span>
-                {isDsmUnavailable && (
-                  <span className="ml-auto text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                    Balaghat only
-                  </span>
-                )}
-              </label>
-            )
-          })}
+          {MAP_LAYERS.map((layer) => (
+            <label
+              key={layer.id}
+              className="flex cursor-pointer items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 transition-colors duration-150 hover:bg-bg/60"
+            >
+              <input
+                type="checkbox"
+                checked={isLayerChecked(layer.id)}
+                onChange={() => handleToggle(layer.id)}
+                className="h-4 w-4 rounded-sm border-border text-orange focus:ring-orange/40"
+              />
+              <span className="text-sm font-medium text-navy">{layer.label}</span>
+            </label>
+          ))}
         </Card>
 
         {anyRasterLayerVisible && (

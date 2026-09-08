@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.models.reserve_zone import ReserveZone
     from app.models.risk_event import RiskEvent
     from app.models.site_note import SiteNote
+    from app.models.weather_record import WeatherRecord
 
 
 class Site(Base):
@@ -48,3 +49,4 @@ class Site(Base):
         back_populates="site", cascade="all, delete-orphan"
     )
     blast_events: Mapped[list["BlastEvent"]] = relationship(back_populates="site")
+    weather_records: Mapped[list["WeatherRecord"]] = relationship(back_populates="site")

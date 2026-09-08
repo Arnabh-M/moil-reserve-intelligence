@@ -30,6 +30,11 @@ from app.schemas.shift_plan import ShiftPlanEntryCreate, ShiftPlanEntryOut
 from app.schemas.simulation import SimStateSnapshot, SimulateRequest, SimulateResponse
 from app.schemas.site import SiteOut
 from app.schemas.site_note import SiteNoteCreate, SiteNoteOut, SiteNoteSearchHit
+from app.schemas.weather import (
+    CurrentWeatherResponse,
+    ForecastWeatherPoint,
+    ForecastWeatherResponse,
+)
 
 __all__ = [
     "JobStatusOut",
@@ -65,4 +70,7 @@ __all__ = [
     "SiteNoteCreate",
     "SiteNoteOut",
     "SiteNoteSearchHit",
+    "CurrentWeatherResponse",
+    "ForecastWeatherPoint",
+    "ForecastWeatherResponse",
 ]

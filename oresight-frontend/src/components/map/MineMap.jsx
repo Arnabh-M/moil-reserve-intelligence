@@ -16,7 +16,6 @@ import {
   RESERVE_ZONE_FILL_PAINT,
   SAMPLE_SITES,
   SPECTRAL_LAYER_CONFIG,
-  DRONE_LAYER_CONFIG,
   NDVI_TIMESERIES_CONFIG,
   STRUCTURAL_LINES_SOURCE_ID,
   STRUCTURAL_LINES_LAYER_ID,
@@ -45,7 +44,6 @@ import NdviTimeSlider from './NdviTimeSlider'
 export default function MineMap({
   prospectivityVisible,
   spectralVisible = false,
-  droneVisible = false,
   ndviVisible = false,
   lineamentVisible = false,
   selectedWeek = 4,
@@ -354,31 +352,7 @@ export default function MineMap({
           />
         </Source>
 
-        {/* Supporting Raster 2: Drone DSM (Spatially localized to Balaghat Bharweli pit) */}
-        <Source
-          id={DRONE_LAYER_CONFIG.sourceId}
-          type="image"
-          url={DRONE_LAYER_CONFIG.url}
-          coordinates={DRONE_LAYER_CONFIG.coordinates}
-        >
-          <Layer
-            id={DRONE_LAYER_CONFIG.layerId}
-            type="raster"
-            paint={{
-              'raster-opacity': rasterOpacity,
-              'raster-resampling': 'linear',
-              'raster-fade-duration': 200,
-            }}
-            layout={{
-              visibility:
-                droneVisible && (!effectiveSiteId || effectiveSiteId === 1)
-                  ? 'visible'
-                  : 'none',
-            }}
-          />
-        </Source>
-
-        {/* Supporting Raster 3: Weekly NDVI Timeseries (Restrained background when prospectivity is active) */}
+        {/* Supporting Raster 2: Weekly NDVI Timeseries (Restrained background when prospectivity is active) */}
         {NDVI_TIMESERIES_CONFIG.map((week) => (
           <Source
             key={week.id}
@@ -660,7 +634,6 @@ export default function MineMap({
             prospectivityVisible={prospectivityVisible}
             lineamentVisible={lineamentVisible}
             spectralVisible={spectralVisible}
-            droneVisible={droneVisible}
             ndviVisible={ndviVisible}
             selectedSiteId={effectiveSiteId}
           />
