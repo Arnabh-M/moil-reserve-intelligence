@@ -139,13 +139,19 @@ export const api = {
   },
   async getSiteWorkspace(id) {
     const siteId = Number(id);
-    const [site, equipmentForSite, productionForSite, risks, zones, recommendationsForSite, demoScenarios] = await Promise.all([
-      this.getSite(siteId), this.getEquipment(siteId), this.getProduction(siteId, 30), this.getRiskEvents(siteId, false), this.getReserveZones(siteId), this.getRecommendations(), this.getDemoScenarios(),
+    const [site, equipmentForSite, productionForSite, risks, zones, demoScenarios] = await Promise.all([
+      this.getSite(siteId), this.getEquipment(siteId), this.getProduction(siteId, 30), this.getRiskEvents(siteId, false), this.getReserveZones(siteId), this.getDemoScenarios(),
     ]);
+    // Scoped to this site's own (typically few) risk events, not
+    // getRecommendations()'s system-wide fan-out across every open risk
+    // event -- that used to tie one site's load time to the total
+    // risk-event count across all sites, then filtered the result down to
+    // this site's risks anyway.
+    const recommendationsForSite = (await Promise.all(risks.map((risk) => this.getRecommendations(risk.id)))).flat();
     const primaryRisk = pickPrimaryRisk(risks, demoScenarios, siteId);
     // Guard: with no open risk this became /risk-events/NaN/causal-graph -> 422 and failed the page.
     const graph = primaryRisk ? await this.getCausalGraph(primaryRisk.id) : { nodes: [], edges: [], graph_source: 'neo4j', note: null };
-    return { site, equipment: equipmentForSite, production: productionForSite, risks, zones: zones.features || [], recommendations: recommendationsForSite.filter((item) => risks.some((risk) => Number(risk.id) === Number(item.risk_event_id))), graph };
+    return { site, equipment: equipmentForSite, production: productionForSite, risks, zones: zones.features || [], recommendations: recommendationsForSite, graph };
   },
   async getMapWorkspace() {
     const [sites, zones] = await Promise.all([this.getSites(), this.getReserveZones()]);
