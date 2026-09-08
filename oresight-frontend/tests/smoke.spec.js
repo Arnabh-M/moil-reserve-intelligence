@@ -125,4 +125,29 @@ test.describe('causal graph contract', () => {
     expect(graphBody, 'No /risk-events/{id}/causal-graph response was observed for the Nagpur site page').toBeTruthy();
     expect(graphBody.graph_source, `Expected the Nagpur equipment-down demo path to resolve a real Neo4j graph; got graph_source="${graphBody.graph_source}" instead. This is the exact bug pickPrimaryRisk() in api/client.js was written to fix (it used to just take risks[0]).`).toBe('neo4j');
   });
+
+  // The test above only covers the Site Intelligence graph tab. The Map zone
+  // panel (ZoneDetailPanel) used to choose a site's risk event with its own
+  // logic and landed on Drill NAG-1's postgres_fallback for Nagpur. It now
+  // delegates to api.getSitePrimaryRisk, the same helper getSiteWorkspace
+  // uses. ZoneDetailPanel has no URL/state hook to open it without a WebGL
+  // canvas click, so drive its exact resolution path (zone-level id first,
+  // then getSitePrimaryRisk) against the live backend instead. Relies on the
+  // Vite dev server (playwright.config.js webServer) serving /src.
+  test('Map zone panel resolves a Nagpur reserve zone to the neo4j graph, not the fallback', async ({ page }) => {
+    await page.goto('/map');
+    const resolved = await page.evaluate(async () => {
+      const { api } = await import('/src/api/client.js');
+      const zones = (await api.getReserveZones(2)).features || [];
+      const zone = zones.find((z) => Number(z.properties?.site_id) === 2) || zones[0];
+      const directId = zone?.properties?.risk_event_id || zone?.properties?.risk_id;
+      const eventId = directId || (await api.getSitePrimaryRisk(2))?.id || null;
+      const graph = eventId ? await api.getCausalGraph(eventId) : null;
+      return { hasZone: Boolean(zone), eventId, graphSource: graph?.graph_source ?? null };
+    });
+
+    expect(resolved.hasZone, 'GET /reserve-zones?site_id=2 returned no zones to exercise the panel path against').toBe(true);
+    expect(resolved.eventId, 'The Nagpur zone panel resolution path produced no risk event id').toBeTruthy();
+    expect(resolved.graphSource, `A Nagpur reserve zone must resolve to the HT-302 neo4j causal graph; got graph_source="${resolved.graphSource}" for risk ${resolved.eventId}. "postgres_fallback" means the Map zone panel has drifted back to picking Drill NAG-1 instead of sharing getSitePrimaryRisk with the site page.`).toBe('neo4j');
+  });
 });
