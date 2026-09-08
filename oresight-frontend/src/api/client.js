@@ -75,6 +75,21 @@ export const api = {
   // graph is shown "primary" for a site (see pickPrimaryRisk) -- the rest of
   // the site workspace shouldn't break if this endpoint is ever unavailable.
   async getDemoScenarios() { if (useMock) return delay([]); try { return await request('/demo/scenarios'); } catch { return []; } },
+  // Single source of truth for "which risk event represents this site", so the
+  // Site Intelligence graph tab (via getSiteWorkspace) and the Map zone panel
+  // (ZoneDetailPanel) can't drift apart on which causal graph they show. Uses
+  // pickPrimaryRisk over the site's unresolved events (demo-scripted event
+  // first, else highest-severity), soft-failing to [] if /demo/scenarios is
+  // down. If every event for the site is resolved, falls back to the most
+  // recent one so a graph still renders instead of an empty panel.
+  async getSitePrimaryRisk(siteId) {
+    const id = Number(siteId);
+    const [unresolved, demoScenarios] = await Promise.all([this.getRiskEvents(id, false), this.getDemoScenarios()]);
+    const primary = pickPrimaryRisk(unresolved, demoScenarios, id);
+    if (primary) return primary;
+    const all = await this.getRiskEvents(id);
+    return all[0] || null;
+  },
   async getRecommendations(riskId) {
     if (riskId !== undefined && riskId !== null) return useMock ? delay(mockData.recommendations.filter((item) => Number(item.risk_event_id) === Number(riskId))) : request(`/recommendations${query({ risk_event_id: Number(riskId) })}`);
     const events = await this.getRiskEvents(undefined, false);
@@ -139,8 +154,8 @@ export const api = {
   },
   async getSiteWorkspace(id) {
     const siteId = Number(id);
-    const [site, equipmentForSite, productionForSite, risks, zones, demoScenarios] = await Promise.all([
-      this.getSite(siteId), this.getEquipment(siteId), this.getProduction(siteId, 30), this.getRiskEvents(siteId, false), this.getReserveZones(siteId), this.getDemoScenarios(),
+    const [site, equipmentForSite, productionForSite, risks, zones, primaryRisk] = await Promise.all([
+      this.getSite(siteId), this.getEquipment(siteId), this.getProduction(siteId, 30), this.getRiskEvents(siteId, false), this.getReserveZones(siteId), this.getSitePrimaryRisk(siteId),
     ]);
     // Scoped to this site's own (typically few) risk events, not
     // getRecommendations()'s system-wide fan-out across every open risk
@@ -148,7 +163,6 @@ export const api = {
     // risk-event count across all sites, then filtered the result down to
     // this site's risks anyway.
     const recommendationsForSite = (await Promise.all(risks.map((risk) => this.getRecommendations(risk.id)))).flat();
-    const primaryRisk = pickPrimaryRisk(risks, demoScenarios, siteId);
     // Guard: with no open risk this became /risk-events/NaN/causal-graph -> 422 and failed the page.
     const graph = primaryRisk ? await this.getCausalGraph(primaryRisk.id) : { nodes: [], edges: [], graph_source: 'neo4j', note: null };
     return { site, equipment: equipmentForSite, production: productionForSite, risks, zones: zones.features || [], recommendations: recommendationsForSite, graph };

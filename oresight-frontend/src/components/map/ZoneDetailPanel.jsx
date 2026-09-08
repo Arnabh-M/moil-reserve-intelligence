@@ -28,16 +28,16 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
       // 1. Determine risk_event_id: direct property on zone feature
       let eventId = zone.risk_event_id || zone.risk_id;
 
-      // 2. If not directly present, check if risk events exist for this zone's site
+      // 2. If not directly present, fall back to this site's primary risk
+      //    event -- resolved via api.getSitePrimaryRisk, the same helper the
+      //    Site Intelligence graph tab uses, so both surfaces show the same
+      //    causal graph (demo-scripted event first, then highest severity,
+      //    then most recent if everything is resolved).
       if (!eventId && zone.site_id) {
         try {
-          const events = await api.getRiskEvents(zone.site_id);
-          if (events && events.length > 0) {
-            // Pick active/unresolved event or fallback to the primary event
-            const activeEvent = events.find((e) => !e.resolved) || events[0];
-            if (activeEvent) {
-              eventId = activeEvent.id;
-            }
+          const primaryRisk = await api.getSitePrimaryRisk(zone.site_id);
+          if (primaryRisk) {
+            eventId = primaryRisk.id;
           }
         } catch {
           // Handled gracefully below
