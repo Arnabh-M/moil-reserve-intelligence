@@ -12,6 +12,7 @@ const TYPE_STYLES = {
   OreZone: { bg: '#22c55e', border: '#16a34a' }, // success
   RiskEvent: { bg: '#e0793a', border: '#c9662c' }, // orange (roadmap)
   WeatherEvent: { bg: '#f59e0b', border: '#d97706' }, // warning
+  StructuralFeature: { bg: '#6366f1', border: '#4f46e5' }, // indigo (geology)
   ProductionForecast: { bg: '#5a6577', border: '#454e5d' }, // text-secondary
   MineSite: { bg: '#8896a8', border: '#6b7889' }, // text-muted
 };
@@ -56,11 +57,19 @@ function layoutNodes(nodes, edges, rootId) {
       }
     }
   }
-  // Any node unreachable from the root (disconnected graph fragment)
-  // still needs a column so it isn't dropped from the view.
-  let maxDepth = Math.max(0, ...depth.values());
+  // Nodes unreachable from the root (disconnected fragments) still need a
+  // slot so they aren't dropped. Pack them a few per column just past the
+  // connected layout rather than one-per-column, so a graph with many
+  // LOCATED_IN-only nodes (e.g. Balaghat's uploaded ore zones) doesn't
+  // stretch into a thin unreadable strip.
+  const ORPHANS_PER_COLUMN = 4;
+  const firstOrphanDepth = Math.max(0, ...depth.values()) + 1;
+  let orphanIndex = 0;
   nodes.forEach((n) => {
-    if (!depth.has(n.id)) depth.set(n.id, ++maxDepth);
+    if (!depth.has(n.id)) {
+      depth.set(n.id, firstOrphanDepth + Math.floor(orphanIndex / ORPHANS_PER_COLUMN));
+      orphanIndex += 1;
+    }
   });
 
   const byDepth = new Map();

@@ -2,12 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, BarChart3, Check, Loader2, Zap } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { api } from '../../api/client';
-
-const SITE_OPTIONS = [
-  { id: 1, name: 'Balaghat' },
-  { id: 2, name: 'Nagpur' },
-  { id: 3, name: 'Bhandara' },
-];
+import { useSites } from '../../hooks/useSites';
 
 const STATUS_OPTIONS = ['planned', 'completed', 'delayed', 'cancelled'];
 
@@ -29,6 +24,7 @@ const initialForm = { site_id: 1, reserve_zone_id: '', planned_date: '2026-09-10
 const initialUpdate = { status: 'delayed', delay_reason: '', actual_date: '', actual_yield_tonnes: '' };
 
 function LogAndTimeline({ showToast }) {
+  const sites = useSites();
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState('idle');
   const [errors, setErrors] = useState({});
@@ -137,7 +133,7 @@ function LogAndTimeline({ showToast }) {
           <div className="field">
             <label>Site</label>
             <select className="select" value={form.site_id} onChange={(e) => setField('site_id', Number(e.target.value))} data-testid="select-blast-site">
-              {SITE_OPTIONS.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+              {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
             </select>
           </div>
           <div className="field">
@@ -173,7 +169,7 @@ function LogAndTimeline({ showToast }) {
 
       <section className="card section-card">
         <div className="card-head">
-          <div><div className="card-title">Blast timeline</div><div className="card-kicker">planned vs actual · {SITE_OPTIONS.find((s) => s.id === form.site_id)?.name}</div></div>
+          <div><div className="card-title">Blast timeline</div><div className="card-kicker">planned vs actual · {sites.find((s) => s.id === form.site_id)?.name}</div></div>
           <Zap size={16} />
         </div>
 
@@ -249,6 +245,7 @@ function LogAndTimeline({ showToast }) {
 }
 
 function DelayAnalysis() {
+  const sites = useSites();
   const [siteId, setSiteId] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -279,7 +276,7 @@ function DelayAnalysis() {
         <div className="filter-row">
           <select className="select" value={siteId} onChange={(e) => setSiteId(e.target.value)} data-testid="select-blast-summary-site">
             <option value="">All sites</option>
-            {SITE_OPTIONS.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+            {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
           </select>
           <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label="From date" data-testid="input-blast-summary-from" />
           <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label="To date" data-testid="input-blast-summary-to" />

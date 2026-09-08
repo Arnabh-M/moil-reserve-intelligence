@@ -1,12 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { api } from '../../api/client';
-
-const SITE_OPTIONS = [
-  { id: 1, name: 'Balaghat' },
-  { id: 2, name: 'Nagpur' },
-  { id: 3, name: 'Bhandara' },
-];
+import { useSites } from '../../hooks/useSites';
 
 const SHIFT_OPTIONS = [
   { value: 'general', label: 'General' },
@@ -53,6 +48,7 @@ const initialForm = {
 };
 
 export default function ProductionTab({ showToast }) {
+  const sites = useSites();
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState('idle');
   const [errors, setErrors] = useState({});
@@ -232,7 +228,7 @@ export default function ProductionTab({ showToast }) {
         <div className="field">
           <label>Site</label>
           <select className="select" value={form.site_id} onChange={(e) => setField('site_id', Number(e.target.value))} data-testid="select-intake-site">
-            {SITE_OPTIONS.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
+            {sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}
           </select>
         </div>
         <div className="field">

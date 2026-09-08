@@ -9,7 +9,7 @@ router = "path"
 [[services]]
 name = "web"
 paths = [ "/" ]
-localPort = 19825
+localPort = 5173
 
 [services.development]
 run = "pnpm --filter @workspace/oresight run dev"
@@ -24,5 +24,5 @@ from = "/*"
 to = "/index.html"
 
 [services.env]
-PORT = "19825"
+PORT = "5173"
 BASE_PATH = "/"

@@ -132,6 +132,9 @@ export const mockData = {
   shortfallReasons,
   productionThresholds,
   simulation,
+  // Matches the real POST /reports/upload response shape exactly -- a
+  // fixture richer than the API (site/author/mineral_candidates/etc.) is
+  // what caused GeologyTab to render fields the live backend never sends.
   upload: {
     filename: 'sample_survey.pdf',
     text_extracted: true,

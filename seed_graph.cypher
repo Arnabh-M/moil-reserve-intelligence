@@ -53,12 +53,23 @@ CREATE (:OreZone {id: 'oz_bhd_01', site_id: 'bhandara', confidence_score: 0.69, 
 CREATE (:OreZone {id: 'oz_bhd_02', site_id: 'bhandara', confidence_score: 0.48, grade_estimate: 16.4});
 
 // =====================================================================
-// Equipment (5 per site = 15). Exactly 2 "down" total:
+// Equipment: 15 base (5 per site) + 4 idle redeploy reserves = 19.
+// Exactly 2 "down" total:
 //   - eq_nag_02 (Drill, Nagpur)      -> feeds the equipment RiskEvent chain
 //   - eq_bal_05 (Compressor, Balaghat)
 // eq_bhd_02 (Drill, Bhandara) is deliberately idle/up and NOT wired to
 // any BlastPlan via DEPENDS_ON — it is the redeploy candidate matching
 // eq_nag_02's type (Drill).
+//
+// eq_bhd_06..eq_bhd_09 (Excavator / Compressor / Conveyor / Loader BHD-2)
+// mirror eq_bhd_02: idle/up, no DEPENDS_ON. Before them, only Drill and
+// Haul Truck had an idle counterpart, so an equipment_failure RiskEvent
+// whose down unit was an Excavator, Compressor, Conveyor, or Loader could
+// never produce a "redeploy" option and fell through to a site-scoped
+// reschedule. They live at Bhandara — which has no equipment_failure
+// scenario of its own — so each sits at a different site from the one
+// most likely to need it (Balaghat's Excavator + Compressor). Title-Case
+// types to match app/seed_dev.py + scripts/import_p2_data.py.
 // =====================================================================
 CREATE (:Equipment {id: 'eq_bal_01', site_id: 'balaghat', name: 'Excavator BAL-1', type: 'Excavator', status: 'up',   last_status_change: datetime('2026-08-01T06:00:00')});
 CREATE (:Equipment {id: 'eq_bal_02', site_id: 'balaghat', name: 'Drill BAL-1',     type: 'Drill',      status: 'up',   last_status_change: datetime('2026-08-03T09:30:00')});
@@ -77,6 +88,13 @@ CREATE (:Equipment {id: 'eq_bhd_02', site_id: 'bhandara', name: 'Drill BHD-1',  
 CREATE (:Equipment {id: 'eq_bhd_03', site_id: 'bhandara', name: 'Conveyor BHD-1',   type: 'Conveyor',   status: 'up', last_status_change: datetime('2026-07-22T12:00:00')});
 CREATE (:Equipment {id: 'eq_bhd_04', site_id: 'bhandara', name: 'Loader BHD-1',     type: 'Loader',     status: 'up', last_status_change: datetime('2026-08-09T10:30:00')});
 CREATE (:Equipment {id: 'eq_bhd_05', site_id: 'bhandara', name: 'Compressor BHD-1', type: 'Compressor', status: 'up', last_status_change: datetime('2026-07-30T15:00:00')});
+
+// Idle redeploy reserves — one spare per type that previously had none.
+// Intentionally NO DEPENDS_ON edge (see the DEPENDS_ON section below).
+CREATE (:Equipment {id: 'eq_bhd_06', site_id: 'bhandara', name: 'Excavator BHD-2',  type: 'Excavator',  status: 'up', last_status_change: datetime('2026-08-04T08:00:00')});
+CREATE (:Equipment {id: 'eq_bhd_07', site_id: 'bhandara', name: 'Compressor BHD-2', type: 'Compressor', status: 'up', last_status_change: datetime('2026-08-04T09:00:00')});
+CREATE (:Equipment {id: 'eq_bhd_08', site_id: 'bhandara', name: 'Conveyor BHD-2',   type: 'Conveyor',   status: 'up', last_status_change: datetime('2026-08-04T10:00:00')});
+CREATE (:Equipment {id: 'eq_bhd_09', site_id: 'bhandara', name: 'Loader BHD-2',     type: 'Loader',     status: 'up', last_status_change: datetime('2026-08-04T11:00:00')});
 
 // =====================================================================
 // StructuralFeature (1-2 per site, general geology context)
@@ -127,7 +145,9 @@ MATCH (e:Equipment {id: 'eq_nag_01'}), (b:BlastPlan {id: 'bp_nag_01'}) CREATE (e
 MATCH (e:Equipment {id: 'eq_nag_02'}), (b:BlastPlan {id: 'bp_nag_01'}) CREATE (e)-[:DEPENDS_ON]->(b);
 MATCH (e:Equipment {id: 'eq_bhd_01'}), (b:BlastPlan {id: 'bp_bhd_01'}) CREATE (e)-[:DEPENDS_ON]->(b);
 MATCH (e:Equipment {id: 'eq_bhd_03'}), (b:BlastPlan {id: 'bp_bhd_01'}) CREATE (e)-[:DEPENDS_ON]->(b);
-// NOTE: eq_bhd_02 (Drill, up) intentionally has NO DEPENDS_ON edge — it is idle.
+// NOTE: eq_bhd_02 (Drill, up) and eq_bhd_06..eq_bhd_09 (Excavator /
+// Compressor / Conveyor / Loader BHD-2, up) intentionally have NO
+// DEPENDS_ON edge — they are the idle redeploy reserves.
 
 // --- WeatherEvent DELAYS BlastPlan ---
 MATCH (w:WeatherEvent {id: 'we_bal_01'}), (b:BlastPlan {id: 'bp_bal_01'}) CREATE (w)-[:DELAYS]->(b);

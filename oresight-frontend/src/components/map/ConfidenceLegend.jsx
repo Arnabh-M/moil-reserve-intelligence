@@ -17,7 +17,7 @@ export default function ConfidenceLegend({
   const showProspectivity = prospectivityVisible || (visible && !lineamentVisible && !spectralVisible && !droneVisible && !ndviVisible);
 
   // Task 4: Drone DSM is localized exclusively to the Balaghat open-cast pit
-  const showDrone = droneVisible && (!selectedSiteId || selectedSiteId === 'balaghat' || selectedSiteId === 1);
+  const showDrone = droneVisible && (!selectedSiteId || selectedSiteId === 1);
 
   // Count active layers that have legend representations
   const activeLayersCount = [

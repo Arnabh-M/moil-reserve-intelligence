@@ -371,7 +371,7 @@ export default function MineMap({
             }}
             layout={{
               visibility:
-                droneVisible && (!effectiveSiteId || effectiveSiteId === 'balaghat' || effectiveSiteId === 1)
+                droneVisible && (!effectiveSiteId || effectiveSiteId === 1)
                   ? 'visible'
                   : 'none',
             }}
@@ -414,15 +414,7 @@ export default function MineMap({
               paint={RESERVE_ZONE_FILL_PAINT}
               filter={
                 effectiveSiteId
-                  ? [
-                      'any',
-                      ['==', ['get', 'site_id'], effectiveSiteId],
-                      [
-                        '==',
-                        ['get', 'site_id'],
-                        effectiveSiteId === 'balaghat' ? 1 : effectiveSiteId === 'nagpur' ? 2 : effectiveSiteId === 'bhandara' ? 3 : -1,
-                      ],
-                    ]
+                  ? ['==', ['get', 'site_id'], effectiveSiteId]
                   : ['literal', true]
               }
               layout={{
