@@ -71,3 +71,17 @@ entry at Nagpur (score 0.93, Haul Truck HT-302), click **View causal graph**.
   edges (WeatherEvent, BlastPlan, OreZone, RiskEvent, MineSite), Scenario B
   is exactly 2 nodes / 1 edge (Equipment, RiskEvent) — no unrelated
   equipment or other-scenario nodes leak into either one.
+
+---
+
+## Talking points if asked "what's your model's accuracy / AUC?"
+
+- **Cross-validated AUC is 0.773** (5-fold, averaged across 3 seeds). That's
+  the number we stand behind.
+- A single 80/20 split can show 0.875, but that's the less reliable number
+  at this sample size — cross-validation and a label-permutation test
+  (p = 0.005) are what actually confirm the signal is real, not noise.
+- For reference, the real Malkansu Belt study using this same technique on
+  real geological data reports AUC 0.916–0.983; our number reflects a small
+  (n = 40) synthetic training set built for architecture validation, with
+  real MOIL data validation explicitly scoped as post-hackathon work.
