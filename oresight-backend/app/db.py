@@ -16,7 +16,7 @@ engine = create_engine(
     # Fail fast when Postgres is unreachable instead of hanging the request
     # for the OS-default TCP timeout — a hung page demos worse than a clean
     # 503 (see app.main's OperationalError handler).
-    connect_args={"connect_timeout": 3},
+    connect_args={"connect_timeout": 10},
 )
 
 SessionLocal = sessionmaker(

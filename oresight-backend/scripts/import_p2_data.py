@@ -63,6 +63,7 @@ from app.db import SessionLocal  # noqa: E402
 from app.models import (  # noqa: E402
     Equipment,
     EquipmentStatus,
+    EquipmentStatusLog,
     ProductionRecord,
     ReserveZone,
     Site,
@@ -176,6 +177,13 @@ def _import_equipment(
     downtime = _load_downtime_log(DOWNTIME_CSV)
 
     site_ids = [site.id for site in sites_by_name.values()]
+    eq_ids_subquery = select(Equipment.id).where(Equipment.site_id.in_(site_ids))
+    db.execute(
+        delete(EquipmentStatusLog).where(
+            (EquipmentStatusLog.site_id.in_(site_ids))
+            | (EquipmentStatusLog.equipment_id.in_(eq_ids_subquery))
+        )
+    )
     db.execute(delete(Equipment).where(Equipment.site_id.in_(site_ids)))
     db.flush()
 
