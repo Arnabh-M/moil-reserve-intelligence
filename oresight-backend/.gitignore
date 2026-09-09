@@ -48,7 +48,9 @@ htmlcov/
 # Model artefacts (regenerate locally: cd .. && python train_shortfall_model.py)
 *.joblib
 *.pkl
+!models/shortfall_forecaster.pkl
 models/feature_columns.json
+!models/feature_columns.json
 
 # IDE
 .vscode/

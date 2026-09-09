@@ -1,0 +1,10 @@
+[
+  "rolling_7day_downtime_pct",
+  "days_since_last_maintenance",
+  "rainfall_proxy",
+  "schedule_pressure",
+  "dow_sin",
+  "dow_cos",
+  "month_sin",
+  "month_cos"
+]
