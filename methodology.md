@@ -9,7 +9,15 @@
 - **Reserve ground truth (Day 1/2):** synthetic, GSI-style
   `deposit_ground_truth.csv` (40 labeled point deposits: lat/lon, depth,
   grade, confirmed/not-confirmed) and a derived `training_features.csv`
-  built from it.
+  built from it. `is_confirmed_deposit` is not a free coin flip: each
+  point's confirmation probability is a logistic function of its own
+  structural/NDVI/elevation features (dominated by proximity to mapped
+  structures and local structural density), with Gaussian noise, and the
+  label is a Bernoulli draw from that probability — so the label carries a
+  real, moderate, deliberately-noisy relationship to the features the
+  classifier trains on. The confirmed/unconfirmed ratio is left to fall out
+  of the scores (≈48% confirmed on the current seed), not fixed by
+  construction.
 - **Satellite proxies (Day 2):** synthetic NDVI and elevation surfaces
   (`synthetic_ndvi`, `synthetic_elevation`) standing in for real
   Sentinel/Landsat-derived vegetation and terrain signals, plus structural
@@ -32,16 +40,68 @@ test fold), 4 features (`dist_to_nearest_structure`, `structural_density`,
 
 | Model | AUC-ROC | Precision | Recall | F1 |
 |---|---|---|---|---|
-| RandomForestClassifier (winner) | 0.600 | 0.667 | 0.400 | 0.500 |
-| XGBClassifier | 0.467 | 0.500 | 0.200 | 0.286 |
+| RandomForestClassifier (winner) | 0.875 | 0.800 | 1.000 | 0.889 |
+| XGBClassifier | 0.875 | 0.750 | 0.750 | 0.750 |
 
-Random Forest wins and is the saved model, but an AUC of 0.600 is barely
-above chance (0.5), on an 8-point test fold from only 40 labeled deposits
-total. The training script's own comment already anticipated this: at this
-sample size, AUC is high-variance and should be read as a rough signal, not
-a precise estimate — a different random seed or split could plausibly swing
-this result substantially. `synthetic_ndvi` dominates feature importance
-(0.375) in both models.
+Single 80/20 split, 8-point test fold. Because 8 test points make a single
+split coarse, the label was also checked with **5-fold stratified CV across
+3 seeds** (RandomForest mean AUC **0.773**, per-seed 0.79 / 0.81 / 0.72;
+XGBoost mean 0.715) and a **label-shuffle permutation test** (real 5-fold CV
+AUC 0.773 vs. a shuffled-label null of mean 0.49 / p95 0.71; permutation
+**p = 0.005**). `dist_to_nearest_structure` dominates RandomForest feature
+importance (~0.45), consistent with how the label is generated. Per-feature
+point-biserial correlation with the label: `dist_to_nearest_structure`
+r = −0.57 (p = 0.0001), `structural_density` r = +0.58 (p = 0.0001),
+`synthetic_ndvi` and `synthetic_elevation` near zero and non-significant
+(they are weak secondary terms in the label rule by design).
+
+This is a deliberately moderate signal, not a near-perfect separator: CV
+folds still swing between ~0.56 and ~1.0, and n = 40 keeps every estimate
+wide. It is honest signal, though — an earlier version of the generator
+assigned `is_confirmed_deposit` independently of the features, which
+permutation-tested at true AUC ≈ 0.5 (chance) regardless of model or sample
+size; that is the version this replaced.
+
+### From classifier to `reserve_zones.confidence_score`
+
+The number served by `GET /reserve-zones` and averaged into
+`GET /kpi/summary` is **the kriged Random Forest prospectivity probability,
+averaged over each zone** — not a count of confirmed deposits. The offline
+chain (`generate_datasets.py` → `generate_features.py` →
+`train_reserve_classifier.py` → `build_confidence_surface.py` →
+`export_reserve_zones.py`) does this:
+
+1. `predict_proba` from the trained Random Forest for every point on a
+   50×50 grid over the combined site bounding box.
+2. `PyKrige.OrdinaryKriging` smooths those grid probabilities (spherical vs.
+   exponential variogram picked by 5-fold CV on a 200-point subsample —
+   exponential won this run, ~7.5 km range), then the surface is resampled
+   onto a clean 100×100 lon/lat cell grid. This run's kriged surface:
+   min 0.006, max 0.982, mean 0.167 — most of the combined bounding box is
+   far from any mapped structure and scores low, with prospectivity
+   concentrating into hot spots along the structural lines, which is the
+   intended behaviour of a classifier that actually keys on
+   structural proximity.
+3. `export_reserve_zones.py` writes the cells (each with a continuous
+   `confidence_score` in [0, 1] and a lowercase `site_id`) to
+   `data/reserve_zones.geojson`.
+4. `scripts/import_prospectivity_scores.py` (run by `rebuild_demo_db.py`
+   immediately after `import_p2_data`) sets each Postgres
+   `reserve_zones.confidence_score` to the mean of the grid cells whose
+   centroid falls inside that zone's polygon, rounded to 3 dp. Zones with
+   no cell inside keep their prior value.
+
+This replaced the earlier `confidence_score = confirmed / total` over the
+handful of ground-truth points nearest each zone, which could only ever be
+0.0, 0.5, 0.67 or 1.0 — a sample-size artifact, not a confidence gradient.
+`estimated_grade_pct` / `estimated_depth_m` are unaffected: those still
+come from `deposit_ground_truth.csv` via `import_p2_data`.
+
+The caveats above carry straight through: the surface is a smoothed
+projection of a moderate-signal classifier (CV AUC ≈ 0.77) trained on 40
+**synthetic** points whose labels were generated from those same features,
+so the per-zone score is a **relative prioritisation signal — where to
+ground-truth next — not a confirmed-reserve probability.**
 
 ### Shortfall Forecaster — XGBoost Regressor
 
@@ -117,11 +177,13 @@ without buying anything):
   (NDVI/elevation stand-ins, a hand-shaped seasonal rainfall proxy, a
   hand-generated deposit ground truth) — **none of this has been validated
   against real MOIL production, equipment, or exploration data.**
-- Both models show genuinely weak fit by standard metrics, honestly
-  reported above rather than glossed over: the shortfall forecaster
-  underperforms a mean-only baseline on RMSE, and the reserve classifier's
-  AUC (0.600) is only marginally above chance on a very small labeled set
-  (n=40).
+- Honestly reported above rather than glossed over: the shortfall forecaster
+  underperforms a mean-only baseline on RMSE. The reserve classifier reaches
+  CV AUC ≈ 0.77 (permutation p = 0.005), but only because its training
+  labels are *synthetically generated from the same features it then learns*
+  — it demonstrates the pipeline works end to end, not that these
+  particular features predict real manganese; and n = 40 keeps every
+  estimate wide (CV folds span ~0.56–1.0).
 - This system is designed to be **retrained on MOIL's own proprietary
   production, downtime, and exploration data post-hackathon** — the feature
   engineering and agent architecture are built to accept that swap without

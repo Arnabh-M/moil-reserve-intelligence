@@ -7,7 +7,14 @@ Generates three CSVs consistent with seed_graph.cypher's node IDs:
   2. equipment_downtime_log.csv — ~30-40 downtime events, matching
                                     Equipment IDs from the graph
   3. deposit_ground_truth.csv   — 40 labeled points for tomorrow's
-                                    deposit classifier
+                                    deposit classifier. is_confirmed_deposit
+                                    is drawn Bernoulli(p) where p is a
+                                    logistic function of the point's OWN
+                                    structural/NDVI/elevation features (the
+                                    same 4 the classifier later trains on),
+                                    so the label carries real, moderate,
+                                    noisy signal instead of being a
+                                    feature-independent coin flip.
 
 Run:  python generate_datasets.py
 Output: ./data/*.csv
@@ -17,8 +24,35 @@ import os
 import numpy as np
 import pandas as pd
 
+import generate_features as _gf
+from geo_utils import compute_structural_features, sample_field
+
 RNG_SEED = 42
 rng = np.random.default_rng(RNG_SEED)
+
+# deposit_ground_truth.csv draws from its OWN Generator, never the shared
+# `rng` above. production_history.csv and equipment_downtime_log.csv are
+# generated first and consume `rng` sequentially; keeping deposits (locations
+# AND the feature-conditioned label) on a separate stream means nothing about
+# the deposit step can shift the byte content of those two files.
+DEPOSIT_RNG_SEED = 2026
+
+# Logistic label rule (STEP 2). Each feature is z-scored across the sample,
+# perturbed with Gaussian noise, weighted, summed, and pushed through a
+# sigmoid to get P(confirmed); the label is then a Bernoulli draw. Weights
+# make distance-to-structure and structural density the dominant signals
+# (matching the real Malkansu prospectivity study's top features); NDVI and
+# elevation are weak secondary terms. dist_to_nearest_structure enters with a
+# negative sign: closer to a mapped structure -> more likely a real deposit.
+LABEL_FEATURE_WEIGHTS = {
+    "dist_to_nearest_structure": -2.10,
+    "structural_density": 1.75,
+    "synthetic_ndvi": 0.35,
+    "synthetic_elevation": 0.28,
+}
+# Noise added to every z-scored feature before the weighted sum, so the rule
+# is a moderate probabilistic tendency, not a clean separator.
+LABEL_ZSCORE_NOISE_SD = 0.42
 
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -174,42 +208,91 @@ def generate_equipment_downtime_log(n_events=36):
 # =====================================================================
 # 3. deposit_ground_truth.csv
 # =====================================================================
-def generate_deposit_ground_truth(n_total=40):
-    per_site = {"balaghat": 13, "nagpur": 13, "bhandara": 14}  # sums to 40
-    rows = []
-    deposit_counter = 1
+def _zscore(a):
+    a = np.asarray(a, dtype=float)
+    sd = a.std()
+    return (a - a.mean()) / sd if sd > 0 else np.zeros_like(a)
 
+
+def _confirmation_probability(features: dict, noise: np.ndarray) -> np.ndarray:
+    """P(is_confirmed_deposit) for each point, from a noisy logistic score
+    over its z-scored features. `noise[:, k]` is the pre-added Gaussian noise
+    for the k-th feature in LABEL_FEATURE_WEIGHTS order."""
+    logit = np.zeros(len(noise))
+    for k, (name, weight) in enumerate(LABEL_FEATURE_WEIGHTS.items()):
+        logit += weight * (_zscore(features[name]) + noise[:, k])
+    return 1.0 / (1.0 + np.exp(-logit))
+
+
+def generate_deposit_ground_truth(n_total=40):
+    # Everything below draws from this isolated stream, not the module `rng`.
+    deposit_rng = np.random.default_rng(DEPOSIT_RNG_SEED)
+
+    per_site = {"balaghat": 13, "nagpur": 13, "bhandara": 14}  # sums to 40
+
+    # --- 1. draw locations FIRST; the label is conditioned on their features
+    site_ids: list[str] = []
+    lats: list[float] = []
+    lons: list[float] = []
+    depths: list[float] = []
     for site_id, n_points in per_site.items():
         lat_lo, lat_hi = SITES[site_id]["lat_range"]
         lon_lo, lon_hi = SITES[site_id]["lon_range"]
+        for _ in range(n_points):
+            lats.append(float(deposit_rng.uniform(lat_lo, lat_hi)))
+            lons.append(float(deposit_rng.uniform(lon_lo, lon_hi)))
+            depths.append(float(deposit_rng.uniform(20, 300)))  # depth: label-independent
+            site_ids.append(site_id)
 
-        n_confirmed = int(round(n_points * 0.6))
-        n_negative = n_points - n_confirmed
-        labels = [True] * n_confirmed + [False] * n_negative
-        rng.shuffle(labels)
+    lat_arr = np.array(lats)
+    lon_arr = np.array(lons)
 
-        for is_confirmed in labels:
-            lat = rng.uniform(lat_lo, lat_hi)
-            lon = rng.uniform(lon_lo, lon_hi)
-            depth_m = rng.uniform(20, 300)
+    # --- 2. compute the SAME 4 features generate_features.py will use, by
+    #        reusing its own structural-line + random-field builders. Those
+    #        have their own internal RNGs (seed 7 / 101 / 202), independent of
+    #        deposit_rng, so this does not perturb the deposit draw sequence.
+    lines_df = _gf.generate_structural_lines()
+    ndvi_field, elevation_field = _gf.build_and_save_fields()
 
-            if is_confirmed:
-                grade_percent = rng.uniform(15, 45)
-            else:
-                grade_percent = rng.uniform(1, 14)
+    min_dist_m, density = compute_structural_features(
+        lon_arr, lat_arr, lines_df, density_radius_km=2.0
+    )
+    synthetic_ndvi = sample_field(ndvi_field, lon_arr, lat_arr) * 2 - 1
+    synthetic_elevation = 300 + sample_field(elevation_field, lon_arr, lat_arr) * (650 - 300)
 
-            rows.append(
-                {
-                    "deposit_id": f"dep_{deposit_counter:03d}",
-                    "site_id": site_id,
-                    "latitude": round(float(lat), 5),
-                    "longitude": round(float(lon), 5),
-                    "depth_m": round(float(depth_m), 1),
-                    "grade_percent": round(float(grade_percent), 2),
-                    "is_confirmed_deposit": bool(is_confirmed),
-                }
-            )
-            deposit_counter += 1
+    features = {
+        "dist_to_nearest_structure": np.asarray(min_dist_m, dtype=float),
+        "structural_density": np.asarray(density, dtype=float),
+        "synthetic_ndvi": np.asarray(synthetic_ndvi, dtype=float),
+        "synthetic_elevation": np.asarray(synthetic_elevation, dtype=float),
+    }
+
+    # --- 3. feature-conditioned label: Bernoulli(p), p from the logistic rule.
+    #        Class balance is NOT forced -- it falls out of the scores.
+    noise = deposit_rng.normal(
+        0.0, LABEL_ZSCORE_NOISE_SD, size=(len(site_ids), len(LABEL_FEATURE_WEIGHTS))
+    )
+    prob = _confirmation_probability(features, noise)
+    is_confirmed = deposit_rng.random(len(site_ids)) < prob
+
+    # --- 4. assemble rows; grade_percent still branches on the label, as before
+    rows = []
+    for i, site_id in enumerate(site_ids):
+        confirmed = bool(is_confirmed[i])
+        grade_percent = (
+            deposit_rng.uniform(15, 45) if confirmed else deposit_rng.uniform(1, 14)
+        )
+        rows.append(
+            {
+                "deposit_id": f"dep_{i + 1:03d}",
+                "site_id": site_id,
+                "latitude": round(float(lat_arr[i]), 5),
+                "longitude": round(float(lon_arr[i]), 5),
+                "depth_m": round(float(depths[i]), 1),
+                "grade_percent": round(float(grade_percent), 2),
+                "is_confirmed_deposit": confirmed,
+            }
+        )
 
     df = pd.DataFrame(rows)
     path = os.path.join(OUT_DIR, "deposit_ground_truth.csv")

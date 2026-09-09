@@ -29,20 +29,44 @@ them — the same way a human would run them one at a time):
                                  step 3 deleted, without touching the real
                                  roster. Without this, enrich_risk_event_5
                                  has no Haul Truck HT-302 to build its
-                                 redeploy scenario around.
-  5. scripts.load_graph --reset  wipe + reload Neo4j from seed_graph.cypher.
-  6. scripts.seed_scenario_a     Balaghat rainfall -> dedicated neo4j causal
+                                 redeploy scenario around. reserve_zones
+                                 already exist by now, so this pass does NOT
+                                 re-touch confidence_score.
+  5. scripts.import_prospectivity_scores
+                                 << MUST run AFTER step 3. Overwrites each
+                                 reserve_zones.confidence_score with the
+                                 zone-averaged kriged RF prospectivity
+                                 probability from the committed
+                                 data/reserve_zones.geojson (repo-root
+                                 "Pipeline B"). Step 3's
+                                 _update_reserve_zone_stats sets
+                                 confidence_score = confirmed/total over the
+                                 3-6 nearest ground-truth points -- a
+                                 sample-size artifact that can only be
+                                 0.0/0.5/0.67/1.0 -- and it rewrites that
+                                 column on EVERY run, so this step has to
+                                 come after it or it gets clobbered. It also
+                                 has to come before the scenario seeds so a
+                                 demo always sees the continuous scores.
+                                 Only confidence_score + last_updated change;
+                                 grade/depth (still from the CSV, still
+                                 correct) and geometry are untouched. Zones
+                                 with no grid cell inside their polygon keep
+                                 their existing value and are named in a
+                                 warning.
+  6. scripts.load_graph --reset  wipe + reload Neo4j from seed_graph.cypher.
+  7. scripts.seed_scenario_a     Balaghat rainfall -> dedicated neo4j causal
                                  chain (WeatherEvent->BlastPlan->OreZone->
                                  RiskEvent) with external_ref.
-  7. scripts.seed_scenario_b     Nagpur Drill-down realignment: Drill NAG-1
+  8. scripts.seed_scenario_b     Nagpur Drill-down realignment: Drill NAG-1
                                  down, Excavator NAG-1 up, the "NAG-1 is
                                  down" risk event pointed at the Drill, and
                                  the Haul Truck HT-302 risk-event FK repaired.
-  8. scripts.enrich_risk_event_5 Neo4j nodes/edges around risk_events.id=5
+  9. scripts.enrich_risk_event_5 Neo4j nodes/edges around risk_events.id=5
                                  (Haul Truck HT-302) for its redeploy
                                  scenario. Skips gracefully if step 4 was
                                  removed and HT-302 is absent.
-  9. scripts.seed_site_notes    ~5 field notes per site + embeddings, so
+ 10. scripts.seed_site_notes    ~5 field notes per site + embeddings, so
                                  GET /site-notes/search returns real hits.
 
 After this, both of these return a "redeploy" option:
@@ -65,6 +89,10 @@ STEPS: list[tuple[str, list[str]]] = [
     ("app.seed_dev  (pass 1 — synthetic fleet + risk events)", ["-m", "app.seed_dev"]),
     ("scripts.import_p2_data  (real roster; DELETES synthetic fleet)", ["-m", "scripts.import_p2_data"]),
     ("app.seed_dev  (pass 2 — RESTORE synthetic fleet dropped by import_p2_data)", ["-m", "app.seed_dev"]),
+    (
+        "scripts.import_prospectivity_scores  (kriged RF surface -> confidence_score; AFTER import_p2_data)",
+        ["-m", "scripts.import_prospectivity_scores"],
+    ),
     ("scripts.load_graph --reset  (wipe + reload Neo4j)", ["-m", "scripts.load_graph", "--reset"]),
     ("scripts.seed_scenario_a  (Balaghat rainfall causal chain)", ["-m", "scripts.seed_scenario_a"]),
     ("scripts.seed_scenario_b  (Nagpur Drill-down realignment + FK repair)", ["-m", "scripts.seed_scenario_b"]),
