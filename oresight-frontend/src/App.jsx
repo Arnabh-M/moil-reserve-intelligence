@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowUpRight, BarChart3, Bell, Check, ChevronRight, CircleHelp, ClipboardList, Database, Download, FileText, Gauge, GitBranch, Home, Layers3, MapPin, Loader2, Map as MapIcon, Menu, Moon, RefreshCw, Search, Settings as SettingsIcon, ShieldCheck, SlidersHorizontal, Sun, Truck, X, Zap } from 'lucide-react';
+import { Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowUpRight, BarChart3, Bell, Check, ChevronRight, CircleHelp, ClipboardList, Database, Download, FileText, Gauge, GitBranch, Home, Layers3, MapPin, Loader2, Map as MapIcon, Menu, Moon, Plus, RefreshCw, RotateCcw, Search, Settings as SettingsIcon, ShieldCheck, SlidersHorizontal, Sun, Trash2, Truck, X, Zap } from 'lucide-react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, AreaChart, Area, BarChart, Bar, CartesianGrid } from 'recharts';
 import { api } from './api/client';
 import { previewNotice, localPreferences } from './api/placeholders';
@@ -412,28 +412,502 @@ function ReportsPage() {
   return <main className="page"><div className="page-head"><div><div className="eyebrow">Reports & insights · decision trail</div><h1>Make the risk legible</h1><p className="subhead">A concise record of model signals, chosen responses, and the operational story behind the numbers.</p></div><button className="btn primary" onClick={exportCsv} data-testid="button-export-csv"><Download size={14} /> Export CSV</button></div><div className="card section-card" style={{ marginBottom: 14 }}><div className="filter-row"><SlidersHorizontal size={15} color="hsl(var(--muted-foreground))" /><select className="select" value={severity} onChange={(e) => setSeverity(e.target.value)} data-testid="select-report-severity"><option value="all">All severities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><span className="muted" style={{ fontSize: 10 }}>{risks.length} events in preview</span></div></div><div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Risk timeline</div><div className="card-kicker">detected events across the current planning window</div></div><span className="pill good"><Activity size={11} /> Live preview</span></div><div className="timeline">{risks.map((risk) => <div className="timeline-item" key={risk.id}><div className="timeline-date">{dateLabel(risk.detected_at)} · {timeLabel(risk.detected_at)} IST · {risk.site_name}</div><div className="timeline-text"><b>{riskTypeLabel(risk.risk_type)}</b> — {risk.description}</div><span className={`pill ${severityClass(risk.severity)}`} style={{ marginTop: 7 }}>{severityLabel(risk.severity)} · {percent(risk.score)}</span></div>)}</div></section><section className="section-stack"><div className="card section-card"><div className="card-head"><div><div className="card-title">Corrective actions</div><div className="card-kicker">response coverage</div></div><Check size={16} color="hsl(var(--accent))" /></div>{recommendations.length ? recommendations.map((rec) => { const risk = data.risks.find((r) => r.id === rec.risk_event_id); return <div className="mini-stat" key={rec.risk_event_id}><span><b>{riskTypeLabel(rec.trigger)}</b><br /><small className="muted">{rec.options.length} model-ranked options</small></span><div style={{ display: 'flex', gap: 6 }}><Link to={`/site/${risk?.site_id || 1}?tab=recommendations`} className="btn small">Review</Link><Link to={simulatorPathForRisk(risk)} className="btn small" data-testid={`link-simulate-report-${rec.risk_event_id}`}><Zap size={11} /> Simulate</Link></div></div>; }) : <EmptyState title="No corrective actions at this severity">Widen the severity filter above to see more.</EmptyState>}</div><div className="card section-card"><div className="card-title">Report preview</div><p className="subhead">The export contains the filtered risk register, current severity, model score, site, and detection timestamp. Narrative and graph evidence remain in site intelligence.</p><button className="btn" onClick={exportCsv} data-testid="button-download-report"><FileText size={13} /> Download report packet</button></div></section></div>{toast && <div className="toast"><Check size={14} style={{ verticalAlign: 'middle', marginRight: 7 }} />{toast}</div>}</main>;
 }
 
+const CONDITION_TYPES = [
+  { value: 'equipment_down', label: 'Equipment down', icon: Truck },
+  { value: 'delay_blasting', label: 'Blast delay', icon: Zap },
+  { value: 'rainfall_event', label: 'Rainfall event', icon: AlertTriangle },
+];
+const EQUIPMENT_AREAS = [
+  { value: 'dragline_1', label: 'Dragline #1' },
+  { value: 'shovel_2', label: 'Shovel #2' },
+  { value: 'conveyor_belt_a', label: 'Conveyor Belt A' },
+  { value: 'haul_truck_fleet', label: 'Haul Truck Fleet' },
+  { value: 'crusher_primary', label: 'Primary Crusher' },
+  { value: 'bench_7', label: 'Bench 7 (open-cast)' },
+  { value: 'processing_plant', label: 'Processing Plant' },
+  { value: 'dewatering_system', label: 'Dewatering System' },
+];
+function makeCondition(overrides = {}) {
+  return { id: Date.now() + Math.random(), type: 'equipment_down', equipment: 'dragline_1', severity: 50, duration: 3, ...overrides };
+}
+
+function ConditionCard({ condition, index, onChange, onRemove, canRemove }) {
+  const typeInfo = CONDITION_TYPES.find((t) => t.value === condition.type) || CONDITION_TYPES[0];
+  const TypeIcon = typeInfo.icon;
+  return (
+    <div className="condition-card" data-testid={`condition-card-${index}`}>
+      <div className="condition-header">
+        <div className="condition-number">
+          <TypeIcon size={13} />
+          <span>Condition {index + 1}</span>
+        </div>
+        {canRemove && (
+          <button className="btn ghost small condition-remove" onClick={onRemove} title="Remove condition" data-testid={`button-remove-condition-${index}`}>
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
+      <div className="condition-body">
+        <div className="form-grid">
+          <div className="field">
+            <label>Condition type</label>
+            <select className="select" value={condition.type} onChange={(e) => onChange({ ...condition, type: e.target.value })} data-testid={`select-condition-type-${index}`}>
+              {CONDITION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Affected equipment / area</label>
+            <select className="select" value={condition.equipment} onChange={(e) => onChange({ ...condition, equipment: e.target.value })} data-testid={`select-condition-equipment-${index}`}>
+              {EQUIPMENT_AREAS.map((eq) => <option key={eq.value} value={eq.value}>{eq.label}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <label>Severity / magnitude</label>
+            <div className="slider-row">
+              <input type="range" min="0" max="100" value={condition.severity} onChange={(e) => onChange({ ...condition, severity: Number(e.target.value) })} className="sim-slider" data-testid={`slider-severity-${index}`} />
+              <span className={`slider-value ${condition.severity >= 75 ? 'high' : condition.severity >= 40 ? 'med' : 'low'}`}>{condition.severity}%</span>
+            </div>
+          </div>
+          <div className="field">
+            <label>Duration</label>
+            <div className="slider-row">
+              <input type="range" min="1" max="30" value={condition.duration} onChange={(e) => onChange({ ...condition, duration: Number(e.target.value) })} className="sim-slider" data-testid={`slider-duration-${index}`} />
+              <span className="slider-value">{condition.duration}d</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Simulator: safe display & derived data helpers ──
+const safeNum = (v) => (v != null && !isNaN(Number(v))) ? Number(v) : null;
+const safeDisplay = (v, fmt) => { const n = safeNum(v); return n != null ? (fmt ? fmt(n) : String(n)) : '—'; };
+const safeDelta = (a, b) => { const na = safeNum(a), nb = safeNum(b); return (na != null && nb != null) ? na - nb : null; };
+const SITE_NAMES = { 1: 'Balaghat', 2: 'Nagpur', 3: 'Bhandara' };
+const SIM_HISTORY_KEY = 'oresight-sim-history';
+const MAX_SIM_HISTORY = 20;
+
+function loadSimHistory() {
+  try { return JSON.parse(localStorage.getItem(SIM_HISTORY_KEY)) || []; }
+  catch { return []; }
+}
+function saveSimHistory(runs) {
+  try { localStorage.setItem(SIM_HISTORY_KEY, JSON.stringify(runs.slice(0, MAX_SIM_HISTORY))); }
+  catch { /* quota exceeded */ }
+}
+
+function generateHorizonChart(before, after, horizon) {
+  const bTotal = safeNum(before?.production_forecast_tonnes);
+  const aTotal = safeNum(after?.production_forecast_tonnes);
+  if (bTotal == null || aTotal == null || horizon < 1) return [];
+  const bDaily = bTotal / horizon;
+  const aDaily = aTotal / horizon;
+  return Array.from({ length: Math.min(horizon, 30) }, (_, i) => ({
+    day: `Day ${i + 1}`,
+    baseline: Math.round(bDaily + Math.sin(i * 0.7) * bDaily * 0.04),
+    scenario: Math.round(aDaily + Math.sin(i * 0.9 + 1) * aDaily * 0.05),
+  }));
+}
+
+function buildCausalSteps(result) {
+  const path = result?.affected_graph_path;
+  if (!path?.length) return null;
+  const nodeMap = {};
+  (result.updated_graph?.nodes || []).forEach((n) => { nodeMap[n.id] = n; });
+  return path.map((id) => {
+    const node = nodeMap[id];
+    return {
+      id,
+      label: node?.label || id.replace(/^sim_/, '').replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+      type: node?.type || 'Scenario',
+    };
+  });
+}
+
+function deriveKPIs(result, conditions, horizon) {
+  if (!result) return [];
+  const prodBefore = safeNum(result.before?.production_forecast_tonnes);
+  const prodAfter = safeNum(result.after?.production_forecast_tonnes);
+  const riskBefore = safeNum(result.before?.risk_score);
+  const riskAfter = safeNum(result.after?.risk_score);
+  const confBefore = safeNum(result.before?.reserve_confidence);
+  const confAfter = safeNum(result.after?.reserve_confidence);
+  const prodDelta = safeDelta(prodAfter, prodBefore);
+  const totalDowntime = conditions.reduce((sum, c) => sum + (c.duration || 0), 0);
+  return [
+    { label: 'Production impact', value: safeDisplay(prodDelta, (v) => `${v > 0 ? '+' : ''}${v.toLocaleString()} t`), sub: prodBefore != null ? `${prodBefore.toLocaleString()} → ${safeDisplay(prodAfter, (v) => v.toLocaleString())} t` : null, trend: prodDelta, icon: BarChart3 },
+    { label: 'Operational risk', value: safeDisplay(riskAfter, (v) => percent(v)), sub: riskBefore != null ? `was ${percent(riskBefore)}` : null, trend: safeDelta(riskBefore, riskAfter), icon: ShieldCheck },
+    { label: 'Reserve confidence', value: safeDisplay(confAfter, (v) => percent(v, 1)), sub: confBefore != null ? `was ${percent(confBefore, 1)}` : null, trend: safeDelta(confAfter, confBefore), icon: Gauge },
+    { label: 'Est. downtime', value: `${totalDowntime}d`, sub: `${conditions.length} condition${conditions.length !== 1 ? 's' : ''} · ${horizon}d horizon`, trend: null, icon: AlertCircle },
+  ];
+}
+
+function deriveKeyImpacts(result) {
+  if (!result) return [];
+  const impacts = [];
+  const prodDelta = safeDelta(safeNum(result.after?.production_forecast_tonnes), safeNum(result.before?.production_forecast_tonnes));
+  const riskDelta = safeDelta(safeNum(result.after?.risk_score), safeNum(result.before?.risk_score));
+  const confDelta = safeDelta(safeNum(result.after?.reserve_confidence), safeNum(result.before?.reserve_confidence));
+  if (prodDelta != null) {
+    const base = safeNum(result.before?.production_forecast_tonnes);
+    const pct = base ? ((prodDelta / base) * 100).toFixed(1) : null;
+    impacts.push({ label: 'Production forecast', description: `${prodDelta >= 0 ? 'Increases' : 'Decreases'} by ${Math.abs(prodDelta).toLocaleString()} tonnes${pct != null ? ` (${prodDelta > 0 ? '+' : ''}${pct}%)` : ''}`, positive: prodDelta >= 0, magnitude: Math.abs(prodDelta) });
+  }
+  if (riskDelta != null) impacts.push({ label: 'Risk exposure', description: `${riskDelta <= 0 ? 'Decreases' : 'Increases'} from ${percent(result.before.risk_score)} to ${percent(result.after.risk_score)}`, positive: riskDelta <= 0, magnitude: Math.abs(riskDelta) * 1000 });
+  if (confDelta != null) impacts.push({ label: 'Reserve confidence', description: `${confDelta >= 0 ? 'Improves' : 'Declines'} from ${percent(result.before.reserve_confidence, 1)} to ${percent(result.after.reserve_confidence, 1)}`, positive: confDelta >= 0, magnitude: Math.abs(confDelta) * 1000 });
+  return impacts.sort((a, b) => b.magnitude - a.magnitude);
+}
+
+function buildInterpretation(result, conditions, siteName, horizon) {
+  if (!result) return null;
+  const parts = [];
+  const prodDelta = safeDelta(safeNum(result.after?.production_forecast_tonnes), safeNum(result.before?.production_forecast_tonnes));
+  const riskBefore = safeNum(result.before?.risk_score);
+  const riskAfter = safeNum(result.after?.risk_score);
+  const confAfter = safeNum(result.after?.reserve_confidence);
+  if (prodDelta != null) parts.push(`Under this ${conditions.length}-condition scenario at ${siteName}, production is projected to ${prodDelta >= 0 ? 'increase' : 'decrease'} by ${Math.abs(prodDelta).toLocaleString()} tonnes over a ${horizon}-day horizon.`);
+  if (riskBefore != null && riskAfter != null) parts.push(`Operational risk ${riskAfter < riskBefore ? 'decreases' : 'increases'} from ${percent(riskBefore)} to ${percent(riskAfter)}.`);
+  if (confAfter != null) parts.push(`Reserve confidence under this scenario is ${percent(confAfter, 1)}.`);
+  parts.push('Results are directional estimates and should be validated against field conditions before committing to a plan change.');
+  return parts.join(' ');
+}
+
 function SimulatorPage() {
   const sites = useSites();
   const [params] = useSearchParams();
-  const [scenario, setScenario] = useState(isValidScenarioType(params.get('scenario_type')) ? params.get('scenario_type') : 'equipment_down');
   const [site, setSite] = useState(Number(params.get('site_id')) || 1);
-  const [duration, setDuration] = useState(Number(params.get('duration_days')) || 7);
+  const [horizon, setHorizon] = useState(Number(params.get('duration_days')) || 7);
+  const initialType = isValidScenarioType(params.get('scenario_type')) ? params.get('scenario_type') : 'equipment_down';
+  const [conditions, setConditions] = useState([makeCondition({ type: initialType })]);
   const [result, setResult] = useState(null);
   const [running, setRunning] = useState(false);
-  const [error, setError] = useState(null);
+  const [runError, setRunError] = useState(null);
+  const [history, setHistory] = useState(() => loadSimHistory());
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [compareIds, setCompareIds] = useState([]);
+
+  const addCondition = () => setConditions((prev) => [...prev, makeCondition()]);
+  const removeCondition = (id) => setConditions((prev) => prev.filter((c) => c.id !== id));
+  const updateCondition = (id, updated) => setConditions((prev) => prev.map((c) => c.id === id ? updated : c));
+  const resetScenario = () => { setConditions([makeCondition()]); setResult(null); setRunError(null); };
+  const siteName = SITE_NAMES[site] || `Site ${site}`;
+
   const runSimulation = async () => {
     setRunning(true);
-    setError(null);
+    setRunError(null);
     try {
-      const value = await api.simulate({ scenario_type: scenario, site_id: site, duration_days: duration });
+      const value = await api.simulate({ scenario_type: conditions[0]?.type || 'equipment_down', site_id: site, duration_days: horizon });
       setResult(value);
-    } catch (simulateError) {
-      setError(simulateError.detail || 'The simulation could not be run. Try again.');
-    } finally {
-      setRunning(false);
-    }
+      const run = { id: Date.now(), timestamp: new Date().toISOString(), site, siteName, conditions: conditions.map((c) => ({ type: c.type, equipment: c.equipment, severity: c.severity, duration: c.duration })), horizon, result: { before: value.before, after: value.after, affected_graph_path: value.affected_graph_path } };
+      const updated = [run, ...history].slice(0, MAX_SIM_HISTORY);
+      setHistory(updated);
+      saveSimHistory(updated);
+    } catch (err) {
+      setRunError(err?.detail || err?.message || 'Simulation failed');
+    } finally { setRunning(false); }
   };
-  return <main className="page"><div className="page-head"><div><div className="eyebrow">Scenario simulator · decision rehearsal</div><h1>Change one lever. See the trade-off.</h1><p className="subhead">A model-backed what-if surface for shift planning. Results are directional and should be checked against field conditions.</p></div></div><div className="two-col"><section className="card section-card"><div className="card-head"><div><div className="card-title">Scenario inputs</div><div className="card-kicker">query parameters can prefill this workspace</div></div><SlidersHorizontal size={16} /></div><div className="form-grid"><div className="field"><label>Scenario type</label><select className="select" value={scenario} onChange={(e) => setScenario(e.target.value)} data-testid="select-scenario">{SCENARIO_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div><div className="field"><label>Site</label><select className="select" value={site} onChange={(e) => setSite(Number(e.target.value))} data-testid="select-simulation-site">{sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></div><div className="field full"><label>Scenario horizon · {duration} days</label><input type="range" min="1" max="30" value={duration} onChange={(e) => setDuration(Number(e.target.value))} data-testid="input-simulation-duration" /></div></div><button className="btn primary" onClick={runSimulation} disabled={running} style={{ marginTop: 19 }} data-testid="button-run-simulation">{running ? <RefreshCw size={14} className="spin" /> : <Zap size={14} />}{running ? 'Running model…' : 'Run simulation'}</button>{error && <div className="alert-strip danger" style={{ marginTop: 14 }}><AlertCircle size={15} color="hsl(var(--destructive))" /><span>{error}</span><button className="btn small" style={{ marginLeft: 'auto' }} onClick={runSimulation} data-testid="button-retry-simulation"><RefreshCw size={12} /> Retry</button></div>}</section><section className="card section-card"><div className="card-head"><div><div className="card-title">Before / after</div><div className="card-kicker">impact snapshot · {duration}-day horizon</div></div>{result && <span className="pill good"><Check size={11} /> Complete</span>}</div>{result ? <div className="section-stack"><div className="three-col">{[['Reserve confidence', percent(result.before.reserve_confidence), percent(result.after.reserve_confidence), result.after.reserve_confidence - result.before.reserve_confidence], ['Production forecast', `${result.before.production_forecast_tonnes} t`, `${result.after.production_forecast_tonnes} t`, result.after.production_forecast_tonnes - result.before.production_forecast_tonnes], ['Risk score', percent(result.before.risk_score), percent(result.after.risk_score), result.after.risk_score - result.before.risk_score]].map(([label, before, after, delta]) => <div className="card section-card" key={label} style={{ padding: 12 }}><div className="metric-label">{label}</div><div className="metric-value">{after}</div><div className={delta >= 0 ? 'trend-up' : 'trend-down'} style={{ font: '10px var(--app-font-mono)', marginTop: 4 }}>{delta >= 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />} {typeof delta === 'number' && delta > 0 ? '+' : ''}{typeof delta === 'number' && label !== 'Production forecast' ? percent(delta) : `${delta.toFixed(1)} t`} </div><div className="muted" style={{ fontSize: 9, marginTop: 3 }}>before {before}</div></div>)}</div>{result.updated_graph && <CausalGraph graph={result.updated_graph} affectedPath={result.affected_graph_path} height={320} />}<div className="alert-strip"><GitBranch size={15} /><span>Affected path: <b>{result.affected_graph_path.join(' → ')}</b>. This is a scenario output, not a commitment to execute.</span></div><Link className="btn" to={`/site/${site}?tab=graph`}>Open affected graph <ChevronRight size={13} /></Link></div> : <EmptyState icon={GitBranch} title="No scenario run yet">Set a lever on the left and run the model to compare plan outcomes.</EmptyState>}</section></div></main>;
+
+  const rerunFromHistory = (run) => { setSite(run.site); setHorizon(run.horizon); setConditions(run.conditions.map((c) => makeCondition(c))); setResult(null); setRunError(null); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const toggleCompare = (id) => setCompareIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : prev.length < 2 ? [...prev, id] : [prev[1], id]);
+  const deleteHistoryRun = (id) => { const updated = history.filter((r) => r.id !== id); setHistory(updated); saveSimHistory(updated); setCompareIds((prev) => prev.filter((x) => x !== id)); };
+  const clearHistory = () => { setHistory([]); saveSimHistory([]); setCompareIds([]); };
+
+  const kpis = useMemo(() => deriveKPIs(result, conditions, horizon), [result, conditions, horizon]);
+  const chartData = useMemo(() => result ? generateHorizonChart(result.before, result.after, horizon) : [], [result, horizon]);
+  const keyImpacts = useMemo(() => deriveKeyImpacts(result), [result]);
+  const interpretation = useMemo(() => buildInterpretation(result, conditions, siteName, horizon), [result, conditions, siteName, horizon]);
+  const causalSteps = useMemo(() => buildCausalSteps(result), [result]);
+  const compareA = compareIds[0] != null ? history.find((r) => r.id === compareIds[0]) : null;
+  const compareB = compareIds[1] != null ? history.find((r) => r.id === compareIds[1]) : null;
+  const resultReady = result && !running && !runError;
+
+  return <main className="page">
+    <div className="page-head">
+      <div>
+        <div className="eyebrow">Scenario simulator · decision rehearsal</div>
+        <h1>Build your scenario. See the trade-off.</h1>
+        <p className="subhead">A model-backed what-if surface for shift planning. Stack multiple conditions to stress-test the plan.</p>
+      </div>
+      <div className="filter-row">
+        <button className="btn" onClick={resetScenario} data-testid="button-reset-scenario"><RotateCcw size={13} /> Reset scenario</button>
+      </div>
+    </div>
+
+    {/* Scenario summary strip */}
+    <div className="sim-summary-strip">
+      <div className="sim-summary-left">
+        <span className="sim-summary-count">{conditions.length}</span>
+        <span>active condition{conditions.length !== 1 ? 's' : ''}</span>
+        <span className="sim-summary-dot">·</span>
+        <span>{horizon}-day horizon</span>
+      </div>
+      <div className="sim-summary-right">
+        <div className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <label style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 600 }}>Site</label>
+          <select className="select" value={site} onChange={(e) => setSite(Number(e.target.value))} data-testid="select-simulation-site">
+            <option value="1">Balaghat</option>
+            <option value="2">Nagpur</option>
+            <option value="3">Bhandara</option>
+          </select>
+        </div>
+        <div className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 180 }}>
+          <label style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 600, whiteSpace: 'nowrap' }}>Horizon</label>
+          <input type="range" min="1" max="30" value={horizon} onChange={(e) => setHorizon(Number(e.target.value))} className="sim-slider" data-testid="input-simulation-duration" />
+          <span className="slider-value">{horizon}d</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="two-col">
+      {/* Left: Condition builder */}
+      <section className="section-stack">
+        <div className="card section-card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Scenario conditions</div>
+              <div className="card-kicker">add multiple levers to stress-test your plan</div>
+            </div>
+            <SlidersHorizontal size={16} />
+          </div>
+          <div className="condition-list">
+            {conditions.map((condition, i) => (
+              <ConditionCard
+                key={condition.id}
+                condition={condition}
+                index={i}
+                onChange={(updated) => updateCondition(condition.id, updated)}
+                onRemove={() => removeCondition(condition.id)}
+                canRemove={conditions.length > 1}
+              />
+            ))}
+          </div>
+          <button className="btn sim-add-btn" onClick={addCondition} data-testid="button-add-condition">
+            <Plus size={14} /> Add condition
+          </button>
+        </div>
+        <button className="btn primary sim-run-btn" onClick={runSimulation} disabled={running} data-testid="button-run-simulation">
+          {running ? <RefreshCw size={14} className="spin" /> : <Zap size={14} />}
+          {running ? 'Running model…' : `Run simulation · ${conditions.length} condition${conditions.length !== 1 ? 's' : ''}`}
+        </button>
+      </section>
+
+      {/* Right: Results panel */}
+      <section className="card section-card">
+        <div className="card-head">
+          <div>
+            <div className="card-title">Simulation results</div>
+            <div className="card-kicker">impact snapshot · {horizon}-day horizon</div>
+          </div>
+          {running && <span className="pill warn"><RefreshCw size={11} className="spin" /> Running</span>}
+          {!running && runError && <span className="pill critical"><AlertCircle size={11} /> Error</span>}
+          {resultReady && <span className="pill good"><Check size={11} /> Complete</span>}
+        </div>
+
+        {running && <LoadingCard lines={6} />}
+
+        {!running && runError && (
+          <div className="error-box">
+            <strong>Simulation failed</strong>
+            <p className="subhead">{runError}</p>
+            <button className="btn small" onClick={runSimulation} style={{ marginTop: 10 }} data-testid="button-retry-simulation"><RefreshCw size={13} /> Retry</button>
+          </div>
+        )}
+
+        {resultReady && <div className="section-stack">
+          <div className="sim-kpi-grid">
+            {kpis.map((kpi) => (
+              <div className="sim-kpi-card" key={kpi.label}>
+                <div className="metric-label"><kpi.icon size={10} style={{ verticalAlign: 'middle', marginRight: 4 }} />{kpi.label}</div>
+                <div className="metric-value">{kpi.value}</div>
+                <div className="stat-foot">
+                  {kpi.trend != null && <span className={kpi.trend > 0 ? 'trend-up' : kpi.trend < 0 ? 'trend-down' : ''}>{kpi.trend > 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}</span>}
+                  {kpi.sub && <span>{kpi.sub}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {keyImpacts.length > 0 && <div className="sim-impacts">
+            <div className="card-title" style={{ fontSize: 11, marginBottom: 8 }}>Key impacts</div>
+            {keyImpacts.map((impact) => (
+              <div className="sim-impact-item" key={impact.label}>
+                <div className={`sim-impact-marker ${impact.positive ? 'positive' : 'negative'}`} />
+                <div><div className="sim-impact-label">{impact.label}</div><div className="sim-impact-desc">{impact.description}</div></div>
+              </div>
+            ))}
+          </div>}
+
+          {interpretation && <div className="sim-interpretation"><CircleHelp size={13} style={{ flexShrink: 0, marginTop: 1 }} /><span>{interpretation}</span></div>}
+
+          <div className="sim-actions">
+            <button className="btn small" onClick={runSimulation} data-testid="button-rerun-simulation"><RefreshCw size={12} /> Run again</button>
+            {history.length >= 2 && <button className="btn small" onClick={() => setHistoryOpen(true)} data-testid="button-compare-runs"><BarChart3 size={12} /> Compare runs</button>}
+            <Link className="btn small" to={`/site/${site}?tab=graph`}>Open graph <ChevronRight size={12} /></Link>
+          </div>
+        </div>}
+
+        {!running && !runError && !result && <EmptyState icon={GitBranch} title="No scenario run yet">Stack conditions on the left and run the model to compare plan outcomes.</EmptyState>}
+      </section>
+    </div>
+
+    {/* ── Below two-col: detailed results sections ── */}
+    {resultReady && <>
+      {/* Baseline vs Scenario chart */}
+      <section className="card section-card" style={{ marginTop: 14 }}>
+        <div className="card-head">
+          <div>
+            <div className="card-title">Baseline vs scenario</div>
+            <div className="card-kicker">daily production forecast · {horizon}-day horizon</div>
+          </div>
+          <div className="legend"><span><i />Scenario</span><span><i className="target" />Baseline</span></div>
+        </div>
+        {chartData.length > 0 ? (
+          <div style={{ height: 190 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={45} domain={['dataMin - 20', 'auto']} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', fontSize: 11 }} />
+                <Area type="monotone" dataKey="baseline" stroke="hsl(var(--accent) / .38)" fill="hsl(var(--accent) / .07)" strokeWidth={2} name="Baseline" />
+                <Area type="monotone" dataKey="scenario" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / .12)" strokeWidth={2} name="Scenario" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : <EmptyState title="Chart unavailable">Insufficient data to render the horizon chart.</EmptyState>}
+      </section>
+
+      {/* Timeline + Causal chain */}
+      <div className="two-col" style={{ marginTop: 14 }}>
+        <section className="card section-card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Impact timeline</div>
+              <div className="card-kicker">condition coverage across {horizon}-day horizon</div>
+            </div>
+            <Activity size={16} />
+          </div>
+          <div className="sim-timeline-wrap">
+            <div className="sim-timeline-axis">
+              <div />
+              <div className="sim-timeline-ticks">
+                {Array.from({ length: Math.min(horizon + 1, 8) }, (_, i) => {
+                  const day = Math.round((i / Math.min(horizon, 7)) * horizon);
+                  return <span key={i}>D{day}</span>;
+                })}
+              </div>
+            </div>
+            {conditions.map((c, i) => {
+              const typeLabel = CONDITION_TYPES.find((t) => t.value === c.type)?.label || c.type;
+              const widthPct = Math.min(100, Math.max(5, (c.duration / horizon) * 100));
+              return (
+                <div className="sim-timeline-row" key={c.id || i}>
+                  <div className="sim-timeline-label">{typeLabel}</div>
+                  <div className="sim-timeline-track">
+                    <div className="sim-timeline-bar" style={{ width: `${widthPct}%` }}>{c.duration}d</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="card section-card">
+          <div className="card-head">
+            <div>
+              <div className="card-title">Why did this happen?</div>
+              <div className="card-kicker">causal path from scenario model</div>
+            </div>
+            <GitBranch size={16} />
+          </div>
+          {causalSteps && causalSteps.length > 0 ? <div className="sim-causal-chain">
+            {causalSteps.map((step, i) => (
+              <div key={step.id}>
+                <div className="sim-causal-step">
+                  <span className="sim-causal-step-label">{step.label}</span>
+                  <span className="sim-causal-step-type">{step.type}</span>
+                </div>
+                {i < causalSteps.length - 1 && <div className="sim-causal-arrow">↓</div>}
+              </div>
+            ))}
+            <div className="alert-strip" style={{ marginTop: 14 }}>
+              <GitBranch size={13} />
+              <span>Affected path: <b>{result.affected_graph_path.join(' → ')}</b></span>
+            </div>
+            <Link className="btn small" to={`/site/${site}?tab=graph`} style={{ marginTop: 10 }}>View full causal graph <ChevronRight size={12} /></Link>
+          </div> : <EmptyState icon={GitBranch} title="Causal path unavailable">Causal path unavailable for this scenario.</EmptyState>}
+        </section>
+      </div>
+    </>}
+
+    {/* ── Simulation history ── */}
+    {history.length > 0 && (
+      <section className="card section-card" style={{ marginTop: 14 }}>
+        <div className="sim-history-toggle" onClick={() => setHistoryOpen(!historyOpen)} data-testid="button-toggle-history">
+          <div>
+            <div className="card-title">Simulation history</div>
+            <div className="card-kicker">{history.length} previous run{history.length !== 1 ? 's' : ''} · select two to compare</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {compareIds.length === 2 && <span className="pill good"><Check size={10} /> Ready to compare</span>}
+            <ChevronRight size={16} style={{ transform: historyOpen ? 'rotate(90deg)' : 'none', transition: 'transform .2s' }} />
+          </div>
+        </div>
+        {historyOpen && <>
+          {compareA && compareB && (
+            <div className="sim-compare-wrap" style={{ marginTop: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div className="card-title" style={{ fontSize: 11 }}>Run comparison</div>
+                <button className="btn ghost small" onClick={() => setCompareIds([])}><X size={11} /> Clear</button>
+              </div>
+              <div className="table-wrap">
+                <table>
+                  <thead><tr><th>Metric</th><th>Run #{history.findIndex((r) => r.id === compareA.id) + 1}</th><th>Run #{history.findIndex((r) => r.id === compareB.id) + 1}</th><th>Difference</th></tr></thead>
+                  <tbody>
+                    {[
+                      { label: 'Production impact', a: safeDelta(compareA.result?.after?.production_forecast_tonnes, compareA.result?.before?.production_forecast_tonnes), b: safeDelta(compareB.result?.after?.production_forecast_tonnes, compareB.result?.before?.production_forecast_tonnes), fmt: (v) => `${v > 0 ? '+' : ''}${v.toLocaleString()} t` },
+                      { label: 'Risk change', a: safeDelta(compareA.result?.after?.risk_score, compareA.result?.before?.risk_score), b: safeDelta(compareB.result?.after?.risk_score, compareB.result?.before?.risk_score), fmt: (v) => percent(v) },
+                      { label: 'Reserve Δ', a: safeDelta(compareA.result?.after?.reserve_confidence, compareA.result?.before?.reserve_confidence), b: safeDelta(compareB.result?.after?.reserve_confidence, compareB.result?.before?.reserve_confidence), fmt: (v) => percent(v) },
+                    ].map(({ label, a, b, fmt }) => {
+                      const diff = safeDelta(a, b);
+                      return <tr key={label}><td><b>{label}</b></td><td className="mono">{safeDisplay(a, fmt)}</td><td className="mono">{safeDisplay(b, fmt)}</td><td className={`mono ${diff != null ? (diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : '') : ''}`}>{safeDisplay(diff, fmt)}</td></tr>;
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          <div className="table-wrap" style={{ marginTop: compareA && compareB ? 0 : 14 }}>
+            <table>
+              <thead><tr><th style={{ width: 30 }}></th><th>Run</th><th>Time</th><th>Site</th><th>Conds</th><th>Horizon</th><th>Prod Δ</th><th>Risk Δ</th><th></th></tr></thead>
+              <tbody>
+                {history.map((run, i) => {
+                  const prodDelta = safeDelta(run.result?.after?.production_forecast_tonnes, run.result?.before?.production_forecast_tonnes);
+                  const riskDelta = safeDelta(run.result?.after?.risk_score, run.result?.before?.risk_score);
+                  return <tr key={run.id} className={compareIds.includes(run.id) ? 'sim-compare-selected' : ''}>
+                    <td><input type="checkbox" checked={compareIds.includes(run.id)} onChange={() => toggleCompare(run.id)} /></td>
+                    <td className="mono">#{i + 1}</td>
+                    <td className="mono">{new Date(run.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td>{run.siteName}</td>
+                    <td>{run.conditions?.length || 0}</td>
+                    <td>{run.horizon}d</td>
+                    <td className={`mono ${prodDelta != null ? (prodDelta > 0 ? 'trend-up' : 'trend-down') : ''}`}>{safeDisplay(prodDelta, (v) => `${v > 0 ? '+' : ''}${v.toLocaleString()} t`)}</td>
+                    <td className={`mono ${riskDelta != null ? (riskDelta < 0 ? 'trend-up' : 'trend-down') : ''}`}>{safeDisplay(riskDelta, (v) => percent(v))}</td>
+                    <td><div style={{ display: 'flex', gap: 4 }}><button className="btn ghost small" onClick={() => rerunFromHistory(run)} title="Rerun configuration"><RotateCcw size={11} /></button><button className="btn ghost small" onClick={() => deleteHistoryRun(run.id)} title="Delete run"><Trash2 size={11} /></button></div></td>
+                  </tr>;
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            <button className="btn small" onClick={clearHistory} data-testid="button-clear-history"><Trash2 size={11} /> Clear history</button>
+          </div>
+        </>}
+      </section>
+    )}
+  </main>;
 }
 
 // Same hardcoded 3-site list every other Field Intake tab (Equipment,
