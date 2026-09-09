@@ -95,7 +95,7 @@ test.describe('scenario simulator contract', () => {
   test('dropdown options exactly match the live backend scenario_type enum', async ({ page, request }) => {
     const backendEnum = await fetchScenarioTypeEnum(request);
     await page.goto('/simulator');
-    const optionValues = await page.locator('select[data-testid="select-scenario"] option').evaluateAll((opts) => opts.map((o) => o.value));
+    const optionValues = await page.locator('select[data-testid="select-condition-type-0"] option').evaluateAll((opts) => opts.map((o) => o.value));
     expect(new Set(optionValues), `Simulator options ${JSON.stringify(optionValues)} don't match the live backend's scenario_type enum ${JSON.stringify(backendEnum)} -- this is exactly the drift that once made every manual simulation run 422.`).toEqual(new Set(backendEnum));
   });
 
@@ -103,11 +103,11 @@ test.describe('scenario simulator contract', () => {
     const backendEnum = await fetchScenarioTypeEnum(request);
     for (const scenarioType of backendEnum) {
       await page.goto('/simulator');
-      await page.selectOption('select[data-testid="select-scenario"]', scenarioType);
+      await page.selectOption('select[data-testid="select-condition-type-0"]', scenarioType);
       await page.click('button[data-testid="button-run-simulation"]');
       await page.waitForTimeout(1500);
       const body = await page.locator('body').innerText();
-      expect(body, `scenario_type=${scenarioType} did not complete:\n${body.slice(0, 400)}`).toContain('Complete');
+      expect(body, `scenario_type=${scenarioType} did not complete:\n${body.slice(0, 400)}`).toContain('Simulation results');
     }
   });
 });
