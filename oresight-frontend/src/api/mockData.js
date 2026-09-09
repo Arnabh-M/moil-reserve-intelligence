@@ -113,6 +113,15 @@ const simulation = {
   after: { reserve_confidence: 0.81, production_forecast_tonnes: 8201, risk_score: 0.59 },
   affected_graph_path: ['sim_equipment_down', 'eq_bal_01', 'bp_bal_01', 'oz_bal_01', 'risk_balaghat_17'],
   updated_graph: graph,
+  uncertainty: {
+    model_rmse: 0.158,
+    model_mae: 0.1177,
+    residual_std: 0.153,
+    production_impact_uncertainty_tonnes: 130.0,
+    risk_uncertainty: 0.062,
+    reserve_confidence_uncertainty: 0.021,
+    downtime_uncertainty_days: 0.6,
+  },
 };
 
 const notes = [

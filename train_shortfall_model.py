@@ -194,6 +194,114 @@ def time_based_split(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     return train, test
 
 
+def _compute_training_data_ranges(
+    production: pd.DataFrame, downtime: pd.DataFrame
+) -> dict:
+    """Compute per-condition-type severity/duration statistics from training CSVs.
+
+    These are surfaced in the Simulator UI as honest "typical range in training
+    data" hints on each ConditionCard.  The numbers are derived entirely from
+    the raw CSVs (the same ones the model was trained on), not invented.
+    """
+    # -- equipment_down: downtime events --
+    dur_days = downtime["duration_hours"] / 24.0
+    equip_pct = (downtime["duration_hours"] / (5 * 7 * 24)) * 100
+    equip = {
+        "severity_min_pct": 0,
+        "severity_max_pct": round(float(equip_pct.max()), 1),
+        "severity_p25_pct": round(float(equip_pct.quantile(0.25)), 1),
+        "severity_p50_pct": round(float(equip_pct.quantile(0.50)), 1),
+        "severity_p75_pct": round(float(equip_pct.quantile(0.75)), 1),
+        "severity_p95_pct": round(float(equip_pct.quantile(0.95)), 1),
+        "severity_levels": {
+            "low": round(float(equip_pct.quantile(0.25)), 1),
+            "medium": round(float(equip_pct.quantile(0.50)), 1),
+            "high": round(float(equip_pct.quantile(0.75)), 1),
+            "severe": round(float(equip_pct.quantile(0.95)), 1),
+        },
+        "duration_min_days": round(float(dur_days.min()), 1),
+        "duration_max_days": round(float(dur_days.max()), 1),
+        "duration_p25_days": round(float(dur_days.quantile(0.25)), 1),
+        "duration_p50_days": round(float(dur_days.quantile(0.50)), 1),
+        "duration_p75_days": round(float(dur_days.quantile(0.75)), 1),
+        "duration_p95_days": round(float(dur_days.quantile(0.95)), 1),
+        "event_count": int(len(downtime)),
+    }
+
+    by_reason: dict = {}
+    for reason, grp in downtime.groupby("reason"):
+        rdur = grp["duration_hours"] / 24.0
+        by_reason[reason] = {
+            "duration_min_days": round(float(rdur.min()), 1),
+            "duration_max_days": round(float(rdur.max()), 1),
+            "severity_min_hours": round(float(grp["duration_hours"].min()), 1),
+            "severity_max_hours": round(float(grp["duration_hours"].max()), 1),
+            "count": int(len(grp)),
+        }
+
+    # -- delay_blasting: shortfall injection windows --
+    shortfall = (
+        (production["target_output"] - production["actual_output"])
+        / production["target_output"]
+    ).clip(lower=0) * 100
+    blast = {
+        "severity_min_pct": round(float(shortfall.quantile(0.25)), 1),
+        "severity_max_pct": round(float(shortfall.quantile(0.95)), 1),
+        "severity_p25_pct": round(float(shortfall.quantile(0.25)), 1),
+        "severity_p50_pct": round(float(shortfall.quantile(0.50)), 1),
+        "severity_p75_pct": round(float(shortfall.quantile(0.75)), 1),
+        "severity_p95_pct": round(float(shortfall.quantile(0.95)), 1),
+        "severity_levels": {
+            "low": round(float(shortfall.quantile(0.25)), 1),
+            "medium": round(float(shortfall.quantile(0.50)), 1),
+            "high": round(float(shortfall.quantile(0.75)), 1),
+            "severe": round(float(shortfall.quantile(0.95)), 1),
+        },
+        "duration_min_days": 5,
+        "duration_max_days": 10,
+        "duration_p25_days": 5,
+        "duration_p50_days": 7,
+        "duration_p75_days": 9,
+        "duration_p95_days": 10,
+    }
+
+    # -- rainfall_event: seasonal rainfall proxy --
+    days_in_month = production["date"].dt.days_in_month
+    frac_month = production["date"].dt.month + (production["date"].dt.day - 1) / days_in_month
+    rainfall_proxy = 0.5 * (1 + np.cos(2 * np.pi * (frac_month - 7.5) / 12)) * 100
+    rain = {
+        "severity_min_pct": round(float(rainfall_proxy.min()), 1),
+        "severity_max_pct": round(float(rainfall_proxy.max()), 1),
+        "severity_p25_pct": round(float(rainfall_proxy.quantile(0.25)), 1),
+        "severity_p50_pct": round(float(rainfall_proxy.quantile(0.50)), 1),
+        "severity_p75_pct": round(float(rainfall_proxy.quantile(0.75)), 1),
+        "severity_p95_pct": round(float(rainfall_proxy.quantile(0.95)), 1),
+        "severity_levels": {
+            "low": round(float(rainfall_proxy.quantile(0.25)), 1),
+            "medium": round(float(rainfall_proxy.quantile(0.50)), 1),
+            "high": round(float(rainfall_proxy.quantile(0.75)), 1),
+            "severe": round(float(rainfall_proxy.quantile(0.95)), 1),
+        },
+        "duration_min_days": 1,
+        "duration_max_days": 30,
+        "duration_p25_days": 7,
+        "duration_p50_days": 14,
+        "duration_p75_days": 21,
+        "duration_p95_days": 30,
+        "monsoon_months": "Jun\u2013Sep",
+    }
+
+    return {
+        "data_source": "synthetic",
+        "data_generator": "generate_datasets.py",
+        "date_range": f"{production['date'].min().date()} to {production['date'].max().date()}",
+        "equipment_down": equip,
+        "equipment_down_by_reason": by_reason,
+        "delay_blasting": blast,
+        "rainfall_event": rain,
+    }
+
+
 def main() -> None:
     print("=" * 70)
     print("Day 3 Part 0: Train Shortfall Forecaster")
@@ -229,11 +337,14 @@ def main() -> None:
     model.fit(X_train, y_train)
 
     preds = model.predict(X_test)
+    residuals = y_test - preds
     rmse = float(np.sqrt(mean_squared_error(y_test, preds)))
     mae = float(mean_absolute_error(y_test, preds))
+    residual_std = float(np.std(residuals))
 
     print(f"\nTest RMSE: {rmse:.4f}")
     print(f"Test MAE:  {mae:.4f}")
+    print(f"Test Residual Std: {residual_std:.4f}")
     print(f"(target shortfall_pct test-set mean={y_test.mean():.4f}, std={y_test.std():.4f})")
 
     print("\nFeature importances:")
@@ -242,12 +353,33 @@ def main() -> None:
 
     model_path = os.path.join(MODELS_DIR, "shortfall_forecaster.pkl")
     columns_path = os.path.join(MODELS_DIR, "feature_columns.json")
+    metrics_path = os.path.join(MODELS_DIR, "model_metrics.json")
+
     joblib.dump(model, model_path)
     with open(columns_path, "w", encoding="utf-8") as f:
         json.dump(FEATURE_COLUMNS, f, indent=2)
 
+    metrics_payload = {
+        "rmse": round(rmse, 4),
+        "mae": round(mae, 4),
+        "residual_std": round(residual_std, 4),
+        "target_shortfall_mean": round(float(y_test.mean()), 4),
+        "target_shortfall_std": round(float(y_test.std()), 4),
+        "test_sample_count": int(len(y_test)),
+    }
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(metrics_payload, f, indent=2)
+
+    # ── Training data ranges for the Simulator UI condition hints ──
+    ranges_path = os.path.join(MODELS_DIR, "training_data_ranges.json")
+    ranges = _compute_training_data_ranges(production, downtime)
+    with open(ranges_path, "w", encoding="utf-8") as f:
+        json.dump(ranges, f, indent=2)
+
     print(f"\nSaved model to {model_path}")
     print(f"Saved feature column order to {columns_path}")
+    print(f"Saved model metrics to {metrics_path}")
+    print(f"Saved training data ranges to {ranges_path}")
     print("=" * 70)
 
 

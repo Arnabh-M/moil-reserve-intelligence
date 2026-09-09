@@ -308,3 +308,72 @@ def test_run_watcher_swallows_agent_failure(monkeypatch):
     assert "simulated agent explosion" in (
         scheduler._watcher_last_result["error"] or ""
     )
+
+
+def test_simulate_out_of_distribution_flags(client):
+    """Test that /simulate returns out_of_distribution flag per condition and overall."""
+    # 1. Out of distribution request (equipment_down with duration=10 > 1.9d max and severity=75 > 5.3% max)
+    r_ood = client.post(
+        "/simulate",
+        json={
+            "scenario_type": "equipment_down",
+            "site_id": 1,
+            "duration_days": 10,
+            "severity": 75,
+            "conditions": [
+                {
+                    "type": "equipment_down",
+                    "severity": 75,
+                    "duration": 10,
+                },
+                {
+                    "type": "rainfall_event",
+                    "severity": 50,
+                    "duration": 7,
+                },
+            ],
+        },
+    )
+    assert r_ood.status_code == 200
+    data_ood = r_ood.json()
+    assert data_ood["out_of_distribution"] is True
+    assert len(data_ood["conditions_ood"]) == 2
+    # First condition (equipment_down 75% 10d) is OOD
+    c0 = data_ood["conditions_ood"][0]
+    assert c0["out_of_distribution"] is True
+    assert c0["severity_out_of_distribution"] is True
+    assert c0["duration_out_of_distribution"] is True
+    assert len(c0["warnings"]) == 2
+
+    # Second condition (rainfall_event 50% 7d) is in-range (14.6-100%, 1-30d)
+    c1 = data_ood["conditions_ood"][1]
+    assert c1["out_of_distribution"] is False
+    assert c1["severity_out_of_distribution"] is False
+    assert c1["duration_out_of_distribution"] is False
+
+    assert "Treat projections with extra caution" in data_ood["out_of_distribution_warning"]
+
+    # 2. In distribution request (rainfall_event 50% 5d)
+    r_in = client.post(
+        "/simulate",
+        json={
+            "scenario_type": "rainfall_event",
+            "site_id": 1,
+            "duration_days": 5,
+            "severity": 50,
+            "conditions": [
+                {
+                    "type": "rainfall_event",
+                    "severity": 50,
+                    "duration": 5,
+                }
+            ],
+        },
+    )
+    assert r_in.status_code == 200
+    data_in = r_in.json()
+    assert data_in["out_of_distribution"] is False
+    assert len(data_in["conditions_ood"]) == 1
+    assert data_in["conditions_ood"][0]["out_of_distribution"] is False
+    assert data_in["out_of_distribution_warning"] is None
+

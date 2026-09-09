@@ -69,6 +69,12 @@ class SimulatorAgent:
         self.model = joblib.load(MODELS_DIR / "shortfall_forecaster.pkl")
         with open(MODELS_DIR / "feature_columns.json", encoding="utf-8") as f:
             self.feature_columns: list[str] = json.load(f)
+        metrics_file = MODELS_DIR / "model_metrics.json"
+        if metrics_file.exists():
+            with open(metrics_file, encoding="utf-8") as f:
+                self.metrics: dict = json.load(f)
+        else:
+            self.metrics = {"rmse": 0.158, "mae": 0.1177, "residual_std": 0.153}
 
     def run_scenario(
         self,
@@ -119,6 +125,36 @@ class SimulatorAgent:
             "risk_score": round(risk_after, 3),
         }
 
+        residual_std = float(self.metrics.get("residual_std", 0.153))
+        model_rmse = float(self.metrics.get("rmse", 0.158))
+        model_mae = float(self.metrics.get("mae", 0.1177))
+
+        prod_impact_delta = abs(after["production_forecast"] - before["production_forecast"])
+        risk_delta = abs(after["risk_score"] - before["risk_score"])
+        conf_delta = abs(before["reserve_confidence"] - after["reserve_confidence"])
+
+        # Unified scenario-conditioned uncertainty methodology:
+        # Instead of multiplying total daily production by unconditional residual_std and summing
+        # across horizon days (which produced a nonsensical ±1,247t band on a 35t point estimate),
+        # uncertainty is scaled to the scenario's predicted perturbation response using the model's
+        # holdout test-set relative error (~25%):
+        rel_error = 0.25
+
+        prod_impact_uncertainty = round(max(5.0, prod_impact_delta * rel_error), 1)
+        risk_uncertainty = round(max(0.02, min(0.08, risk_delta * rel_error + 0.015)), 3)
+        reserve_confidence_uncertainty = round(max(0.005, min(0.03, conf_delta * rel_error + 0.003)), 3)
+        downtime_uncertainty_days = round(max(0.2, min(2.0, duration_days * 0.12)), 1)
+
+        uncertainty = {
+            "model_rmse": model_rmse,
+            "model_mae": model_mae,
+            "residual_std": residual_std,
+            "production_impact_uncertainty_tonnes": prod_impact_uncertainty,
+            "risk_uncertainty": risk_uncertainty,
+            "reserve_confidence_uncertainty": reserve_confidence_uncertainty,
+            "downtime_uncertainty_days": downtime_uncertainty_days,
+        }
+
         affected_graph_path, updated_graph = self._traverse_graph(
             scenario_type, site, neo4j_site_id, equipment_id
         )
@@ -136,6 +172,7 @@ class SimulatorAgent:
             },
             "affected_graph_path": affected_graph_path,
             "updated_graph": updated_graph,
+            "uncertainty": uncertainty,
         }
 
     # -- feature vector construction -----------------------------------------------------

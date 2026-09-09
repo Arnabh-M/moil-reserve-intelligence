@@ -125,10 +125,64 @@ export const api = {
     if (useMock) return delay(mockShiftPlan.filter((row) => siteId === undefined || Number(row.site_id) === Number(siteId)));
     return request(`/shift-plan${query({ site_id: siteId === undefined ? undefined : Number(siteId) })}`);
   },
-  async simulate({ scenario_type, site_id, duration_days }) {
-    const payload = { scenario_type, site_id: Number(site_id), duration_days: Number(duration_days) };
-    return useMock ? delay({ ...mockData.simulation, scenario_type, site_id: Number(site_id), duration_days: Number(duration_days) }) : request('/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+  async simulate({ scenario_type, site_id, duration_days, severity, conditions, site_context, current_reserve_confidence, recent_production_variance }) {
+    const payload = {
+      scenario_type,
+      site_id: Number(site_id),
+      duration_days: Number(duration_days),
+      ...(severity != null ? { severity: Number(severity) } : {}),
+      ...(conditions ? { conditions } : {}),
+      ...(site_context ? { site_context } : {}),
+      ...(current_reserve_confidence != null ? { current_reserve_confidence: Number(current_reserve_confidence) } : {}),
+      ...(recent_production_variance != null ? { recent_production_variance: Number(recent_production_variance) } : {}),
+    };
+    if (useMock) {
+      const ranges = {
+        equipment_down: { severity_min_pct: 0, severity_max_pct: 5.3, duration_min_days: 0.1, duration_max_days: 1.9 },
+        delay_blasting: { severity_min_pct: 0.4, severity_max_pct: 34.9, duration_min_days: 5, duration_max_days: 10 },
+        rainfall_event: { severity_min_pct: 14.6, severity_max_pct: 100.0, duration_min_days: 1, duration_max_days: 30 },
+      };
+      const items = conditions && conditions.length > 0 ? conditions : [{ type: scenario_type, duration: duration_days, severity }];
+      let anyOOD = false;
+      const conditions_ood = items.map((c, idx) => {
+        const r = ranges[c.type] || { severity_min_pct: 0, severity_max_pct: 100, duration_min_days: 1, duration_max_days: 30 };
+        const sevOOD = c.severity != null && (c.severity < r.severity_min_pct || c.severity > r.severity_max_pct);
+        const durOOD = c.duration != null && (c.duration < r.duration_min_days || c.duration > r.duration_max_days);
+        const ood = Boolean(sevOOD || durOOD);
+        if (ood) anyOOD = true;
+        const warnings = [];
+        if (sevOOD) warnings.push(`Severity ${c.severity}% is outside validated training range (${r.severity_min_pct}–${r.severity_max_pct}%).`);
+        if (durOOD) warnings.push(`Duration ${c.duration}d is outside validated training range (${r.duration_min_days}–${r.duration_max_days} days).`);
+        return {
+          index: idx,
+          scenario_type: c.type,
+          out_of_distribution: ood,
+          severity_out_of_distribution: Boolean(sevOOD),
+          duration_out_of_distribution: Boolean(durOOD),
+          severity_value: c.severity,
+          duration_value: c.duration,
+          severity_valid_range: [r.severity_min_pct, r.severity_max_pct],
+          duration_valid_range: [r.duration_min_days, r.duration_max_days],
+          warnings,
+        };
+      });
+      const oodWarning = anyOOD
+        ? 'One or more condition parameters exceed the range the model was validated on. Treat results with extra caution.'
+        : null;
+
+      return delay({
+        ...mockData.simulation,
+        scenario_type,
+        site_id: Number(site_id),
+        duration_days: Number(duration_days),
+        out_of_distribution: anyOOD,
+        conditions_ood,
+        out_of_distribution_warning: oodWarning,
+      });
+    }
+    return request('/simulate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
   },
+
   async uploadReport(file) {
     if (useMock) return delay({ ...mockData.upload, filename: file?.name || mockData.upload.filename });
     const form = new FormData();
@@ -266,6 +320,7 @@ export const api = {
   },
   async getHealth() { return useMock ? delay(mockData.health) : request('/health'); },
   async getAdminJobs() { return useMock ? delay(mockData.jobs) : request('/admin/jobs'); },
+  async getTrainingRanges() { if (useMock) return delay(null); try { return await request('/simulate/training-ranges'); } catch { return null; } },
   async getDashboard() {
     const [kpi, sites, risks, recommendations] = await Promise.all([this.getKpiSummary(), this.getSites(), this.getRiskEvents(undefined, false), this.getRecommendations()]);
     const production = await Promise.all(sitesFor(this, sites));

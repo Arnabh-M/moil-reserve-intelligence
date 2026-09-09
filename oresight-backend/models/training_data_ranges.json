@@ -1,0 +1,118 @@
+{
+  "data_source": "synthetic",
+  "data_generator": "generate_datasets.py",
+  "date_range": "2026-03-01 to 2026-08-30",
+  "equipment_down": {
+    "severity_min_pct": 0,
+    "severity_max_pct": 5.3,
+    "severity_p25_pct": 0.8,
+    "severity_p50_pct": 1.4,
+    "severity_p75_pct": 2.5,
+    "severity_p95_pct": 4.7,
+    "severity_levels": {
+      "low": 0.8,
+      "medium": 1.4,
+      "high": 2.5,
+      "severe": 4.7
+    },
+    "duration_min_days": 0.1,
+    "duration_max_days": 1.9,
+    "duration_p25_days": 0.3,
+    "duration_p50_days": 0.5,
+    "duration_p75_days": 0.9,
+    "duration_p95_days": 1.7,
+    "event_count": 36
+  },
+  "equipment_down_by_reason": {
+    "electrical fault": {
+      "duration_min_days": 0.4,
+      "duration_max_days": 0.9,
+      "severity_min_hours": 8.4,
+      "severity_max_hours": 21.9,
+      "count": 6
+    },
+    "hydraulic leak": {
+      "duration_min_days": 0.1,
+      "duration_max_days": 0.9,
+      "severity_min_hours": 3.4,
+      "severity_max_hours": 21.6,
+      "count": 7
+    },
+    "mechanical failure": {
+      "duration_min_days": 0.2,
+      "duration_max_days": 0.9,
+      "severity_min_hours": 5.3,
+      "severity_max_hours": 21.1,
+      "count": 4
+    },
+    "operator shift gap": {
+      "duration_min_days": 0.4,
+      "duration_max_days": 0.9,
+      "severity_min_hours": 9.8,
+      "severity_max_hours": 22.4,
+      "count": 3
+    },
+    "scheduled maintenance": {
+      "duration_min_days": 0.1,
+      "duration_max_days": 0.3,
+      "severity_min_hours": 2.4,
+      "severity_max_hours": 7.5,
+      "count": 7
+    },
+    "spare parts unavailable": {
+      "duration_min_days": 0.2,
+      "duration_max_days": 0.8,
+      "severity_min_hours": 4.2,
+      "severity_max_hours": 19.7,
+      "count": 3
+    },
+    "weather delay": {
+      "duration_min_days": 0.3,
+      "duration_max_days": 1.9,
+      "severity_min_hours": 6.7,
+      "severity_max_hours": 44.6,
+      "count": 6
+    }
+  },
+  "delay_blasting": {
+    "severity_min_pct": 0.4,
+    "severity_max_pct": 34.9,
+    "severity_p25_pct": 0.4,
+    "severity_p50_pct": 6.2,
+    "severity_p75_pct": 12.3,
+    "severity_p95_pct": 34.9,
+    "severity_levels": {
+      "low": 0.4,
+      "medium": 6.2,
+      "high": 12.3,
+      "severe": 34.9
+    },
+    "duration_min_days": 5,
+    "duration_max_days": 10,
+    "duration_p25_days": 5,
+    "duration_p50_days": 7,
+    "duration_p75_days": 9,
+    "duration_p95_days": 10
+  },
+  "rainfall_event": {
+    "severity_min_pct": 14.6,
+    "severity_max_pct": 100.0,
+    "severity_p25_pct": 49.1,
+    "severity_p50_pct": 84.8,
+    "severity_p75_pct": 96.4,
+    "severity_p95_pct": 99.9,
+    "severity_levels": {
+      "low": 49.1,
+      "medium": 84.8,
+      "high": 96.4,
+      "severe": 99.9
+    },
+    "duration_min_days": 1,
+    "duration_max_days": 30,
+    "duration_p25_days": 7,
+    "duration_p50_days": 14,
+    "duration_p75_days": 21,
+    "duration_p95_days": 30,
+    "monsoon_months": "Jun\u2013Sep"
+  }
+}

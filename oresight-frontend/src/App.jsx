@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowUpRight, BarChart3, Bell, Check, ChevronRight, CircleHelp, ClipboardList, Database, Download, FileText, Gauge, GitBranch, Home, Layers3, MapPin, Loader2, Map as MapIcon, Menu, Moon, Plus, RefreshCw, RotateCcw, Search, Settings as SettingsIcon, ShieldCheck, SlidersHorizontal, Sun, Trash2, Truck, X, Zap } from 'lucide-react';
+import { Activity, AlertCircle, AlertTriangle, ArrowDownRight, ArrowUpRight, BarChart3, Bell, Check, ChevronRight, CircleHelp, ClipboardList, Database, Download, FileText, Gauge, GitBranch, Home, Info, Layers3, MapPin, Loader2, Map as MapIcon, Menu, Moon, Plus, RefreshCw, RotateCcw, Search, Settings as SettingsIcon, ShieldCheck, SlidersHorizontal, Sun, Trash2, Truck, X, Zap } from 'lucide-react';
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, AreaChart, Area, BarChart, Bar, CartesianGrid } from 'recharts';
 import { api } from './api/client';
 import { previewNotice, localPreferences } from './api/placeholders';
@@ -427,19 +427,160 @@ const EQUIPMENT_AREAS = [
   { value: 'processing_plant', label: 'Processing Plant' },
   { value: 'dewatering_system', label: 'Dewatering System' },
 ];
-function makeCondition(overrides = {}) {
-  return { id: Date.now() + Math.random(), type: 'equipment_down', equipment: 'dragline_1', severity: 50, duration: 3, ...overrides };
+const DEFAULT_SEVERITY_LEVELS = {
+  equipment_down: [
+    { key: 'low', label: 'Low', percentile: '25th', value: 0.8 },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: 1.4 },
+    { key: 'high', label: 'High', percentile: '75th', value: 2.5 },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: 4.7 },
+  ],
+  delay_blasting: [
+    { key: 'low', label: 'Low', percentile: '25th', value: 0.4 },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: 6.2 },
+    { key: 'high', label: 'High', percentile: '75th', value: 12.3 },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: 34.9 },
+  ],
+  rainfall_event: [
+    { key: 'low', label: 'Low', percentile: '25th', value: 49.1 },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: 84.8 },
+    { key: 'high', label: 'High', percentile: '75th', value: 96.4 },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: 99.9 },
+  ],
+};
+
+function getSeverityLevels(trainingRanges, conditionType) {
+  const defaults = DEFAULT_SEVERITY_LEVELS[conditionType] || DEFAULT_SEVERITY_LEVELS.equipment_down;
+  const r = trainingRanges?.[conditionType];
+  if (!r) return defaults;
+
+  const lowVal = r.severity_levels?.low ?? r.severity_p25_pct ?? defaults[0].value;
+  const medVal = r.severity_levels?.medium ?? r.severity_p50_pct ?? defaults[1].value;
+  const highVal = r.severity_levels?.high ?? r.severity_p75_pct ?? defaults[2].value;
+  const sevVal = r.severity_levels?.severe ?? r.severity_p95_pct ?? defaults[3].value;
+
+  return [
+    { key: 'low', label: 'Low', percentile: '25th', value: Number(lowVal) },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: Number(medVal) },
+    { key: 'high', label: 'High', percentile: '75th', value: Number(highVal) },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: Number(sevVal) },
+  ];
 }
 
-function ConditionCard({ condition, index, onChange, onRemove, canRemove }) {
+function getActiveSeverityLevel(levels, severityValue) {
+  if (severityValue == null) return levels[1]; // default medium
+  let closest = levels[0];
+  let minDiff = Math.abs(levels[0].value - severityValue);
+  for (const lvl of levels) {
+    const diff = Math.abs(lvl.value - severityValue);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = lvl;
+    }
+  }
+  return closest;
+}
+
+function makeCondition(overrides = {}) {
+  const type = overrides.type || 'equipment_down';
+  const defaultSeverity = DEFAULT_SEVERITY_LEVELS[type]?.[1]?.value ?? 1.4;
+  const defaultDuration = type === 'rainfall_event' ? 14 : type === 'delay_blasting' ? 7 : 1;
+  return { id: Date.now() + Math.random(), type, equipment: 'dragline_1', severity: defaultSeverity, duration: defaultDuration, ...overrides };
+}
+
+function formatRangeHint(ranges, conditionType) {
+  if (!ranges) return null;
+  const r = ranges[conditionType];
+  if (!r) return null;
+
+  let severityHint;
+  if (r.severity_p25_pct != null && r.severity_p75_pct != null) {
+    severityHint = `Typical: ${r.severity_p25_pct}–${r.severity_p75_pct}% (full range: ${r.severity_min_pct}–${r.severity_max_pct}%)`;
+  } else {
+    severityHint = `${r.severity_min_pct}–${r.severity_max_pct}%`;
+  }
+
+  let durationHint;
+  if (r.duration_p25_days != null && r.duration_p75_days != null) {
+    durationHint = `Typical: ${r.duration_p25_days}–${r.duration_p75_days}d (full range: ${r.duration_min_days}–${r.duration_max_days}d)`;
+  } else if (r.duration_min_days != null && r.duration_max_days != null) {
+    durationHint = `${r.duration_min_days}–${r.duration_max_days} days`;
+  }
+  if (conditionType === 'rainfall_event' && r.monsoon_months) {
+    durationHint = `${durationHint} (peak: ${r.monsoon_months})`;
+  }
+
+  const events = r.event_count != null ? ` · ${r.event_count} events` : '';
+  return { rawRange: r, severityHint, durationHint, events, isSynthetic: ranges.data_source === 'synthetic' };
+}
+
+function ConditionCard({ condition, index, onChange, onRemove, canRemove, trainingRanges, oodStatus }) {
   const typeInfo = CONDITION_TYPES.find((t) => t.value === condition.type) || CONDITION_TYPES[0];
   const TypeIcon = typeInfo.icon;
+  const hint = formatRangeHint(trainingRanges, condition.type);
+  const r = hint?.rawRange;
+
+  const levels = getSeverityLevels(trainingRanges, condition.type);
+  const activeLevel = getActiveSeverityLevel(levels, condition.severity);
+
+  // State A: Outside full min/max observed in training data (strong warning)
+  const isSeverityOutOfRange = r && condition.severity != null && (condition.severity < r.severity_min_pct || condition.severity > r.severity_max_pct);
+  const isDurationOutOfRange = r && condition.duration != null && (condition.duration < r.duration_min_days || condition.duration > r.duration_max_days);
+  const isConditionOutOfRange = isSeverityOutOfRange || isDurationOutOfRange || Boolean(oodStatus?.out_of_distribution);
+
+  // State B: Inside full range but outside IQR (atypical / uncommon - neutral info)
+  const isSeverityUncommon = r && condition.severity != null && !isSeverityOutOfRange && (
+    (r.severity_p25_pct != null && condition.severity < r.severity_p25_pct) ||
+    (r.severity_p75_pct != null && condition.severity > r.severity_p75_pct)
+  );
+  const severityUncommonDirection = (r?.severity_p25_pct != null && condition.severity < r.severity_p25_pct) ? 'below' : 'above';
+
+  const isDurationUncommon = r && condition.duration != null && !isDurationOutOfRange && (
+    (r.duration_p25_days != null && condition.duration < r.duration_p25_days) ||
+    (r.duration_p75_days != null && condition.duration > r.duration_p75_days)
+  );
+  const durationUncommonDirection = (r?.duration_p25_days != null && condition.duration < r.duration_p25_days) ? 'below' : 'above';
+
+  const isConditionUncommon = !isConditionOutOfRange && (isSeverityUncommon || isDurationUncommon);
+
+  const handleTypeChange = (newType) => {
+    const currentLevels = getSeverityLevels(trainingRanges, condition.type);
+    const currentActive = getActiveSeverityLevel(currentLevels, condition.severity);
+    const newLevels = getSeverityLevels(trainingRanges, newType);
+    const targetLevel = newLevels.find((l) => l.key === currentActive.key) || newLevels[1];
+
+    let newDuration = condition.duration;
+    const newR = trainingRanges?.[newType];
+    if (newR) {
+      if (newDuration < newR.duration_min_days) {
+        newDuration = Math.round(newR.duration_p50_days || newR.duration_min_days);
+      } else if (newDuration > newR.duration_max_days) {
+        newDuration = Math.round(newR.duration_p75_days || newR.duration_max_days);
+      }
+    }
+    onChange({
+      ...condition,
+      type: newType,
+      severity: targetLevel.value,
+      duration: newDuration,
+    });
+  };
+
   return (
-    <div className="condition-card" data-testid={`condition-card-${index}`}>
+    <div className={`condition-card ${isConditionOutOfRange ? 'condition-card-ood' : isConditionUncommon ? 'condition-card-uncommon' : ''}`} data-testid={`condition-card-${index}`}>
       <div className="condition-header">
         <div className="condition-number">
           <TypeIcon size={13} />
           <span>Condition {index + 1}</span>
+          {isConditionOutOfRange && (
+            <span className="pill warn small" style={{ fontSize: 9, padding: '2px 6px', display: 'inline-flex', alignItems: 'center', gap: 4 }} title="Parameters exceed validated training distribution" data-testid={`pill-ood-${index}`}>
+              <AlertTriangle size={10} /> Out of bounds
+            </span>
+          )}
+          {isConditionUncommon && (
+            <span className="pill neutral small" style={{ fontSize: 9, padding: '2px 6px', display: 'inline-flex', alignItems: 'center', gap: 4 }} title="Parameters are within full dataset range but outside typical IQR" data-testid={`pill-uncommon-${index}`}>
+              <Info size={10} /> Atypical input
+            </span>
+          )}
         </div>
         {canRemove && (
           <button className="btn ghost small condition-remove" onClick={onRemove} title="Remove condition" data-testid={`button-remove-condition-${index}`}>
@@ -451,7 +592,7 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove }) {
         <div className="form-grid">
           <div className="field">
             <label>Condition type</label>
-            <select className="select" value={condition.type} onChange={(e) => onChange({ ...condition, type: e.target.value })} data-testid={`select-condition-type-${index}`}>
+            <select className="select" value={condition.type} onChange={(e) => handleTypeChange(e.target.value)} data-testid={`select-condition-type-${index}`}>
               {CONDITION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
@@ -461,12 +602,50 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove }) {
               {EQUIPMENT_AREAS.map((eq) => <option key={eq.value} value={eq.value}>{eq.label}</option>)}
             </select>
           </div>
-          <div className="field">
-            <label>Severity / magnitude</label>
-            <div className="slider-row">
-              <input type="range" min="0" max="100" value={condition.severity} onChange={(e) => onChange({ ...condition, severity: Number(e.target.value) })} className="sim-slider" data-testid={`slider-severity-${index}`} />
-              <span className={`slider-value ${condition.severity >= 75 ? 'high' : condition.severity >= 40 ? 'med' : 'low'}`}>{condition.severity}%</span>
+          <div className="field severity-field">
+            <div className="severity-control-wrap">
+              <div className="severity-header-row">
+                <label>Severity / magnitude</label>
+                <span className="severity-current-badge" data-testid={`severity-badge-${index}`}>
+                  <strong>{activeLevel.label}</strong> · {condition.severity != null ? `${condition.severity}%` : `${activeLevel.value}%`}
+                </span>
+              </div>
+              <div className="severity-segmented-group" role="group" aria-label="Severity level" data-testid={`segmented-severity-${index}`}>
+                {levels.map((lvl) => {
+                  const isSelected = activeLevel.key === lvl.key;
+                  return (
+                    <button
+                      key={lvl.key}
+                      type="button"
+                      className={`severity-seg-btn ${isSelected ? 'active' : ''}`}
+                      onClick={() => onChange({ ...condition, severity: lvl.value })}
+                      data-testid={`btn-severity-${lvl.key}-${index}`}
+                      aria-pressed={isSelected}
+                    >
+                      <span className="seg-label">{lvl.label}</span>
+                      <span className="seg-pct">{lvl.value}%</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            {hint?.severityHint && (
+              <div className="condition-range-hint" data-testid={`hint-severity-${index}`}>
+                {hint.isSynthetic ? 'Training data bounds: ' : 'Historical range: '}{hint.severityHint}{hint.events}
+              </div>
+            )}
+            {isSeverityOutOfRange && (
+              <div className="condition-ood-warning" data-testid={`warning-severity-${index}`}>
+                <AlertTriangle size={11} />
+                <span>This severity is outside the range the model was validated on ({r.severity_min_pct}–{r.severity_max_pct}%) — treat results with extra caution.</span>
+              </div>
+            )}
+            {isSeverityUncommon && (
+              <div className="condition-uncommon-info" data-testid={`info-severity-${index}`}>
+                <Info size={11} />
+                <span>Less common in training data ({severityUncommonDirection} typical range {r.severity_p25_pct}–{r.severity_p75_pct}%) — prediction may be less precise.</span>
+              </div>
+            )}
           </div>
           <div className="field">
             <label>Duration</label>
@@ -474,12 +653,30 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove }) {
               <input type="range" min="1" max="30" value={condition.duration} onChange={(e) => onChange({ ...condition, duration: Number(e.target.value) })} className="sim-slider" data-testid={`slider-duration-${index}`} />
               <span className="slider-value">{condition.duration}d</span>
             </div>
+            {hint?.durationHint && (
+              <div className="condition-range-hint" data-testid={`hint-duration-${index}`}>
+                {hint.isSynthetic ? 'Training data bounds: ' : 'Historical range: '}{hint.durationHint}
+              </div>
+            )}
+            {isDurationOutOfRange && (
+              <div className="condition-ood-warning" data-testid={`warning-duration-${index}`}>
+                <AlertTriangle size={11} />
+                <span>This duration is outside the range the model was validated on ({r.duration_min_days}–{r.duration_max_days} days) — treat results with extra caution.</span>
+              </div>
+            )}
+            {isDurationUncommon && (
+              <div className="condition-uncommon-info" data-testid={`info-duration-${index}`}>
+                <Info size={11} />
+                <span>Less common in training data ({durationUncommonDirection} typical range {r.duration_p25_days}–{r.duration_p75_days} days) — prediction may be less precise.</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 // ── Simulator: safe display & derived data helpers ──
 const safeNum = (v) => (v != null && !isNaN(Number(v))) ? Number(v) : null;
@@ -498,17 +695,28 @@ function saveSimHistory(runs) {
   catch { /* quota exceeded */ }
 }
 
-function generateHorizonChart(before, after, horizon) {
-  const bTotal = safeNum(before?.production_forecast_tonnes);
-  const aTotal = safeNum(after?.production_forecast_tonnes);
-  if (bTotal == null || aTotal == null || horizon < 1) return [];
-  const bDaily = bTotal / horizon;
-  const aDaily = aTotal / horizon;
-  return Array.from({ length: Math.min(horizon, 30) }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    baseline: Math.round(bDaily + Math.sin(i * 0.7) * bDaily * 0.04),
-    scenario: Math.round(aDaily + Math.sin(i * 0.9 + 1) * aDaily * 0.05),
-  }));
+function generateHorizonChart(before, after, horizon, uncertainty) {
+  const bDaily = safeNum(before?.production_forecast_tonnes);
+  const aDaily = safeNum(after?.production_forecast_tonnes);
+  if (bDaily == null || aDaily == null || horizon < 1) return [];
+  const prodUnc = safeNum(uncertainty?.production_impact_uncertainty_tonnes);
+  const dailyUncertainty = prodUnc != null ? prodUnc : null;
+
+  return Array.from({ length: Math.min(horizon, 30) }, (_, i) => {
+    const bVal = Math.round(bDaily + Math.sin(i * 0.7) * bDaily * 0.04);
+    const aVal = Math.round(aDaily + Math.sin(i * 0.9 + 1) * aDaily * 0.05);
+    const uVal = dailyUncertainty != null ? Math.round(dailyUncertainty) : Math.round(aDaily * 0.05);
+    const lower = Math.max(0, aVal - uVal);
+    const upper = aVal + uVal;
+    return {
+      day: `Day ${i + 1}`,
+      baseline: bVal,
+      scenario: aVal,
+      scenarioUpper: upper,
+      scenarioLower: lower,
+      scenarioBand: [lower, upper],
+    };
+  });
 }
 
 function buildCausalSteps(result) {
@@ -536,11 +744,38 @@ function deriveKPIs(result, conditions, horizon) {
   const confAfter = safeNum(result.after?.reserve_confidence);
   const prodDelta = safeDelta(prodAfter, prodBefore);
   const totalDowntime = conditions.reduce((sum, c) => sum + (c.duration || 0), 0);
+
+  const unc = result.uncertainty || null;
+  const prodUnc = unc ? safeNum(unc.production_impact_uncertainty_tonnes) : null;
+  const riskUnc = unc ? safeNum(unc.risk_uncertainty) : null;
+  const confUnc = unc ? safeNum(unc.reserve_confidence_uncertainty) : null;
+  const downtimeUnc = unc ? safeNum(unc.downtime_uncertainty_days) : null;
+
+  const isOOD = Boolean(result.out_of_distribution);
+
+  const prodUncFormatted = prodUnc != null
+    ? (prodUnc < 10 ? prodUnc.toFixed(1) : Math.round(prodUnc).toLocaleString())
+    : null;
+
+  const prodValStr = prodDelta != null
+    ? `${prodDelta > 0 ? '+' : ''}${prodDelta.toLocaleString()} t${prodUncFormatted != null ? ` (±${prodUncFormatted} t)` : ''}`
+    : '—';
+
+  const riskValStr = riskAfter != null
+    ? `${percent(riskAfter)}${riskUnc != null ? ` (±${(riskUnc * 100).toFixed(1)}%)` : ''}`
+    : '—';
+
+  const confValStr = confAfter != null
+    ? `${percent(confAfter, 1)}${confUnc != null ? ` (±${(confUnc * 100).toFixed(1)}%)` : ''}`
+    : '—';
+
+  const downtimeValStr = `${totalDowntime}d${downtimeUnc != null ? ` (±${downtimeUnc}d)` : ''}`;
+
   return [
-    { label: 'Production impact', value: safeDisplay(prodDelta, (v) => `${v > 0 ? '+' : ''}${v.toLocaleString()} t`), sub: prodBefore != null ? `${prodBefore.toLocaleString()} → ${safeDisplay(prodAfter, (v) => v.toLocaleString())} t` : null, trend: prodDelta, icon: BarChart3 },
-    { label: 'Operational risk', value: safeDisplay(riskAfter, (v) => percent(v)), sub: riskBefore != null ? `was ${percent(riskBefore)}` : null, trend: safeDelta(riskBefore, riskAfter), icon: ShieldCheck },
-    { label: 'Reserve confidence', value: safeDisplay(confAfter, (v) => percent(v, 1)), sub: confBefore != null ? `was ${percent(confBefore, 1)}` : null, trend: safeDelta(confAfter, confBefore), icon: Gauge },
-    { label: 'Est. downtime', value: `${totalDowntime}d`, sub: `${conditions.length} condition${conditions.length !== 1 ? 's' : ''} · ${horizon}d horizon`, trend: null, icon: AlertCircle },
+    { label: 'Production impact', value: prodValStr, sub: prodBefore != null ? `${prodBefore.toLocaleString()} → ${safeDisplay(prodAfter, (v) => v.toLocaleString())} t` : null, trend: prodDelta, icon: BarChart3, isOOD },
+    { label: 'Operational risk', value: riskValStr, sub: riskBefore != null ? `was ${percent(riskBefore)}` : null, trend: safeDelta(riskBefore, riskAfter), icon: ShieldCheck, isOOD },
+    { label: 'Reserve confidence', value: confValStr, sub: confBefore != null ? `was ${percent(confBefore, 1)}` : null, trend: safeDelta(confAfter, confBefore), icon: Gauge, isOOD },
+    { label: 'Est. downtime', value: downtimeValStr, sub: `${conditions.length} condition${conditions.length !== 1 ? 's' : ''} · ${horizon}d horizon`, trend: null, icon: AlertCircle, isOOD },
   ];
 }
 
@@ -570,9 +805,14 @@ function buildInterpretation(result, conditions, siteName, horizon) {
   if (prodDelta != null) parts.push(`Under this ${conditions.length}-condition scenario at ${siteName}, production is projected to ${prodDelta >= 0 ? 'increase' : 'decrease'} by ${Math.abs(prodDelta).toLocaleString()} tonnes over a ${horizon}-day horizon.`);
   if (riskBefore != null && riskAfter != null) parts.push(`Operational risk ${riskAfter < riskBefore ? 'decreases' : 'increases'} from ${percent(riskBefore)} to ${percent(riskAfter)}.`);
   if (confAfter != null) parts.push(`Reserve confidence under this scenario is ${percent(confAfter, 1)}.`);
-  parts.push('Results are directional estimates and should be validated against field conditions before committing to a plan change.');
+  if (result.out_of_distribution) {
+    parts.push('⚠️ Model validation warning: At least one scenario condition has severity or duration exceeding the training distribution. The model is extrapolating beyond historical bounds; predictions carry elevated uncertainty.');
+  } else {
+    parts.push('Results are directional estimates and should be validated against field conditions before committing to a plan change.');
+  }
   return parts.join(' ');
 }
+
 
 function SimulatorPage() {
   const sites = useSites();
@@ -587,6 +827,20 @@ function SimulatorPage() {
   const [history, setHistory] = useState(() => loadSimHistory());
   const [historyOpen, setHistoryOpen] = useState(false);
   const [compareIds, setCompareIds] = useState([]);
+  const [trainingRanges, setTrainingRanges] = useState(null);
+  const [siteProdVariance, setSiteProdVariance] = useState(null);
+  useEffect(() => { api.getTrainingRanges().then(setTrainingRanges); }, []);
+
+  useEffect(() => {
+    let active = true;
+    api.getProduction(site, 14).then((recs) => {
+      if (!active) return;
+      const variances = recs?.map((r) => r.variance_pct).filter((v) => v != null) || [];
+      const avgVar = variances.length ? variances.reduce((a, b) => a + b, 0) / variances.length : 0;
+      setSiteProdVariance(Math.round(avgVar * 10) / 10);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [site]);
 
   const addCondition = () => setConditions((prev) => [...prev, makeCondition()]);
   const removeCondition = (id) => setConditions((prev) => prev.filter((c) => c.id !== id));
@@ -598,9 +852,45 @@ function SimulatorPage() {
     setRunning(true);
     setRunError(null);
     try {
-      const value = await api.simulate({ scenario_type: conditions[0]?.type || 'equipment_down', site_id: site, duration_days: horizon });
+      const condsPayload = conditions.map((c) => ({
+        type: c.type,
+        equipment: c.equipment,
+        severity: Number(c.severity),
+        duration: Number(c.duration),
+      }));
+      const currentSiteObj = sites.find((s) => s.id === site);
+      const currentConfidence = currentSiteObj?.avg_reserve_confidence ?? null;
+      const siteContext = {
+        reserve_confidence: currentConfidence,
+        production_variance: siteProdVariance,
+        active_conditions_count: conditions.length,
+      };
+      const value = await api.simulate({
+        scenario_type: conditions[0]?.type || 'equipment_down',
+        site_id: site,
+        duration_days: horizon,
+        severity: conditions[0]?.severity,
+        conditions: condsPayload,
+        site_context: siteContext,
+        current_reserve_confidence: currentConfidence,
+        recent_production_variance: siteProdVariance,
+      });
       setResult(value);
-      const run = { id: Date.now(), timestamp: new Date().toISOString(), site, siteName, conditions: conditions.map((c) => ({ type: c.type, equipment: c.equipment, severity: c.severity, duration: c.duration })), horizon, result: { before: value.before, after: value.after, affected_graph_path: value.affected_graph_path } };
+
+      const run = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        site,
+        siteName,
+        conditions: condsPayload,
+        horizon,
+        result: {
+          before: value.before,
+          after: value.after,
+          affected_graph_path: value.affected_graph_path,
+          out_of_distribution: value.out_of_distribution,
+        },
+      };
       const updated = [run, ...history].slice(0, MAX_SIM_HISTORY);
       setHistory(updated);
       saveSimHistory(updated);
@@ -615,7 +905,7 @@ function SimulatorPage() {
   const clearHistory = () => { setHistory([]); saveSimHistory([]); setCompareIds([]); };
 
   const kpis = useMemo(() => deriveKPIs(result, conditions, horizon), [result, conditions, horizon]);
-  const chartData = useMemo(() => result ? generateHorizonChart(result.before, result.after, horizon) : [], [result, horizon]);
+  const chartData = useMemo(() => result ? generateHorizonChart(result.before, result.after, horizon, result.uncertainty) : [], [result, horizon]);
   const keyImpacts = useMemo(() => deriveKeyImpacts(result), [result]);
   const interpretation = useMemo(() => buildInterpretation(result, conditions, siteName, horizon), [result, conditions, siteName, horizon]);
   const causalSteps = useMemo(() => buildCausalSteps(result), [result]);
@@ -680,6 +970,8 @@ function SimulatorPage() {
                 onChange={(updated) => updateCondition(condition.id, updated)}
                 onRemove={() => removeCondition(condition.id)}
                 canRemove={conditions.length > 1}
+                trainingRanges={trainingRanges}
+                oodStatus={result?.conditions_ood?.[i]}
               />
             ))}
           </div>
@@ -702,7 +994,11 @@ function SimulatorPage() {
           </div>
           {running && <span className="pill warn"><RefreshCw size={11} className="spin" /> Running</span>}
           {!running && runError && <span className="pill critical"><AlertCircle size={11} /> Error</span>}
-          {resultReady && <span className="pill good"><Check size={11} /> Complete</span>}
+          {resultReady && (
+            result.out_of_distribution
+              ? <span className="pill warn" data-testid="pill-sim-ood"><AlertTriangle size={11} /> Out of distribution</span>
+              : <span className="pill good"><Check size={11} /> Validated range</span>
+          )}
         </div>
 
         {running && <LoadingCard lines={6} />}
@@ -716,14 +1012,35 @@ function SimulatorPage() {
         )}
 
         {resultReady && <div className="section-stack">
+          {result.out_of_distribution && (
+            <div className="sim-ood-banner" data-testid="sim-ood-banner">
+              <AlertTriangle size={16} className="sim-ood-banner-icon" />
+              <div className="sim-ood-banner-content">
+                <div className="sim-ood-banner-title">Out-of-Distribution Warning</div>
+                <div className="sim-ood-banner-desc">
+                  {result.out_of_distribution_warning || 'One or more condition parameters exceed the range the model was validated on. Projections are extrapolations beyond historical bounds — treat results with extra caution.'}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="sim-kpi-grid">
             {kpis.map((kpi) => (
-              <div className="sim-kpi-card" key={kpi.label}>
-                <div className="metric-label"><kpi.icon size={10} style={{ verticalAlign: 'middle', marginRight: 4 }} />{kpi.label}</div>
+              <div className={`sim-kpi-card ${kpi.isOOD ? 'ood-card' : ''}`} key={kpi.label} data-testid={`kpi-card-${kpi.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                <div className="metric-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span><kpi.icon size={10} style={{ verticalAlign: 'middle', marginRight: 4 }} />{kpi.label}</span>
+                  {kpi.isOOD && (
+                    <span className="kpi-ood-badge" title="Input condition is outside model validation bounds — projection is an extrapolation">
+                      <AlertTriangle size={9} />
+                      <span>Caution</span>
+                    </span>
+                  )}
+                </div>
                 <div className="metric-value">{kpi.value}</div>
                 <div className="stat-foot">
                   {kpi.trend != null && <span className={kpi.trend > 0 ? 'trend-up' : kpi.trend < 0 ? 'trend-down' : ''}>{kpi.trend > 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}</span>}
                   {kpi.sub && <span>{kpi.sub}</span>}
+                  {kpi.isOOD && <span className="ood-sub-flag">⚠️ Extrapolated</span>}
                 </div>
               </div>
             ))}
@@ -739,10 +1056,16 @@ function SimulatorPage() {
             ))}
           </div>}
 
-          {interpretation && <div className="sim-interpretation"><CircleHelp size={13} style={{ flexShrink: 0, marginTop: 1 }} /><span>{interpretation}</span></div>}
+          {interpretation && (
+            <div className={`sim-interpretation ${result.out_of_distribution ? 'ood' : ''}`} data-testid="sim-interpretation">
+              {result.out_of_distribution ? <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1, color: 'hsl(38 92% 50%)' }} /> : <CircleHelp size={13} style={{ flexShrink: 0, marginTop: 1 }} />}
+              <span>{interpretation}</span>
+            </div>
+          )}
 
           <div className="sim-actions">
             <button className="btn small" onClick={runSimulation} data-testid="button-rerun-simulation"><RefreshCw size={12} /> Run again</button>
+
             {history.length >= 2 && <button className="btn small" onClick={() => setHistoryOpen(true)} data-testid="button-compare-runs"><BarChart3 size={12} /> Compare runs</button>}
             <Link className="btn small" to={`/site/${site}?tab=graph`}>Open graph <ChevronRight size={12} /></Link>
           </div>
@@ -761,7 +1084,14 @@ function SimulatorPage() {
             <div className="card-title">Baseline vs scenario</div>
             <div className="card-kicker">daily production forecast · {horizon}-day horizon</div>
           </div>
-          <div className="legend"><span><i />Scenario</span><span><i className="target" />Baseline</span></div>
+          <div className="legend">
+            <span><i />Scenario</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'hsl(var(--muted-foreground))' }}>
+              <span style={{ width: 10, height: 10, background: 'hsl(var(--primary) / 0.25)', borderRadius: 2, display: 'inline-block' }} />
+              Confidence band (± residual error)
+            </span>
+            <span><i className="target" />Baseline</span>
+          </div>
         </div>
         {chartData.length > 0 ? (
           <div style={{ height: 190 }}>
@@ -771,8 +1101,9 @@ function SimulatorPage() {
                 <XAxis dataKey="day" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={45} domain={['dataMin - 20', 'auto']} />
                 <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', fontSize: 11 }} />
+                <Area type="monotone" dataKey="scenarioBand" stroke="none" fill="hsl(var(--primary) / 0.16)" name="Confidence band (± residual error)" />
                 <Area type="monotone" dataKey="baseline" stroke="hsl(var(--accent) / .38)" fill="hsl(var(--accent) / .07)" strokeWidth={2} name="Baseline" />
-                <Area type="monotone" dataKey="scenario" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / .12)" strokeWidth={2} name="Scenario" />
+                <Area type="monotone" dataKey="scenario" stroke="hsl(var(--primary))" fill="none" strokeWidth={2} name="Scenario" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

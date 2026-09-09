@@ -1,0 +1,8 @@
+{
+  "rmse": 0.158,
+  "mae": 0.1177,
+  "residual_std": 0.153,
+  "target_shortfall_mean": 0.1362,
+  "target_shortfall_std": 0.0903,
+  "test_sample_count": 111
+}

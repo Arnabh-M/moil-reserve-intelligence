@@ -7,20 +7,44 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.schemas.causal_graph import CausalGraphOut
 
 
+class ConditionInput(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    type: Literal["equipment_down", "delay_blasting", "rainfall_event"]
+    equipment: str | None = None
+    severity: float | None = None
+    duration: float | None = None
+
+
+class SiteContextInput(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    reserve_confidence: float | None = None
+    production_variance: float | None = None
+    active_conditions_count: int | None = None
+
+
 class SimulateRequest(BaseModel):
     model_config = ConfigDict(
+        extra="ignore",
         json_schema_extra={
             "example": {
                 "scenario_type": "equipment_down",
                 "site_id": 1,
                 "duration_days": 5,
             }
-        }
+        },
     )
 
     scenario_type: Literal["equipment_down", "delay_blasting", "rainfall_event"]
     site_id: int
     duration_days: int = Field(..., ge=1, le=90)
+    severity: float | None = None
+    conditions: list[ConditionInput] | None = None
+    site_context: SiteContextInput | None = None
+    current_reserve_confidence: float | None = None
+    recent_production_variance: float | None = None
+
 
 
 class SimStateSnapshot(BaseModel):
@@ -29,6 +53,33 @@ class SimStateSnapshot(BaseModel):
     reserve_confidence: float
     production_forecast_tonnes: float
     risk_score: float
+
+
+class UncertaintyMetrics(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    model_rmse: float
+    model_mae: float
+    residual_std: float
+    production_impact_uncertainty_tonnes: float
+    risk_uncertainty: float
+    reserve_confidence_uncertainty: float
+    downtime_uncertainty_days: float
+
+
+class ConditionOODStatus(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    index: int = 0
+    scenario_type: str
+    out_of_distribution: bool = False
+    severity_out_of_distribution: bool = False
+    duration_out_of_distribution: bool = False
+    severity_value: float | None = None
+    duration_value: float | None = None
+    severity_valid_range: list[float] | None = None
+    duration_valid_range: list[float] | None = None
+    warnings: list[str] = Field(default_factory=list)
 
 
 class SimulateResponse(BaseModel):
@@ -93,6 +144,18 @@ class SimulateResponse(BaseModel):
                         },
                     ],
                 },
+                "uncertainty": {
+                    "model_rmse": 0.158,
+                    "model_mae": 0.1177,
+                    "residual_std": 0.153,
+                    "production_impact_uncertainty_tonnes": 137.7,
+                    "risk_uncertainty": 0.306,
+                    "reserve_confidence_uncertainty": 0.007,
+                    "downtime_uncertainty_days": 0.5,
+                },
+                "out_of_distribution": False,
+                "conditions_ood": [],
+                "out_of_distribution_warning": None,
             }
         },
     )
@@ -101,3 +164,7 @@ class SimulateResponse(BaseModel):
     after: SimStateSnapshot
     affected_graph_path: list[str]
     updated_graph: CausalGraphOut
+    uncertainty: UncertaintyMetrics | None = None
+    out_of_distribution: bool = False
+    conditions_ood: list[ConditionOODStatus] = Field(default_factory=list)
+    out_of_distribution_warning: str | None = None
