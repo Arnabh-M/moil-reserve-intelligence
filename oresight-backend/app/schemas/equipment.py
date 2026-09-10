@@ -3,7 +3,9 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.constants.validation_limits import MAX_FREE_TEXT_LENGTH
 
 
 class EquipmentOut(BaseModel):
@@ -50,7 +52,7 @@ class EquipmentStatusUpdate(BaseModel):
     )
 
     status: Literal["up", "down"]
-    reason: str | None = None
+    reason: str | None = Field(None, max_length=MAX_FREE_TEXT_LENGTH)
     # 'manual' (single-row edit, the default), 'bulk' (bulk-down flow), or
     # 'sync' (reserved for a future automated ingestion path).
     source: Literal["manual", "bulk", "sync"] = "manual"

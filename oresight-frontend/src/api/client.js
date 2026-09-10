@@ -7,7 +7,12 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 const wait = (value, delay = 160) => new Promise((resolve) => setTimeout(() => resolve(value), delay));
 
 function contractError(status, body) {
-  const detail = body?.detail || body?.message || `Request failed (${status})`;
+  // A 422's `detail` is a list of readable per-field strings (see the
+  // backend's RequestValidationError handler) — join them into one message
+  // rather than letting `new Error([...])` coerce the array to
+  // "[object Object]"-style garbage.
+  const rawDetail = body?.detail || body?.message || `Request failed (${status})`;
+  const detail = Array.isArray(rawDetail) ? rawDetail.join('; ') : rawDetail;
   const error = new Error(detail);
   error.status = status;
   error.detail = detail;

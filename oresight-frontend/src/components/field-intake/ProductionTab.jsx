@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { api } from '../../api/client';
 import { useSites } from '../../hooks/useSites';
+import { MAX_TONNES } from '../../constants/validationLimits';
 
 const SHIFT_OPTIONS = [
   { value: 'general', label: 'General' },
@@ -133,15 +134,22 @@ export default function ProductionTab({ showToast }) {
     const next = {};
     if (form.actual_output === '' || Number.isNaN(actual)) next.actual_output = 'Enter the actual tonnes produced.';
     else if (actual < 0) next.actual_output = 'Actual output cannot be negative.';
+    else if (actual > MAX_TONNES) next.actual_output = `Actual output cannot exceed ${MAX_TONNES.toLocaleString()} tonnes.`;
     if (form.target_output === '' || Number.isNaN(target)) next.target_output = 'Enter a target output.';
     else if (target < 0) next.target_output = 'Target output cannot be negative.';
     else if (target === 0) next.target_output = 'Target output must be greater than zero.';
+    else if (target > MAX_TONNES) next.target_output = `Target output cannot exceed ${MAX_TONNES.toLocaleString()} tonnes.`;
     if (!form.date) next.date = 'Select a shift date.';
     if (varianceState === 'significantly_below' && form.shortfall_reasons.length === 0) next.shortfall_reasons = 'Select at least one reason for the shortfall.';
     if (form.shortfall_reasons.includes('other') && !form.shortfall_other_note.trim()) next.shortfall_other_note = 'Describe the other reason.';
     if (form.operating_hours !== '' && (operatingHoursNum < 0 || operatingHoursNum > 24)) next.operating_hours = 'Enter hours between 0 and 24.';
     if (form.downtime_hours !== '' && downtimeHoursNum < 0) next.downtime_hours = 'Downtime cannot be negative.';
     if (operatingHoursNum !== null && downtimeHoursNum !== null && operatingHoursNum + downtimeHoursNum > 24) next.downtime_hours = 'Operating + downtime hours cannot exceed 24.';
+    if (form.material_processed !== '') {
+      const materialNum = Number(form.material_processed);
+      if (materialNum < 0) next.material_processed = 'Material processed cannot be negative.';
+      else if (materialNum > MAX_TONNES) next.material_processed = `Material processed cannot exceed ${MAX_TONNES.toLocaleString()} tonnes.`;
+    }
     if (form.quality_grade !== '' && (Number(form.quality_grade) < 0 || Number(form.quality_grade) > 100)) next.quality_grade = 'Enter a grade between 0 and 100%.';
     return next;
   };
@@ -244,12 +252,12 @@ export default function ProductionTab({ showToast }) {
         </div>
         <div className="field">
           <label>Actual output (tonnes)</label>
-          <input className="input" type="number" min="0" value={form.actual_output} onChange={(e) => setField('actual_output', e.target.value)} placeholder="e.g. 980" data-testid="input-actual-output" />
+          <input className="input" type="number" min="0" max={MAX_TONNES} value={form.actual_output} onChange={(e) => setField('actual_output', e.target.value)} placeholder="e.g. 980" data-testid="input-actual-output" />
           {errors.actual_output && <span className="field-error">{errors.actual_output}</span>}
         </div>
         <div className="field">
           <label>Target output (tonnes)</label>
-          <input className="input" type="number" min="0" value={form.target_output} onChange={(e) => setField('target_output', e.target.value)} placeholder="e.g. 1040" data-testid="input-target-output" />
+          <input className="input" type="number" min="0" max={MAX_TONNES} value={form.target_output} onChange={(e) => setField('target_output', e.target.value)} placeholder="e.g. 1040" data-testid="input-target-output" />
           {errors.target_output && <span className="field-error">{errors.target_output}</span>}
         </div>
       </div>
@@ -301,7 +309,8 @@ export default function ProductionTab({ showToast }) {
         </div>
         <div className="field">
           <label>Material processed (t)</label>
-          <input className="input" type="number" min="0" value={form.material_processed} onChange={(e) => setField('material_processed', e.target.value)} placeholder="e.g. 1150" data-testid="input-material-processed" />
+          <input className="input" type="number" min="0" max={MAX_TONNES} value={form.material_processed} onChange={(e) => setField('material_processed', e.target.value)} placeholder="e.g. 1150" data-testid="input-material-processed" />
+          {errors.material_processed && <span className="field-error">{errors.material_processed}</span>}
         </div>
         <div className="field">
           <label>Quality / grade (%)</label>

@@ -3,6 +3,7 @@ import { AlertTriangle, BarChart3, Check, Loader2, Zap } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { api } from '../../api/client';
 import { useSites } from '../../hooks/useSites';
+import { MAX_TONNES } from '../../constants/validationLimits';
 
 const STATUS_OPTIONS = ['planned', 'completed', 'delayed', 'cancelled'];
 
@@ -59,6 +60,7 @@ function LogAndTimeline({ showToast }) {
     if (!form.planned_date) next.planned_date = 'Select a planned blast date.';
     if (form.expected_yield_tonnes === '' || Number.isNaN(expected)) next.expected_yield_tonnes = 'Enter the expected yield in tonnes.';
     else if (expected <= 0) next.expected_yield_tonnes = 'Expected yield must be greater than zero.';
+    else if (expected > MAX_TONNES) next.expected_yield_tonnes = `Expected yield cannot exceed ${MAX_TONNES.toLocaleString()} tonnes.`;
     return next;
   };
 
@@ -93,6 +95,7 @@ function LogAndTimeline({ showToast }) {
       if (!update.actual_date) next.actual_date = 'Enter the date the blast fired.';
       if (update.actual_yield_tonnes === '' || Number.isNaN(Number(update.actual_yield_tonnes))) next.actual_yield_tonnes = 'Enter the tonnes actually recovered.';
       else if (Number(update.actual_yield_tonnes) < 0) next.actual_yield_tonnes = 'Actual yield cannot be negative.';
+      else if (Number(update.actual_yield_tonnes) > MAX_TONNES) next.actual_yield_tonnes = `Actual yield cannot exceed ${MAX_TONNES.toLocaleString()} tonnes.`;
     }
     return next;
   };
@@ -150,7 +153,7 @@ function LogAndTimeline({ showToast }) {
           </div>
           <div className="field">
             <label>Expected yield (tonnes)</label>
-            <input className="input" type="number" min="0" value={form.expected_yield_tonnes} onChange={(e) => setField('expected_yield_tonnes', e.target.value)} placeholder="e.g. 1800" data-testid="input-blast-expected-yield" />
+            <input className="input" type="number" min="0" max={MAX_TONNES} value={form.expected_yield_tonnes} onChange={(e) => setField('expected_yield_tonnes', e.target.value)} placeholder="e.g. 1800" data-testid="input-blast-expected-yield" />
             {errors.expected_yield_tonnes && <span className="field-error">{errors.expected_yield_tonnes}</span>}
           </div>
           <div className="field full">
@@ -221,7 +224,7 @@ function LogAndTimeline({ showToast }) {
                             </div>
                             <div className="field">
                               <label>Actual yield (tonnes)</label>
-                              <input className="input" type="number" min="0" value={update.actual_yield_tonnes} onChange={(e) => setUpdate((u) => ({ ...u, actual_yield_tonnes: e.target.value }))} placeholder="e.g. 1725" data-testid="input-blast-actual-yield" />
+                              <input className="input" type="number" min="0" max={MAX_TONNES} value={update.actual_yield_tonnes} onChange={(e) => setUpdate((u) => ({ ...u, actual_yield_tonnes: e.target.value }))} placeholder="e.g. 1725" data-testid="input-blast-actual-yield" />
                               {updateErrors.actual_yield_tonnes && <span className="field-error">{updateErrors.actual_yield_tonnes}</span>}
                             </div>
                           </>

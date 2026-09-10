@@ -4,6 +4,12 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.constants.validation_limits import (
+    SEVERITY_PCT_MAX,
+    SEVERITY_PCT_MIN,
+    SIMULATOR_CONDITION_DURATION_MAX_DAYS,
+    SIMULATOR_CONDITION_DURATION_MIN_DAYS,
+)
 from app.schemas.causal_graph import CausalGraphOut
 
 
@@ -12,8 +18,10 @@ class ConditionInput(BaseModel):
 
     type: Literal["equipment_down", "delay_blasting", "rainfall_event"]
     equipment: str | None = None
-    severity: float | None = None
-    duration: float | None = None
+    severity: float | None = Field(None, ge=SEVERITY_PCT_MIN, le=SEVERITY_PCT_MAX)
+    duration: float | None = Field(
+        None, ge=SIMULATOR_CONDITION_DURATION_MIN_DAYS, le=SIMULATOR_CONDITION_DURATION_MAX_DAYS
+    )
 
 
 class SiteContextInput(BaseModel):
@@ -38,8 +46,10 @@ class SimulateRequest(BaseModel):
 
     scenario_type: Literal["equipment_down", "delay_blasting", "rainfall_event"]
     site_id: int
+    # 1-90 is the simulator's own validated range, tighter than the generic
+    # simulator-lever bound elsewhere — left as-is, not touched by this task.
     duration_days: int = Field(..., ge=1, le=90)
-    severity: float | None = None
+    severity: float | None = Field(None, ge=SEVERITY_PCT_MIN, le=SEVERITY_PCT_MAX)
     conditions: list[ConditionInput] | None = None
     site_context: SiteContextInput | None = None
     current_reserve_confidence: float | None = None

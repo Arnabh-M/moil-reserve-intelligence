@@ -13,6 +13,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.constants.validation_limits import MAX_TONNES
+
 ShiftLiteral = Literal["day", "night", "general"]
 
 ShortfallReasonLiteral = Literal[
@@ -143,11 +145,15 @@ class ProductionRecordCreate(BaseModel):
     site_id: int
     date: date
     shift: ShiftLiteral = "general"
-    actual_output: float = Field(ge=0, description="Tonnes actually produced; must be non-negative")
-    target_output: float = Field(gt=0, description="Planned tonnes target; must be positive")
+    actual_output: float = Field(
+        ge=0, le=MAX_TONNES, description="Tonnes actually produced; must be non-negative"
+    )
+    target_output: float = Field(
+        gt=0, le=MAX_TONNES, description="Planned tonnes target; must be positive"
+    )
     operating_hours: float | None = Field(None, ge=0, le=24)
     downtime_hours: float | None = Field(None, ge=0, le=24)
-    material_processed: float | None = Field(None, ge=0)
+    material_processed: float | None = Field(None, ge=0, le=MAX_TONNES)
     quality_grade: float | None = Field(None, ge=0, le=100)
     shortfall_reasons: list[ShortfallReasonLiteral] = Field(default_factory=list)
     shortfall_other_note: str | None = None
@@ -187,11 +193,11 @@ class ProductionRecordUpdate(BaseModel):
         }
     )
 
-    actual_output: float | None = Field(None, ge=0)
-    target_output: float | None = Field(None, gt=0)
+    actual_output: float | None = Field(None, ge=0, le=MAX_TONNES)
+    target_output: float | None = Field(None, gt=0, le=MAX_TONNES)
     operating_hours: float | None = Field(None, ge=0, le=24)
     downtime_hours: float | None = Field(None, ge=0, le=24)
-    material_processed: float | None = Field(None, ge=0)
+    material_processed: float | None = Field(None, ge=0, le=MAX_TONNES)
     quality_grade: float | None = Field(None, ge=0, le=100)
     shortfall_reasons: list[ShortfallReasonLiteral] | None = None
     shortfall_other_note: str | None = None

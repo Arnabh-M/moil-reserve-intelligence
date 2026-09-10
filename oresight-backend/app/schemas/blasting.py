@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.constants.validation_limits import MAX_TONNES
+
 BlastStatusLiteral = Literal["planned", "completed", "delayed", "cancelled"]
 DelayReasonLiteral = Literal[
     "permit_pending",
@@ -67,7 +69,7 @@ class BlastEventCreate(BaseModel):
     reserve_zone_id: int | None = None
     planned_date: date
     expected_yield_tonnes: float = Field(
-        gt=0, description="Planned tonnes from this blast; must be positive"
+        gt=0, le=MAX_TONNES, description="Planned tonnes from this blast; must be positive"
     )
     notes: str | None = None
 
@@ -93,7 +95,7 @@ class BlastEventUpdate(BaseModel):
     actual_date: date | None = None
     delay_reason: DelayReasonLiteral | None = None
     actual_yield_tonnes: float | None = Field(
-        default=None, ge=0, description="Tonnes actually recovered; non-negative"
+        default=None, ge=0, le=MAX_TONNES, description="Tonnes actually recovered; non-negative"
     )
     notes: str | None = None
 

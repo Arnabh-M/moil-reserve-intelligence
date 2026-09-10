@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from urllib.parse import urlsplit, urlunsplit
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -58,6 +57,33 @@ _ERROR_CODES_BY_STATUS = {
 
 def _error_code_for_status(status_code: int) -> str:
     return _ERROR_CODES_BY_STATUS.get(status_code, "ERROR")
+
+
+def _format_validation_errors(errors: list[dict]) -> list[str]:
+    """Turn pydantic's `exc.errors()` (a list of {loc, msg, input, ...} dicts)
+    into a list of human-readable strings — one per error, naming the field
+    and the offending value where pydantic supplied one.
+
+    Generic by construction: built from loc/input/msg on every error the
+    same way, so a new `Field(le=...)` bound anywhere in the app gets a
+    readable message for free, with no per-field wording added here.
+    Still a list (not a single string) — see main.py's RequestValidationError
+    handler docstring for why that shape is preserved.
+    """
+    _SKIP_LOC_PARTS = {"body", "query", "path", "__root__"}
+    formatted = []
+    for err in errors:
+        loc = [part for part in err.get("loc", ()) if part not in _SKIP_LOC_PARTS]
+        field = ".".join(str(part) for part in loc)
+        msg = err.get("msg", "Invalid value")
+        input_value = err.get("input")
+        if field and input_value is not None:
+            formatted.append(f"{field}: {input_value!s} - {msg}")
+        elif field:
+            formatted.append(f"{field}: {msg}")
+        else:
+            formatted.append(msg)
+    return formatted
 
 
 def mask_db_url(url: str) -> str:
@@ -142,10 +168,14 @@ def create_app() -> FastAPI:
     async def handle_validation_error(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        # `detail` stays a LIST (shape unchanged) so any consumer that
+        # already iterates it keeps working; only the element type changed,
+        # from a raw pydantic error dict to a readable string naming the
+        # field, the value given, and the constraint that rejected it.
         return JSONResponse(
             status_code=422,
             content={
-                "detail": jsonable_encoder(exc.errors()),
+                "detail": _format_validation_errors(exc.errors()),
                 "error_code": "VALIDATION_ERROR",
             },
         )
@@ -194,6 +224,12 @@ def create_app() -> FastAPI:
             status_code=500,
             content={"detail": "Internal server error", "error_code": "INTERNAL_ERROR"},
         )
+
+    @app.get("/", tags=["meta"])
+    def root() -> dict[str, str]:
+        # Operator-clarity only: no DB/Neo4j calls here, deliberately — a
+        # failing dependency check at the root would be a demo liability.
+        return {"service": "OreSight API", "status": "ok", "docs": "/docs"}
 
     @app.get("/health", tags=["meta"])
     def health() -> dict[str, str]:
