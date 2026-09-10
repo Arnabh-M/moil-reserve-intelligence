@@ -335,7 +335,20 @@ class SimulatorAgent:
                     if node_id not in path:
                         path.append(node_id)
                 for r in record["rs"]:
-                    edge = {"source": r.start_node["id"], "target": r.end_node["id"], "relationship": r.type}
+                    # Mirror the node-collection guard above: some node types
+                    # reached by this generic multi-hop traversal (e.g.
+                    # CalendarDate, keyed by `date` rather than `id` — a pure
+                    # scheduling join point, never meant to be a visualization
+                    # node) have no `id` property, which is required and
+                    # non-nullable on GraphEdge. Filter those edges out here,
+                    # at the read layer, the same way id-less nodes are
+                    # already filtered out just above, rather than letting a
+                    # None reach CausalGraphOut's validation.
+                    source_id = r.start_node["id"]
+                    target_id = r.end_node["id"]
+                    if source_id is None or target_id is None:
+                        continue
+                    edge = {"source": source_id, "target": target_id, "relationship": r.type}
                     if edge not in edges:
                         edges.append(edge)
 
