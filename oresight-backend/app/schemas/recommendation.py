@@ -5,6 +5,40 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class ImpactedEntity(BaseModel):
+    """One entity reached while tracing a recommendation's ripple/cascade
+    effect through the causal graph. See app/services/cascade_service.py.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    entity_id: str
+    entity_type: str
+    name: str
+    hops: int
+    classification: Literal["blocking", "shifted", "downstream", "informational"]
+    path: list[str]
+    detail: str | None = None
+
+
+class CascadeResult(BaseModel):
+    """Downstream ripple impact of acting on a recommendation option — a
+    deterministic graph-traversal + rule-evaluation result, never
+    model-generated. Optional/additive: absent or null whenever cascade
+    computation isn't available or fails (see cascade_service.compute_cascade).
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    shift_days: int | None
+    entities_affected: int
+    blocking_count: int
+    cascade_severity: Literal["none", "low", "moderate", "high"]
+    cascade_adjusted_impact: float | None
+    explanation: str
+    impacted: list[ImpactedEntity] = Field(default_factory=list)
+
+
 class RecommendationOption(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -12,6 +46,7 @@ class RecommendationOption(BaseModel):
     description: str
     projected_impact: float = Field(..., ge=0, le=100)
     confidence: float = Field(..., ge=0, le=1)
+    cascade: CascadeResult | None = None
 
 
 class RecommendationOut(BaseModel):

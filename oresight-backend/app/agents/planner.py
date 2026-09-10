@@ -50,7 +50,14 @@ from sqlalchemy.orm import Session
 from app.agents._bridge import logger, neo4j_id_to_pg_site, pg_site_to_neo4j_id
 from app.agents.simulator import SimulatorAgent
 from app.models import Equipment, EquipmentStatus, ProductionRecord, RiskEvent, Site
+from app.services.cascade_service import compute_cascade
 from app.services.lookups import get_risk_event_or_404
+
+_ACTION_TYPE_BY_CANDIDATE = {
+    "reschedule": "reschedule_plan",
+    "redeploy": "redeploy_equipment",
+    "adjust_plan": "adjust_plan",
+}
 
 MAX_OPTIONS = 3
 RESCHEDULE_SEARCH_DAYS = 14
@@ -141,15 +148,15 @@ class PlannerAgent:
         options = []
         for candidate in candidates:
             impact = self._projected_impact(candidate, site)
-            options.append(
-                {
-                    "type": candidate["type"],
-                    "description": candidate["description"],
-                    "target_id": candidate["target_id"],
-                    "projected_impact": round(impact, 1),
-                    "confidence": _CONFIDENCE_BY_TYPE[candidate["type"]],
-                }
-            )
+            option = {
+                "type": candidate["type"],
+                "description": candidate["description"],
+                "target_id": candidate["target_id"],
+                "projected_impact": round(impact, 1),
+                "confidence": _CONFIDENCE_BY_TYPE[candidate["type"]],
+            }
+            option["cascade"] = self._compute_cascade(candidate, option, site)
+            options.append(option)
 
         options.sort(key=lambda o: o["projected_impact"], reverse=True)
         return {
@@ -326,6 +333,7 @@ class PlannerAgent:
                         ),
                         "target_id": blast_id,
                         "days_out": offset,
+                        "target_date": candidate_date,
                     }
         return None
 
@@ -413,6 +421,36 @@ class PlannerAgent:
         base = _BASE_IMPACT_BY_TYPE[candidate["type"]]
         signal_bonus = min(1.0, raw_delta / _MODEL_SIGNAL_SATURATION) * _MODEL_SIGNAL_BONUS_MAX
         return min(85.0, max(40.0, base + signal_bonus))
+
+    # -- cascade / ripple impact ------------------------------------------
+
+    def _compute_cascade(self, candidate: dict, option: dict, site: Site) -> dict | None:
+        """Best-effort ripple-impact lookup for one recommendation option.
+
+        Never allowed to affect the option's own fields (type/description/
+        projected_impact/confidence, computed above and untouched here) or
+        to fail the request — compute_cascade already never raises, but this
+        is wrapped defensively anyway since "a cascade failure must never
+        fail a recommendation" is the feature's top-line constraint, not
+        just an internal contract of one function.
+        """
+        action_type = _ACTION_TYPE_BY_CANDIDATE.get(candidate["type"])
+        if action_type is None:
+            return None
+        try:
+            proposed_change = {"new_date": candidate["target_date"]} if "target_date" in candidate else {}
+            return compute_cascade(
+                action_type=action_type,
+                target_entity_id=candidate["target_id"],
+                proposed_change=proposed_change,
+                site_id=site.id,
+                max_hops=2,
+                projected_impact=option["projected_impact"],
+                driver=self.neo4j_driver,
+            )
+        except Exception:  # noqa: BLE001 - cascade must never sink the base recommendation
+            logger.error("Cascade computation failed for candidate %s", candidate["type"], exc_info=True)
+            return None
 
 
 if __name__ == "__main__":

@@ -23,7 +23,12 @@ from app.schemas.production import (
     ProductionThresholdsOut,
     ShortfallReasonOut,
 )
-from app.schemas.recommendation import RecommendationOption, RecommendationOut
+from app.schemas.recommendation import (
+    CascadeResult,
+    ImpactedEntity,
+    RecommendationOption,
+    RecommendationOut,
+)
 from app.schemas.report import ExtractedDeposit, ReportUploadOut
 from app.schemas.risk_event import RiskEventOut
 from app.schemas.shift_plan import ShiftPlanEntryCreate, ShiftPlanEntryOut
@@ -63,6 +68,8 @@ __all__ = [
     "ProductionRecordUpdate",
     "ProductionThresholdsOut",
     "ShortfallReasonOut",
+    "CascadeResult",
+    "ImpactedEntity",
     "RecommendationOption",
     "RecommendationOut",
     "ExtractedDeposit",
