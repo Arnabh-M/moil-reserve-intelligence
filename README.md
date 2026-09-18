@@ -2,7 +2,7 @@
 
 Day 1 build: Neo4j graph foundation + synthetic datasets.
 Day 2 build: Reserve Prospectivity model (structural features, classifier,
-kriged confidence surface, GeoJSON export) + Shortfall Forecaster feature prep.
+kriged confidence surface, GeoJSON export) + Shortfall Forecaster feature prep .
 
 ## Files
 
