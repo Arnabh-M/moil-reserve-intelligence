@@ -10,6 +10,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   use: {
+    channel: 'chrome',
     baseURL: 'http://localhost:5173',
     trace: 'retain-on-failure',
   },

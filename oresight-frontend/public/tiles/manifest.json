@@ -8,32 +8,40 @@
       "id": "ndvi-latest",
       "name": "Sentinel-2 NDVI (Latest)",
       "file": "ndvi_latest.png",
-      "date": "2026-09-04",
+      "date": "2026-09-22",
+      "date_range": [
+        "2026-08-23",
+        "2026-09-22"
+      ],
       "bbox": [
-        78.5,
-        20.9,
-        80.8,
-        22.25
+        79.0,
+        21.0,
+        80.4,
+        22.0
       ],
       "maplibre_coordinates": [
         [
-          78.5,
-          22.25
+          79.0,
+          22.0
         ],
         [
-          80.8,
-          22.25
+          80.4,
+          22.0
         ],
         [
-          80.8,
-          20.9
+          80.4,
+          21.0
         ],
         [
-          78.5,
-          20.9
+          79.0,
+          21.0
         ]
       ],
       "type": "raster",
+      "source": "SIMULATED_MOCK",
+      "cloud_filter_pct": 20.0,
+      "image_count": 0,
+      "simulated": true,
       "palette_legend": [
         "#d73027",
         "#f46d43",
@@ -50,32 +58,40 @@
       "id": "iron-oxide-latest",
       "name": "Sentinel-2 Iron-Oxide Alteration Index",
       "file": "iron_oxide_latest.png",
-      "date": "2026-09-04",
+      "date": "2026-09-22",
+      "date_range": [
+        "2026-08-23",
+        "2026-09-22"
+      ],
       "bbox": [
-        78.5,
-        20.9,
-        80.8,
-        22.25
+        79.0,
+        21.0,
+        80.4,
+        22.0
       ],
       "maplibre_coordinates": [
         [
-          78.5,
-          22.25
+          79.0,
+          22.0
         ],
         [
-          80.8,
-          22.25
+          80.4,
+          22.0
         ],
         [
-          80.8,
-          20.9
+          80.4,
+          21.0
         ],
         [
-          78.5,
-          20.9
+          79.0,
+          21.0
         ]
       ],
       "type": "raster",
+      "source": "SIMULATED_MOCK",
+      "cloud_filter_pct": 20.0,
+      "image_count": 0,
+      "simulated": true,
       "palette_legend": [
         "#2c7bb6",
         "#abd9e9",
@@ -90,138 +106,170 @@
     {
       "week_index": 1,
       "id": "ndvi-week-1",
-      "name": "NDVI Week 1 (2026-08-14)",
+      "name": "NDVI Week 1 (2026-09-01)",
       "file": "ndvi_week_1.png",
-      "date": "2026-08-14",
-      "window_start": "2026-08-07",
-      "window_end": "2026-08-14",
+      "date": "2026-09-01",
+      "window_start": "2026-08-25",
+      "window_end": "2026-09-01",
+      "date_range": [
+        "2026-08-25",
+        "2026-09-01"
+      ],
       "bbox": [
-        78.5,
-        20.9,
-        80.8,
-        22.25
+        79.0,
+        21.0,
+        80.4,
+        22.0
       ],
       "maplibre_coordinates": [
         [
-          78.5,
-          22.25
+          79.0,
+          22.0
         ],
         [
-          80.8,
-          22.25
+          80.4,
+          22.0
         ],
         [
-          80.8,
-          20.9
+          80.4,
+          21.0
         ],
         [
-          78.5,
-          20.9
+          79.0,
+          21.0
         ]
       ],
-      "type": "raster"
+      "type": "raster",
+      "source": "SIMULATED_MOCK",
+      "image_count": 0,
+      "cloud_cover_pct": 5.0,
+      "simulated": true
     },
     {
       "week_index": 2,
       "id": "ndvi-week-2",
-      "name": "NDVI Week 2 (2026-08-21)",
+      "name": "NDVI Week 2 (2026-09-08)",
       "file": "ndvi_week_2.png",
-      "date": "2026-08-21",
-      "window_start": "2026-08-14",
-      "window_end": "2026-08-21",
+      "date": "2026-09-08",
+      "window_start": "2026-09-01",
+      "window_end": "2026-09-08",
+      "date_range": [
+        "2026-09-01",
+        "2026-09-08"
+      ],
       "bbox": [
-        78.5,
-        20.9,
-        80.8,
-        22.25
+        79.0,
+        21.0,
+        80.4,
+        22.0
       ],
       "maplibre_coordinates": [
         [
-          78.5,
-          22.25
+          79.0,
+          22.0
         ],
         [
-          80.8,
-          22.25
+          80.4,
+          22.0
         ],
         [
-          80.8,
-          20.9
+          80.4,
+          21.0
         ],
         [
-          78.5,
-          20.9
+          79.0,
+          21.0
         ]
       ],
-      "type": "raster"
+      "type": "raster",
+      "source": "SIMULATED_MOCK",
+      "image_count": 0,
+      "cloud_cover_pct": 7.5,
+      "simulated": true
     },
     {
       "week_index": 3,
       "id": "ndvi-week-3",
-      "name": "NDVI Week 3 (2026-08-28)",
+      "name": "NDVI Week 3 (2026-09-15)",
       "file": "ndvi_week_3.png",
-      "date": "2026-08-28",
-      "window_start": "2026-08-21",
-      "window_end": "2026-08-28",
+      "date": "2026-09-15",
+      "window_start": "2026-09-08",
+      "window_end": "2026-09-15",
+      "date_range": [
+        "2026-09-08",
+        "2026-09-15"
+      ],
       "bbox": [
-        78.5,
-        20.9,
-        80.8,
-        22.25
+        79.0,
+        21.0,
+        80.4,
+        22.0
       ],
       "maplibre_coordinates": [
         [
-          78.5,
-          22.25
+          79.0,
+          22.0
         ],
         [
-          80.8,
-          22.25
+          80.4,
+          22.0
         ],
         [
-          80.8,
-          20.9
+          80.4,
+          21.0
         ],
         [
-          78.5,
-          20.9
+          79.0,
+          21.0
         ]
       ],
-      "type": "raster"
+      "type": "raster",
+      "source": "SIMULATED_MOCK",
+      "image_count": 0,
+      "cloud_cover_pct": 10.0,
+      "simulated": true
     },
     {
       "week_index": 4,
       "id": "ndvi-week-4",
-      "name": "NDVI Week 4 (2026-09-04)",
+      "name": "NDVI Week 4 (2026-09-22)",
       "file": "ndvi_week_4.png",
-      "date": "2026-09-04",
-      "window_start": "2026-08-28",
-      "window_end": "2026-09-04",
+      "date": "2026-09-22",
+      "window_start": "2026-09-15",
+      "window_end": "2026-09-22",
+      "date_range": [
+        "2026-09-15",
+        "2026-09-22"
+      ],
       "bbox": [
-        78.5,
-        20.9,
-        80.8,
-        22.25
+        79.0,
+        21.0,
+        80.4,
+        22.0
       ],
       "maplibre_coordinates": [
         [
-          78.5,
-          22.25
+          79.0,
+          22.0
         ],
         [
-          80.8,
-          22.25
+          80.4,
+          22.0
         ],
         [
-          80.8,
-          20.9
+          80.4,
+          21.0
         ],
         [
-          78.5,
-          20.9
+          79.0,
+          21.0
         ]
       ],
-      "type": "raster"
+      "type": "raster",
+      "source": "SIMULATED_MOCK",
+      "image_count": 0,
+      "cloud_cover_pct": 12.5,
+      "simulated": true
     }
   ]
 }

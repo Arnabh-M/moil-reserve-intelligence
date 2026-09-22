@@ -68,7 +68,10 @@ DEM_FALLBACK = "USGS/SRTMGL1_003"                # 30 m fallback
 SCL_MASK_VALUES = [3, 8, 9, 10]
 
 BASELINE_YEARS = 3          # Part 1.1 — 3 prior years for the seasonal median
-BASELINE_CLOUD_PCT = 20     # Part 1.1 — <20% cloud cover filter
+BASELINE_CLOUD_PCT = 20     # Part 1.1 — <20% strict cloud cover filter
+RETRY_CLOUD_PCT = int(os.environ.get("S2_RETRY_CLOUD_PCT", "60"))
+# Conservative retry threshold for cloudy/monsoon weeks when strict 20% yields 0 scenes,
+# while still excluding heavily cloud-dominated scenes (e.g. >80%).
 BASELINE_CACHE_TTL_DAYS = 7  # Part 1.1 — weekly regeneration, not per-request
 
 
@@ -100,6 +103,15 @@ def initialize_ee(service_account_json: str | None = None):
             "    pip install earthengine-api\n"
             "then authenticate (see module docstring)."
         ) from exc
+
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        load_dotenv(os.path.join(base_dir, ".env"))
+        load_dotenv(os.path.join(base_dir, "gee_pipeline", ".env"))
+    except ImportError:
+        pass
 
     key_path = service_account_json or os.environ.get("EE_SERVICE_ACCOUNT_JSON")
     project = os.environ.get("EE_PROJECT")
@@ -186,14 +198,48 @@ def mask_s2_clouds(image, ee):
     return image.updateMask(mask).divide(10000).copyProperties(image, ["system:time_start"])
 
 
-def _s2_collection(ee, geometry, start, end, max_cloud_pct=BASELINE_CLOUD_PCT):
-    return (
+def _s2_collection(ee, geometry, start, end, max_cloud_pct=BASELINE_CLOUD_PCT, retry_cloud_pct=None):
+    """
+    Query Sentinel-2 L2A collection with two-tier cloud filtering and SCL pixel masking.
+
+    1. First attempts strict cloud threshold (default 20%).
+    2. If 0 scenes match, retries with a conservative higher threshold (default RETRY_CLOUD_PCT=60%)
+       to accommodate monsoon conditions without accepting heavily-clouded scenes (e.g. >80%).
+    3. All returned scenes are processed through pixel-level SCL cloud masking (mask_s2_clouds).
+    """
+    if retry_cloud_pct is None:
+        retry_cloud_pct = RETRY_CLOUD_PCT
+
+    base_coll = (
         ee.ImageCollection(S2_COLLECTION)
         .filterBounds(geometry)
         .filterDate(start, end)
-        .filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", max_cloud_pct))
-        .map(lambda img: mask_s2_clouds(img, ee))
     )
+
+    # 1. Attempt strict threshold
+    strict_coll = base_coll.filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", max_cloud_pct))
+    strict_count = strict_coll.size().getInfo()
+
+    if strict_count > 0:
+        logger.info(
+            "S2 [%s to %s]: Selected %d scene(s) at strict cloud filter <%s%%",
+            start, end, strict_count, max_cloud_pct
+        )
+        selected_coll = strict_coll
+    elif retry_cloud_pct > max_cloud_pct:
+        # 2. Retry with conservative higher threshold
+        retry_coll = base_coll.filter(ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", retry_cloud_pct))
+        retry_count = retry_coll.size().getInfo()
+        logger.info(
+            "S2 [%s to %s]: 0 scenes at <%s%% clouds; retrying with conservative threshold <%s%% (found %d scene(s))",
+            start, end, max_cloud_pct, retry_cloud_pct, retry_count
+        )
+        selected_coll = retry_coll
+    else:
+        logger.warning("S2 [%s to %s]: 0 scenes found under cloud threshold <%s%%", start, end, max_cloud_pct)
+        selected_coll = strict_coll
+
+    return selected_coll.map(lambda img: mask_s2_clouds(img, ee))
 
 
 # ---------------------------------------------------------------------------
@@ -335,7 +381,10 @@ def seasonal_ndvi_baseline(ee, geometry, reference_date: datetime, years: int = 
         week_end = week_start + timedelta(days=7)
 
         coll = _s2_collection(ee, geometry, week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d"))
-        yearly.append(coll.map(compute_ndvi).median())
+        if coll.size().getInfo() > 0:
+            yearly.append(coll.map(compute_ndvi).median())
+        else:
+            logger.warning("ISO week %d in year %d has 0 usable scenes; skipping year in baseline composite", iso_week, year)
 
     if not yearly:
         raise GEELayerError(
@@ -354,11 +403,12 @@ def seasonal_ndvi_anomaly(ee, geometry, reference_date: datetime):
     interest for surface disturbance / exposure.
     """
     week_start = reference_date - timedelta(days=7)
-    current = (
-        _s2_collection(ee, geometry, week_start.strftime("%Y-%m-%d"), reference_date.strftime("%Y-%m-%d"))
-        .map(compute_ndvi)
-        .median()
-    )
+    coll = _s2_collection(ee, geometry, week_start.strftime("%Y-%m-%d"), reference_date.strftime("%Y-%m-%d"))
+    if coll.size().getInfo() == 0:
+        raise GEELayerError(
+            f"No current Sentinel-2 imagery available between {week_start.strftime('%Y-%m-%d')} and {reference_date.strftime('%Y-%m-%d')}"
+        )
+    current = coll.map(compute_ndvi).median()
     baseline = seasonal_ndvi_baseline(ee, geometry, reference_date)
     return current.subtract(baseline).rename("ndvi_anomaly")
 
@@ -381,13 +431,12 @@ def terrain_features(ee, geometry, dem_asset: str = DEM_COLLECTION):
     except Exception:  # noqa: BLE001 — GLO30 is a collection, SRTM is an Image
         dem = ee.Image(dem_asset).select("elevation")
 
-    dem = dem.clip(geometry)
-    terrain = ee.Terrain.products(dem)
+    terrain = ee.Terrain.products(dem).clip(geometry)
 
     ruggedness = dem.reduceNeighborhood(
         reducer=ee.Reducer.stdDev(),
         kernel=ee.Kernel.square(radius=2, units="pixels"),  # 5x5
-    ).rename("terrain_ruggedness")
+    ).rename("terrain_ruggedness").clip(geometry)
 
     return (
         terrain.select("slope").rename("slope")
@@ -442,14 +491,19 @@ def build_feature_stack(ee, geometry, reference_date: datetime | None = None) ->
     # Single cloud-masked composite for the current week, shared by the
     # non-temporal indices so they are all derived from identical pixels.
     week_start = reference_date - timedelta(days=7)
-    current = with_gee_retry(
+    current_coll = with_gee_retry(
         lambda: _s2_collection(
             ee, geometry,
             week_start.strftime("%Y-%m-%d"),
             reference_date.strftime("%Y-%m-%d"),
-        ).median(),
-        what="s2_current_week_composite",
+        ),
+        what="s2_current_week_collection",
     )
+    if current_coll.size().getInfo() == 0:
+        raise GEELayerError(
+            f"No Sentinel-2 imagery available between {week_start.strftime('%Y-%m-%d')} and {reference_date.strftime('%Y-%m-%d')}"
+        )
+    current = current_coll.median()
 
     layers: dict[str, Callable] = {
         "ndvi_anomaly": lambda: seasonal_ndvi_anomaly(ee, geometry, reference_date),

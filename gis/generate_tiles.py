@@ -12,38 +12,50 @@ Validates:
   - Every layer has a valid 4-element numeric bounding box [west, south, east, north]
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import json
 import argparse
 
-# Import local GIS modules
-from gis.ndvi_pull import pull_single_layers, MOIL_BBOX
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+from geo_utils import COMBINED_BBOX
+from gis.ndvi_pull import pull_single_layers
 from gis.ndvi_timeseries import generate_ndvi_timeseries_tiles
 
+DEFAULT_BBOX = list(COMBINED_BBOX)
 
-def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
+
+def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", bbox=None, dry_run=False):
     """
     Runs full tile extraction and builds gis/tiles/manifest.json.
     """
+    if bbox is None:
+        bbox = DEFAULT_BBOX
+
     tiles_dir = os.path.abspath(tiles_dir)
     os.makedirs(tiles_dir, exist_ok=True)
 
     print("=" * 70)
     print(" MOIL Reserve Intelligence — GIS Tile Pipeline & Manifest Generator")
+    print(f" Target Extent (COMBINED_BBOX): {bbox}")
     print("=" * 70)
 
     # 1. Generate Single-Date NDVI and Iron-Oxide Alteration tiles
     print("\n[STEP 1/2] Generating Single-Date Spectral Index Tiles (NDVI & Iron Oxide)...")
-    single_layers_meta = pull_single_layers(tiles_dir=tiles_dir, dry_run=dry_run)
+    single_layers_meta = pull_single_layers(tiles_dir=tiles_dir, bbox=bbox, dry_run=dry_run)
 
     # 2. Generate 4-Week NDVI Time-Series Tiles for MapLibre Time-Slider
     print("\n[STEP 2/2] Generating 4-Week Weekly NDVI Time-Series Tiles...")
-    timeseries_meta = generate_ndvi_timeseries_tiles(tiles_dir=tiles_dir, num_weeks=4, interval_days=7, dry_run=dry_run)
+    timeseries_meta = generate_ndvi_timeseries_tiles(tiles_dir=tiles_dir, bbox=bbox, num_weeks=4, interval_days=7, dry_run=dry_run)
 
     # Helper function to convert [west, south, east, north] to MapLibre 4-point coordinates
-    def to_maplibre_coords(bbox):
-        w, s, e, n = bbox
+    def to_maplibre_coords(b):
+        w, s, e, n = b
         return [
             [w, n],  # Top-Left [lng, lat]
             [e, n],  # Top-Right [lng, lat]
@@ -51,7 +63,7 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
             [w, s]   # Bottom-Left [lng, lat]
         ]
 
-    # 4. Construct Consolidated Manifest for Frontend MapLibre Developer (P4)
+    # 4. Construct Consolidated Manifest for Frontend MapLibre Developer
     manifest = {
         "title": "MOIL Reserve Intelligence - MapLibre Raster Tiles Manifest",
         "description": "Pre-rendered georeferenced raster PNG tiles and time-series layers for browser rendering in MapLibre GL.",
@@ -63,9 +75,14 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
                 "name": "Sentinel-2 NDVI (Latest)",
                 "file": "ndvi_latest.png",
                 "date": single_layers_meta["ndvi_latest"]["date"],
+                "date_range": single_layers_meta["ndvi_latest"].get("date_range"),
                 "bbox": single_layers_meta["ndvi_latest"]["bbox"],
                 "maplibre_coordinates": to_maplibre_coords(single_layers_meta["ndvi_latest"]["bbox"]),
                 "type": "raster",
+                "source": single_layers_meta["ndvi_latest"].get("source", "COPERNICUS/S2_SR_HARMONIZED"),
+                "cloud_filter_pct": single_layers_meta["ndvi_latest"].get("cloud_filter_pct"),
+                "image_count": single_layers_meta["ndvi_latest"].get("image_count", 0),
+                "simulated": single_layers_meta["ndvi_latest"].get("simulated", False),
                 "palette_legend": ["#d73027", "#f46d43", "#fdae61", "#fee08b", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850"],
                 "description": "Vegetation index for environmental baseline and overburden monitoring."
             },
@@ -74,9 +91,14 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
                 "name": "Sentinel-2 Iron-Oxide Alteration Index",
                 "file": "iron_oxide_latest.png",
                 "date": single_layers_meta["iron_oxide_latest"]["date"],
+                "date_range": single_layers_meta["iron_oxide_latest"].get("date_range"),
                 "bbox": single_layers_meta["iron_oxide_latest"]["bbox"],
                 "maplibre_coordinates": to_maplibre_coords(single_layers_meta["iron_oxide_latest"]["bbox"]),
                 "type": "raster",
+                "source": single_layers_meta["iron_oxide_latest"].get("source", "COPERNICUS/S2_SR_HARMONIZED"),
+                "cloud_filter_pct": single_layers_meta["iron_oxide_latest"].get("cloud_filter_pct"),
+                "image_count": single_layers_meta["iron_oxide_latest"].get("image_count", 0),
+                "simulated": single_layers_meta["iron_oxide_latest"].get("simulated", False),
                 "palette_legend": ["#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"],
                 "description": "Red/Blue spectral alteration ratio highlighting manganese and iron gossan signatures."
             }
@@ -94,9 +116,14 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", dry_run=False):
             "date": item["date"],
             "window_start": item["window_start"],
             "window_end": item["window_end"],
+            "date_range": item.get("date_range"),
             "bbox": item["bbox"],
             "maplibre_coordinates": to_maplibre_coords(item["bbox"]),
-            "type": "raster"
+            "type": "raster",
+            "source": item.get("source", "COPERNICUS/S2_SR_HARMONIZED"),
+            "image_count": item.get("image_count", 0),
+            "cloud_cover_pct": item.get("cloud_cover_pct"),
+            "simulated": item.get("simulated", False)
         })
 
     # Save manifest.json

@@ -13,6 +13,7 @@ import CrossSectionDrawer from './components/map/CrossSectionDrawer';
 import ProspectivityCellPanel from './components/map/ProspectivityCellPanel';
 import CausalGraph from './components/CausalGraph';
 import { useSites } from './hooks/useSites';
+import SatelliteConditionsPanel from './components/SatelliteConditionsPanel';
 // Lazy-loaded: a missing/broken dependency in one Field Intake tab (see
 // react-window, which shipped in package.json without a matching install)
 // should only break that tab, not the whole router — every route used to
@@ -225,6 +226,7 @@ function SitePage() {
   const setTab = (next) => setSearchParams({ tab: next });
   const showToast = (message) => { setToast(message); setTimeout(() => setToast(''), 2200); };
   return <main className="page"><div className="site-banner"><div><div className="eyebrow">Site intelligence · {site.id}</div><h1>{site.name}</h1><div className="site-place">{site.belt_name} · {site.district}, {site.state} · updated 08:05 IST</div></div><div className="filter-row"><span className={`pill ${site.active_risk_count > 2 ? 'critical' : 'warn'}`}>{site.active_risk_count} active risks</span><Link className="btn small" to="/map">View on map <MapIcon size={12} /></Link></div></div><div className="tabs">{tabs.map((item) => <button className={`tab ${tab === item ? 'active' : ''}`} onClick={() => setTab(item)} key={item} data-testid={`tab-site-${item}`}>{item[0].toUpperCase() + item.slice(1)}</button>)}</div>
+    <SatelliteConditionsPanel site={site} />
     {tab === 'overview' && <SiteOverview site={site} risks={risks} equipment={equipment} zones={zones} production={production} />}
     {tab === 'production' && <ProductionView production={production} site={site} />}
     {tab === 'reserve' && <ReserveView zones={zones} site={site} />}

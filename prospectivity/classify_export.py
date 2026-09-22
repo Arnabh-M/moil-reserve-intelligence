@@ -473,6 +473,94 @@ def generate_demo_exports(out_dir: str = "oresight-frontend/public/prospectivity
     return written
 
 
+def generate_exports_from_models(
+    model_dir: str = "models/prospectivity",
+    out_dir: str = "oresight-frontend/public/prospectivity",
+    aggregate: int = DEFAULT_AGGREGATE,
+) -> list[str]:
+    """
+    Export real model predictions from trained classifiers and cached grid features.
+    """
+    import joblib
+    import pandas as pd
+    from prospectivity.grid import build_all_grids
+    from geo_utils import compute_structural_features
+
+    grids = build_all_grids()
+    written: list[str] = []
+
+    lines_csv = "data/structural_lines.csv"
+    lines_df = pd.read_csv(lines_csv) if os.path.exists(lines_csv) else None
+
+    for site_id, grid in grids.items():
+        centers = grid.centers_utm
+        lonlat = grid.centers_lonlat
+
+        # Load trained models
+        models = {}
+        for m_name in ["rf", "nb", "xgb"]:
+            m_path = os.path.join(model_dir, f"{m_name}_{site_id}.pkl")
+            if os.path.exists(m_path):
+                models[m_name] = joblib.load(m_path)
+
+        if not models:
+            logger.warning("No models found for %s in %s, skipping", site_id, model_dir)
+            continue
+
+        # Load or compute grid features
+        grid_cache = os.path.join("data", "cache", f"grid_features_{site_id}.npz")
+        factors = {}
+        if os.path.exists(grid_cache):
+            npz = np.load(grid_cache)
+            for k in npz.files:
+                if k in FACTOR_FIELDS:
+                    factors[k] = npz[k]
+
+        # Structural features
+        if lines_df is not None:
+            min_dist, density = compute_structural_features(lonlat[:, 0], lonlat[:, 1], lines_df)
+            factors["dist_to_nearest_structure"] = min_dist
+            factors["structural_density"] = density
+
+        # Ensure all FACTOR_FIELDS are present
+        for f in FACTOR_FIELDS:
+            if f not in factors:
+                factors[f] = np.zeros(len(centers))
+
+        feat_df = pd.DataFrame(factors)
+
+        surfaces = {}
+        for m_name, m_dict in models.items():
+            model = m_dict["model"]
+            m_features = m_dict["features"]
+            X = feat_df[m_features].values
+            surfaces[m_name] = model.predict_proba(X)[:, 1]
+
+        ensemble = algebraic_overlay(surfaces)
+        data_quality = np.ones(len(centers))
+
+        provenance = {
+            "status": "TRAINED_MODEL_SCORES",
+            "warning": (
+                "Scores derived from models trained with per-site spatial cross-validation. "
+                "Deposit ground truth labels are synthetic by construction — real GSI/MOIL "
+                "borehole data is needed for true geophysical exploration validation."
+            ),
+            "generated_utc": datetime.now(timezone.utc).isoformat(),
+        }
+
+        path = os.path.join(out_dir, f"{site_id}.geojson")
+        fc = export_site_geojson(grid, ensemble, factors, data_quality, path,
+                                 aggregate=aggregate, provenance=provenance)
+        written.append(path)
+
+        bands_path = os.path.join(out_dir, f"{site_id}_bands.geojson")
+        export_band_outlines(fc, bands_path)
+        written.append(bands_path)
+
+    return written
+
+
 if __name__ == "__main__":
     import sys
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -494,6 +582,28 @@ if __name__ == "__main__":
                   f"@ {fc['grid']['analysis_cell_size_m']:.0f}m -> {fc['grid']['render_cell_size_m']:.0f}m render")
             for b in CONFIDENCE_BANDS:
                 print(f"    {b:<11} {bands.get(b, 0):>6}")
+        print("\nAll exports passed validate_geojson().")
+        print("=" * 70)
+        raise SystemExit(0)
+
+    if "--from-models" in sys.argv or os.path.exists("models/prospectivity/rf_balaghat.pkl"):
+        paths = generate_exports_from_models()
+        print("\n" + "=" * 70)
+        print(" PART 6.3 — MODEL EXPORTS (trained models + real/cached features)")
+        print("=" * 70)
+        for p in paths:
+            if not p.endswith("_bands.geojson"):
+                with open(p, encoding="utf-8") as fh:
+                    fc = json.load(fh)
+                bands = {}
+                for feat in fc["features"]:
+                    b = feat["properties"]["confidence_band"]
+                    bands[b] = bands.get(b, 0) + 1
+                print(f"\n{fc['site_id']}: {len(fc['features'])} render cells "
+                      f"({os.path.getsize(p)/1e6:.2f} MB), grid {fc['grid']['analysis_dimensions']} "
+                      f"@ {fc['grid']['analysis_cell_size_m']:.0f}m -> {fc['grid']['render_cell_size_m']:.0f}m render")
+                for b in CONFIDENCE_BANDS:
+                    print(f"    {b:<11} {bands.get(b, 0):>6}")
         print("\nAll exports passed validate_geojson().")
         print("=" * 70)
         raise SystemExit(0)

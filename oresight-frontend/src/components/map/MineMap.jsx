@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, Loader2, Mountain, Sun } from 'lucide-react'
 import Map, { Layer, Marker, Popup, Source } from 'react-map-gl/maplibre'
+import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { api } from '../../api/client'
 import {
@@ -291,9 +292,16 @@ export default function MineMap({
     return ids
   }, [prospectivityVisible, reserveZones, prospectivityData])
 
+  const mapLib = useMemo(() => {
+    if (maplibregl?.Map) return maplibregl
+    if (maplibregl?.default?.Map) return maplibregl.default
+    return maplibregl
+  }, [])
+
   return (
     <div className="relative h-full w-full">
       <Map
+        mapLib={mapLib}
         ref={mapRef}
         initialViewState={{
           longitude: MAP_CENTER.longitude,

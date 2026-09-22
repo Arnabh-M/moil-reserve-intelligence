@@ -1,7 +1,8 @@
 """
 MOIL Reserve Intelligence — GIS Data Prep: 4-Week NDVI Time-Series Tiles
 =========================================================================
-Generates 4 weekly NDVI PNG tiles for MapLibre GL time-slider UI.
+Generates 4 weekly NDVI PNG tiles for MapLibre GL time-slider UI
+covering geo_utils.COMBINED_BBOX.
 
 ARCHITECTURAL DECISION & TRADE-OFF EXPLANATION:
 ----------------------------------------------
@@ -12,6 +13,8 @@ We use `ee.Image.getThumbURL()` with standard NDVI color ramp palette:
     supplying the tile URL/path and the 4 corner coordinates.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import json
@@ -19,42 +22,32 @@ import argparse
 from datetime import datetime, timedelta, timezone
 import urllib.request
 
-# Global Bounding Box [west, south, east, north] (WGS84 EPSG:4326)
-MOIL_BBOX = [78.50, 20.90, 80.80, 22.25]
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
-# Standard NDVI visual palette: Red -> Orange -> Yellow -> Light Green -> Dark Green
-NDVI_PALETTE = ["#d73027", "#f46d43", "#fdae61", "#fee08b", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850"]
-NDVI_MIN = -0.1
-NDVI_MAX = 0.7
+from geo_utils import COMBINED_BBOX
+from gis.ndvi_pull import NDVI_PALETTE, NDVI_MIN, NDVI_MAX, mask_s2_clouds, export_thumb_png, create_sample_tile
+from gee_pipeline.ee_auth import get_ee
 
-
-def check_ee_available():
-    """
-    Checks if Google Earth Engine is installed and initialized.
-    """
-    try:
-        import ee
-        ee.Number(1).getInfo()
-        return ee
-    except Exception as exc:
-        print(f"[INFO] GEE not initialized ({exc}). Operating in simulation/offline mode.")
-        return None
+DEFAULT_BBOX = list(COMBINED_BBOX)  # [79.0, 21.0, 80.4, 22.0]
 
 
 def generate_ndvi_timeseries_tiles(tiles_dir="gis/tiles", bbox=None, num_weeks=4, interval_days=7, dry_run=False):
     """
     Generates 4 weekly NDVI PNG tiles and returns structured metadata for MapLibre.
+    Fails loudly if any weekly interval has image_count == 0 in real mode.
     """
     if bbox is None:
-        bbox = MOIL_BBOX
+        bbox = DEFAULT_BBOX
 
     os.makedirs(tiles_dir, exist_ok=True)
-    ee_mod = None if dry_run else check_ee_available()
+    ee_mod = get_ee(dry_run=dry_run)
 
     now = datetime.now(timezone.utc)
     timeseries_list = []
 
-    print(f"\n[GIS] Generating {num_weeks}-Week NDVI Time-Series Tiles...")
+    print(f"\n[GIS] Generating {num_weeks}-Week NDVI Time-Series Tiles (BBox: {bbox})...")
 
     for i in range(num_weeks):
         week_num = i + 1
@@ -67,66 +60,68 @@ def generate_ndvi_timeseries_tiles(tiles_dir="gis/tiles", bbox=None, num_weeks=4
         tile_filepath = os.path.join(tiles_dir, tile_filename)
 
         if ee_mod is not None:
-            try:
-                roi = ee_mod.Geometry.Rectangle(bbox)
-                
-                # Filter Sentinel-2 L2A collection for the weekly interval
+            roi = ee_mod.Geometry.Rectangle(bbox)
+
+            collection = ee_mod.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
+                .filterBounds(roi) \
+                .filterDate(start_str, end_str)
+
+            count = collection.size().getInfo()
+            if count == 0:
+                lookback_start = (w_start - timedelta(days=7)).strftime("%Y-%m-%d")
+                print(f"[WARN] No scenes for Week {week_num} ({start_str} to {end_str}), looking back to {lookback_start}...")
                 collection = ee_mod.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
                     .filterBounds(roi) \
-                    .filterDate(start_str, end_str)
-
+                    .filterDate(lookback_start, end_str)
                 count = collection.size().getInfo()
-                if count > 0:
-                    best_img = collection.sort("CLOUDY_PIXEL_PERCENTAGE", True).first()
-                else:
-                    # Fallback to nearest scene if a specific week was overcast
-                    print(f"[WARN] No scenes for Week {week_num} ({start_str} to {end_str}), picking closest available.")
-                    best_img = ee_mod.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-                        .filterBounds(roi) \
-                        .filterDate((w_start - timedelta(days=5)).strftime("%Y-%m-%d"), end_str) \
-                        .sort("CLOUDY_PIXEL_PERCENTAGE", True).first()
+                if count == 0:
+                    raise RuntimeError(f"No Sentinel-2 imagery available for Week {week_num} (window {start_str} to {end_str}, lookback from {lookback_start}; image_count == 0).")
 
-                meta = best_img.toDictionary(["system:time_start"]).getInfo()
-                time_ms = meta.get("system:time_start", 0)
-                acq_date = datetime.fromtimestamp(time_ms / 1000.0, tz=timezone.utc).strftime("%Y-%m-%d") if time_ms else end_str
+            best_img = collection.sort("CLOUDY_PIXEL_PERCENTAGE", True).first()
+            masked_img = mask_s2_clouds(best_img, ee_mod)
 
-                # Calculate NDVI
-                ndvi = best_img.normalizedDifference(["B8", "B4"]).rename("NDVI")
+            meta = best_img.toDictionary(["system:time_start", "CLOUDY_PIXEL_PERCENTAGE"]).getInfo()
+            time_ms = meta.get("system:time_start", 0)
+            acq_date = datetime.fromtimestamp(time_ms / 1000.0, tz=timezone.utc).strftime("%Y-%m-%d") if time_ms else end_str
 
-                # Export PNG via getThumbURL
-                clean_palette = [c.replace("#", "") for c in NDVI_PALETTE]
-                vis_params = {
-                    "min": NDVI_MIN,
-                    "max": NDVI_MAX,
-                    "palette": clean_palette,
-                    "dimensions": "1024x1024",
-                    "region": roi,
-                    "crs": "EPSG:4326",
-                    "format": "png"
-                }
-                url = ndvi.getThumbURL(vis_params)
-                urllib.request.urlretrieve(url, tile_filepath)
-                print(f"[OK] Week {week_num} ({acq_date}) PNG downloaded -> {tile_filepath}")
+            ndvi = masked_img.normalizedDifference(["B8", "B4"]).rename("NDVI")
 
-            except Exception as exc:
-                print(f"[ERROR] Week {week_num} export failed: {exc}. Generating mock tile.")
-                acq_date = end_str
-                from gis.ndvi_pull import create_sample_tile
-                create_sample_tile(tile_filepath, NDVI_PALETTE, title=f"NDVI Week {week_num} ({acq_date})")
+            export_thumb_png(ndvi, roi, tile_filepath, NDVI_MIN, NDVI_MAX, NDVI_PALETTE)
+            print(f"[OK] Week {week_num} ({acq_date}) PNG downloaded -> {tile_filepath}")
+
+            timeseries_list.append({
+                "week_index": week_num,
+                "file": tile_filename,
+                "date": acq_date,
+                "window_start": start_str,
+                "window_end": end_str,
+                "date_range": [start_str, end_str],
+                "bbox": bbox,
+                "layer_type": "NDVI",
+                "source": "COPERNICUS/S2_SR_HARMONIZED",
+                "image_count": count,
+                "cloud_cover_pct": meta.get("CLOUDY_PIXEL_PERCENTAGE"),
+                "simulated": False
+            })
+
         else:
             acq_date = end_str
-            from gis.ndvi_pull import create_sample_tile
             create_sample_tile(tile_filepath, NDVI_PALETTE, title=f"NDVI Week {week_num} ({acq_date})")
 
-        timeseries_list.append({
-            "week_index": week_num,
-            "file": tile_filename,
-            "date": acq_date,
-            "window_start": start_str,
-            "window_end": end_str,
-            "bbox": bbox,
-            "layer_type": "NDVI"
-        })
+            timeseries_list.append({
+                "week_index": week_num,
+                "file": tile_filename,
+                "date": acq_date,
+                "window_start": start_str,
+                "window_end": end_str,
+                "date_range": [start_str, end_str],
+                "bbox": bbox,
+                "layer_type": "NDVI",
+                "source": "SIMULATED_MOCK",
+                "image_count": 0,
+                "cloud_cover_pct": 5.0 + i * 2.5,
+                "simulated": True
+            })
 
     return timeseries_list
 

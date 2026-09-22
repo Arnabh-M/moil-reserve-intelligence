@@ -79,10 +79,49 @@ def load_site_boundaries(database_url: str | None = None) -> dict:
     from shapely import wkt
     from sqlalchemy import create_engine, text
 
-    url = database_url or os.environ.get(
-        "DATABASE_URL", "postgresql+psycopg://oresight:oresight@localhost:5433/oresight"
-    )
-    engine = create_engine(url)
+    candidates = []
+    if database_url:
+        candidates.append(database_url)
+    elif "DATABASE_URL" in os.environ:
+        candidates.append(os.environ["DATABASE_URL"])
+    else:
+        candidates.extend([
+            "postgresql+psycopg2://oresight:oresight@localhost:5432/oresight",
+            "postgresql+psycopg2://oresight:oresight@localhost:5433/oresight",
+            "postgresql+psycopg://oresight:oresight@localhost:5432/oresight",
+            "postgresql+psycopg://oresight:oresight@localhost:5433/oresight",
+        ])
+
+    engine = None
+    last_err = None
+    for url in candidates:
+        try:
+            eng = create_engine(url)
+            with eng.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            engine = eng
+            break
+        except Exception as exc:
+            last_err = exc
+            continue
+
+    if engine is None:
+        # Check if we can fallback to geo_utils.SITE_BBOXES
+        try:
+            from geo_utils import SITE_BBOXES
+            from shapely.geometry import box
+            logger.warning("Database unreachable (%s) — falling back to SITE_BBOXES", last_err)
+            return {
+                k: {
+                    "db_id": i + 1,
+                    "name": k.capitalize(),
+                    "geom": box(*bbox),
+                    "area_km2": 300.0,
+                }
+                for i, (k, bbox) in enumerate(SITE_BBOXES.items())
+            }
+        except Exception:
+            raise SiteBoundaryError(f"Cannot connect to database: {last_err}") from last_err
 
     sites = {}
     with engine.connect() as conn:
@@ -202,16 +241,27 @@ def stratified_split(df: pd.DataFrame, test_size: float = TEST_SIZE, random_stat
     return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
 
 
-def build_all_sites(random_state: int = RANDOM_STATE) -> dict[str, SiteTrainingSet]:
+def build_all_sites(random_state: int = RANDOM_STATE, use_cache: bool = True) -> dict[str, SiteTrainingSet]:
     """Build per-site training sets for every site with a valid boundary."""
+    import os
     rng = np.random.default_rng(random_state)
     sites = load_site_boundaries()
 
     out: dict[str, SiteTrainingSet] = {}
     for key, site in sites.items():
         try:
-            ts = generate_site_training_points(key, site, rng)
-            ts.points = attach_structural_features(ts.points)
+            cache_file = os.path.join("data", "cache", f"training_features_{key}.csv")
+            if use_cache and os.path.exists(cache_file):
+                cached_df = pd.read_csv(cache_file)
+                ts = SiteTrainingSet(
+                    site_id=key,
+                    site_name=site["name"],
+                    points=cached_df,
+                    area_km2=site["area_km2"],
+                )
+            else:
+                ts = generate_site_training_points(key, site, rng)
+                ts.points = attach_structural_features(ts.points)
             out[key] = ts
         except SiteBoundaryError as exc:
             # Per robustness requirement: fail clearly for THAT site, keep going.
