@@ -292,11 +292,7 @@ export default function MineMap({
     return ids
   }, [prospectivityVisible, reserveZones, prospectivityData])
 
-  const mapLib = useMemo(() => {
-    if (maplibregl?.Map) return maplibregl
-    if (maplibregl?.default?.Map) return maplibregl.default
-    return maplibregl
-  }, [])
+  const mapLib = useMemo(() => maplibregl, [])
 
   return (
     <div className="relative h-full w-full">
@@ -579,11 +575,10 @@ export default function MineMap({
         <button
           type="button"
           onClick={onToggleCrossSection}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-[3px] text-xs font-semibold shadow-xs transition-all duration-150 border cursor-pointer ${
-            crossSectionActive
-              ? 'bg-teal text-white border-teal ring-2 ring-teal/30'
-              : 'bg-bg-surface text-navy border-border hover:bg-bg hover:text-teal'
-          }`}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-[3px] text-xs font-semibold shadow-xs transition-all duration-150 border cursor-pointer ${crossSectionActive
+            ? 'bg-teal text-white border-teal ring-2 ring-teal/30'
+            : 'bg-bg-surface text-navy border-border hover:bg-bg hover:text-teal'
+            }`}
         >
           <Activity size={15} className={crossSectionActive ? 'text-white' : 'text-teal'} />
           <span>{crossSectionActive ? 'Cross-Section Active: Click Map' : 'Cross-Section Tool'}</span>
@@ -598,11 +593,10 @@ export default function MineMap({
           <button
             type="button"
             onClick={() => handleBasemapChange('light')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] text-xs font-semibold transition-all duration-150 cursor-pointer ${
-              basemapMode === 'light'
-                ? 'bg-teal text-white shadow-xs'
-                : 'text-slate-600 hover:text-navy hover:bg-bg'
-            }`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] text-xs font-semibold transition-all duration-150 cursor-pointer ${basemapMode === 'light'
+              ? 'bg-teal text-white shadow-xs'
+              : 'text-slate-600 hover:text-navy hover:bg-bg'
+              }`}
             title="Analytical Light Basemap (OpenFreeMap Positron)"
           >
             <Sun size={13} />
@@ -611,11 +605,10 @@ export default function MineMap({
           <button
             type="button"
             onClick={() => handleBasemapChange('terrain')}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] text-xs font-semibold transition-all duration-150 cursor-pointer ${
-              basemapMode === 'terrain'
-                ? 'bg-teal text-white shadow-xs'
-                : 'text-slate-600 hover:text-navy hover:bg-bg'
-            }`}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-[2px] text-xs font-semibold transition-all duration-150 cursor-pointer ${basemapMode === 'terrain'
+              ? 'bg-teal text-white shadow-xs'
+              : 'text-slate-600 hover:text-navy hover:bg-bg'
+              }`}
             title="Topographic Terrain Basemap (OpenFreeMap Liberty + AWS Open Data Hillshade)"
           >
             <Mountain size={13} />
