@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Activity, Loader2, Mountain, Sun } from 'lucide-react'
+import { Component, useEffect, useMemo, useRef, useState } from 'react'
+import { Activity, AlertTriangle, Loader2, Mountain, RefreshCw, Sun, X } from 'lucide-react'
 import Map, { Layer, Marker, Popup, Source } from 'react-map-gl/maplibre'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -41,6 +41,60 @@ import {
 } from '../../lib/map'
 import ConfidenceLegend from './ConfidenceLegend'
 import NdviTimeSlider from './NdviTimeSlider'
+
+class MapErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('[MapErrorBoundary caught error]:', error, errorInfo)
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null })
+    if (this.props.onRetry) {
+      this.props.onRetry()
+    }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex h-full w-full flex-col items-center justify-center bg-bg/90 p-6 text-center">
+          <div className="max-w-md rounded-[4px] border border-danger/40 bg-bg-surface p-5 shadow-sm text-left">
+            <div className="flex items-center gap-2 font-semibold text-sm text-danger mb-2">
+              <AlertTriangle size={18} className="shrink-0" />
+              <span>Map Initialization Failure</span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed mb-3">
+              The map engine encountered an unexpected rendering error:
+            </p>
+            <div className="rounded bg-bg p-2 text-[11px] font-mono text-danger/90 break-words mb-4">
+              {this.state.error?.message || String(this.state.error || 'Unknown error')}
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={this.handleRetry}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white rounded-[3px] text-xs font-semibold cursor-pointer shadow-xs hover:bg-teal-hover transition-colors"
+              >
+                <RefreshCw size={13} />
+                <span>Retry Map</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 export default function MineMap({
   prospectivityVisible,
@@ -292,26 +346,63 @@ export default function MineMap({
     return ids
   }, [prospectivityVisible, reserveZones, prospectivityData])
 
+  const [mapError, setMapError] = useState(null)
+  const [mapKey, setMapKey] = useState(0)
+
+  function handleMapError(event) {
+    const errorObj = event?.error || event
+    console.error('[MineMap runtime error]', errorObj)
+    const rawMsg = errorObj?.message || String(errorObj || '')
+
+    let category = 'map initialization'
+    if (
+      event?.dataType === 'style' ||
+      rawMsg.toLowerCase().includes('style') ||
+      rawMsg.toLowerCase().includes('positron') ||
+      rawMsg.toLowerCase().includes('liberty')
+    ) {
+      category = 'style loading'
+    } else if (
+      event?.dataType === 'source' ||
+      rawMsg.toLowerCase().includes('tile') ||
+      rawMsg.toLowerCase().includes('pbf')
+    ) {
+      category = 'tile loading'
+    }
+
+    setMapError({
+      category,
+      message: rawMsg || `Failed to load ${category} resources.`,
+    })
+  }
+
+  function handleRetryMap() {
+    setMapError(null)
+    setMapKey((k) => k + 1)
+  }
+
   const mapLib = useMemo(() => maplibregl, [])
 
   return (
     <div className="relative h-full w-full">
-      <Map
-        mapLib={mapLib}
-        ref={mapRef}
-        initialViewState={{
-          longitude: MAP_CENTER.longitude,
-          latitude: MAP_CENTER.latitude,
-          zoom: MAP_ZOOM,
-        }}
-        style={{ width: '100%', height: '100%' }}
-        mapStyle={BASEMAP_STYLES[basemapMode] || MAP_STYLE}
-        attributionControl={false}
-        interactiveLayerIds={interactiveLayerIds}
-        onClick={handleMapClick}
-        onMouseMove={handleMouseMove}
-        onLoad={onMapLoad}
-      >
+      <MapErrorBoundary key={mapKey} onRetry={handleRetryMap}>
+        <Map
+          mapLib={mapLib}
+          ref={mapRef}
+          initialViewState={{
+            longitude: MAP_CENTER.longitude,
+            latitude: MAP_CENTER.latitude,
+            zoom: MAP_ZOOM,
+          }}
+          style={{ width: '100%', height: '100%' }}
+          mapStyle={BASEMAP_STYLES[basemapMode] || MAP_STYLE}
+          attributionControl={false}
+          interactiveLayerIds={interactiveLayerIds}
+          onClick={handleMapClick}
+          onMouseMove={handleMouseMove}
+          onLoad={onMapLoad}
+          onError={handleMapError}
+        >
         {/* Real Terrain DEM Hillshade (AWS Open Data Terrarium, active in Terrain mode) */}
         {basemapMode === 'terrain' && (
           <Source
@@ -568,7 +659,40 @@ export default function MineMap({
             </div>
           </Popup>
         )}
-      </Map>
+        </Map>
+      </MapErrorBoundary>
+
+      {/* Defensive runtime warning banner for style / tile failures */}
+      {mapError && (
+        <div className="absolute top-16 left-4 z-20 max-w-sm rounded-[3px] border border-amber-500/40 bg-bg-surface/95 backdrop-blur-xs p-3 shadow-md">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={15} className="text-amber-500 shrink-0 mt-0.5" />
+            <div className="flex-1 text-xs">
+              <p className="font-semibold text-text-primary capitalize">
+                Map {mapError.category} issue
+              </p>
+              <p className="text-[11px] text-text-secondary mt-0.5 line-clamp-2">
+                {mapError.message}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRetryMap}
+              className="text-[11px] font-semibold text-teal hover:underline ml-2 shrink-0 cursor-pointer"
+            >
+              Retry
+            </button>
+            <button
+              type="button"
+              onClick={() => setMapError(null)}
+              className="text-text-muted hover:text-text-primary ml-1 text-xs cursor-pointer"
+              title="Dismiss"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Map Controls (Top-Left) */}
       <div className="absolute top-4 left-4 z-10 flex items-center gap-2">

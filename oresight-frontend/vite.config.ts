@@ -35,7 +35,7 @@ export default defineConfig({
   // works since that's main-thread, only WebGL tile painting fails). The
   // pre-Replit frontend excluded it for the same reason (vite.config.js).
   optimizeDeps: {
-    include: ['maplibre-gl'],
+    exclude: ['maplibre-gl'],
   },
   plugins: [
     react(),
