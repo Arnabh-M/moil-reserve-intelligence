@@ -1,10 +1,10 @@
 {
   "pipeline": "MOIL Reserve Intelligence \u2014 Site Daily Climate & Satellite Exporter",
   "script_version": "1.0.0",
-  "generated_at": "2026-09-22T07:41:36.137474+00:00",
+  "generated_at": "2026-09-22T19:07:51.689754+00:00",
   "start": "2025-01-01",
   "end": "2026-09-22",
-  "simulated": true,
+  "simulated": false,
   "geometry_source": {
     "balaghat": "bbox",
     "nagpur": "bbox",
@@ -16,32 +16,32 @@
       "band": "precipitation",
       "scale_m": 5566,
       "units": "mm/day",
-      "latest_valid_date": "2026-09-20",
-      "valid_day_count": 1884
+      "latest_valid_date": "2026-09-21",
+      "valid_day_count": 1887
     },
     "soil_moisture": {
       "dataset_id": "NASA/SMAP/SPL4SMGP/008",
       "band": "sm_surface",
       "scale_m": 9000,
       "units": "m3/m3",
-      "latest_valid_date": "2026-09-19",
-      "valid_day_count": 1881
+      "latest_valid_date": "2026-09-18",
+      "valid_day_count": 1878
     },
     "lst": {
       "dataset_id": "MODIS/061/MOD11A1",
       "band": "LST_Day_1km",
       "scale_m": 1000,
       "units": "deg_c",
-      "latest_valid_date": "2026-09-19",
-      "valid_day_count": 1423
+      "latest_valid_date": "2026-09-20",
+      "valid_day_count": 881
     },
     "ndvi": {
       "dataset_id": "COPERNICUS/S2_SR_HARMONIZED",
       "band": "NDVI=(B8-B4)/(B8+B4)",
       "scale_m": 30,
       "units": "unitless [-1, 1]",
-      "latest_valid_date": "2026-09-22",
-      "valid_day_count": 1865
+      "latest_valid_date": null,
+      "valid_day_count": 0
     }
   },
   "columns": [

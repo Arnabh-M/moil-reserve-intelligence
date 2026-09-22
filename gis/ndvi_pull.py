@@ -67,7 +67,11 @@ def mask_s2_clouds(image, ee_module):
     mask = ee_module.Image.constant(1)
     for val in [3, 8, 9, 10]:
         mask = mask.And(scl.neq(val))
-    return image.updateMask(mask).copyProperties(image, ["system:time_start", "CLOUDY_PIXEL_PERCENTAGE", "PRODUCT_ID"])
+    # .copyProperties() always returns a generic ee.Element (GEE API quirk) —
+    # cast back to ee.Image so Image-only methods stay available downstream.
+    return ee_module.Image(
+        image.updateMask(mask).copyProperties(image, ["system:time_start", "CLOUDY_PIXEL_PERCENTAGE", "PRODUCT_ID"])
+    )
 
 
 def fetch_latest_sentinel2_indices(ee_module, bbox=None, days_back=30):

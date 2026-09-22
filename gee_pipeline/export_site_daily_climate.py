@@ -641,7 +641,10 @@ def fetch_live_climate_dataset(
                     .filterBounds(ee_geom)
                 )
                 def process_s2(img):
-                    masked = mask_s2_clouds(img, ee)
+                    # mask_s2_clouds() ends in .copyProperties(), which always returns a
+                    # generic ee.Element (GEE API quirk) — cast back to ee.Image so
+                    # Image-only methods like normalizedDifference() are available.
+                    masked = ee.Image(mask_s2_clouds(img, ee))
                     ndvi = masked.normalizedDifference(["B8", "B4"]).rename("ndvi")
                     # Clear mask is where mask == 1
                     clear_mask = masked.select("B4").mask()
