@@ -1,8 +1,8 @@
 """Routes for mining equipment: list, status updates, and status history."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
@@ -21,6 +21,8 @@ from app.schemas import (
     EquipmentStatusLogOut,
     EquipmentStatusUpdate,
 )
+from app.schemas.equipment import EquipmentDetailMetricsOut, EquipmentMetricsOut
+from app.services import equipment_metrics
 from app.services.lookups import get_equipment_or_404, get_site_or_404
 
 router = APIRouter(prefix="/equipment", tags=["equipment"])
@@ -56,6 +58,66 @@ def list_equipment(
         stmt = stmt.where(Equipment.site_id == site_id)
     equipment_rows = db.scalars(stmt).all()
     return [_equipment_to_out(e) for e in equipment_rows]
+
+
+@router.get(
+    "/metrics",
+    response_model=EquipmentMetricsOut,
+    summary="Fleet equipment performance metrics",
+    description=(
+        "Availability, failures, MTBF, MTTR, and maintenance-due status for "
+        "every machine (optionally filtered to one site) plus fleet totals, "
+        "over an analysis window. Declared before /{equipment_id} routes so "
+        "'metrics' is never read as an id. See docs/EQUIPMENT_METRICS.md for "
+        "every definition and formula."
+    ),
+)
+def get_fleet_equipment_metrics(
+    site_id: int | None = Query(None, description="Filter to one site's equipment"),
+    start: date | None = Query(None, description="Window start date (YYYY-MM-DD)"),
+    end: date | None = Query(None, description="Window end date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+) -> EquipmentMetricsOut:
+    if site_id is not None:
+        get_site_or_404(db, site_id)
+
+    try:
+        result = equipment_metrics.get_fleet_metrics(db, site_id=site_id, start=start, end=end)
+    except equipment_metrics.InvalidWindowError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except equipment_metrics.WindowTooLongError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return EquipmentMetricsOut(**result)
+
+
+@router.get(
+    "/{equipment_id}/metrics",
+    response_model=EquipmentDetailMetricsOut,
+    summary="One equipment unit's performance metrics",
+    description=(
+        "Same fields as one entry in GET /equipment/metrics's 'equipment' "
+        "array, plus a weekly downtime/availability series and the raw "
+        "downtime events used to compute them, over an analysis window. See "
+        "docs/EQUIPMENT_METRICS.md for every definition and formula."
+    ),
+)
+def get_one_equipment_metrics(
+    equipment_id: int,
+    start: date | None = Query(None, description="Window start date (YYYY-MM-DD)"),
+    end: date | None = Query(None, description="Window end date (YYYY-MM-DD)"),
+    db: Session = Depends(get_db),
+) -> EquipmentDetailMetricsOut:
+    equipment = get_equipment_or_404(db, equipment_id)
+
+    try:
+        result = equipment_metrics.get_equipment_metrics(db, equipment, start=start, end=end)
+    except equipment_metrics.InvalidWindowError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except equipment_metrics.WindowTooLongError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return EquipmentDetailMetricsOut(**result)
 
 
 @router.get(
