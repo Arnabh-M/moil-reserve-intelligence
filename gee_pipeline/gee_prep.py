@@ -39,7 +39,7 @@ from gee_pipeline.ee_auth import get_ee
 
 # Format: [min_lon (West), min_lat (South), max_lon (East), max_lat (North)]
 # Covers Balaghat (MP), Nagpur & Bhandara (MH) manganese mining belt
-DEFAULT_BBOX = list(COMBINED_BBOX)  # [79.0, 21.0, 80.4, 22.0]
+DEFAULT_BBOX = list(COMBINED_BBOX)  # [west, south, east, north] from data/moil_sites.json
 
 DEFAULT_EXPORT_SCALE = 250
 DEFAULT_CRS = "EPSG:4326"

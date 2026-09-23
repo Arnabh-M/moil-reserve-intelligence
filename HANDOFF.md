@@ -1,4 +1,4 @@
-# Handoff — branch `fix/site-aois` (Phases 1-3 done; 4-5 remain, then merge to `main`)
+# Handoff — branch `fix/site-aois` (Phases 1-5 done; ready for a visual check, then merge to `main`)
 
 ## 1. What this branch changed
 - **Corrected site boxes.** Nagpur and Bhandara were centred on the cities, 30-50 km from any real MOIL mine;
@@ -18,32 +18,35 @@ Prospectivity features: NDVI anomaly = last 90 days vs the same 90 days of year 
 indices from the Feb-May dry-season composite; terrain at native 30 m. Cells with a missing feature are no-data
 (dropped, never imputed). Labels are still synthetic; CV AUCs are chance-level (see `prospectivity/RESULTS.md`).
 
-## 3. Still stale (exact commands)
-- `oresight-backend/docs/API_CONTRACT.md`, `docs/openapi.json`: `python -m scripts.export_contract` from
-  `oresight-backend/` (needs the API running).
-- `prospectivity/METHODOLOGY.md`: site areas (810.8 / 142.5 / 193.5 km2) and grid dimensions/cell counts (Balaghat
-  81,147, Nagpur 14,248, Bhandara 19,365 at 100 m) in sections 3.2 and 4, by hand. (Feature windows are current.)
+## 3. Docs (all current)
+- `oresight-backend/docs/API_CONTRACT.md` + `docs/openapi.json` regenerated from the rebuilt API
+  (`python -m scripts.export_contract`, backend venv). It has an endpoint-sync guard: add every new route to
+  `STATUS_TABLE` in that script or it refuses to run. It flips equipment status temporarily, so run
+  `rebuild_demo_db` + `backfill_equipment_status_log` afterwards (see section 5).
+- `prospectivity/METHODOLOGY.md`: site areas, grid dimensions and feature windows are current.
 
-## 4. Remaining phases
-- **Phase 4:** `docker compose build api`; `python -m scripts.export_contract`; update METHODOLOGY.md; search the
-  repo for leftover old coordinates (old Nagpur/Bhandara city-centred boxes).
-- **Phase 5:** `python -m scripts.build_site_aois --check`; full backend suite (`pytest` in `oresight-backend/`);
-  then `python -m scripts.rebuild_demo_db` and `python -m scripts.backfill_equipment_status_log`; live API checks on
-  `/sites`, `/reserve-zones`, `/equipment/metrics`; in `oresight-frontend/`: `pnpm install`, `pnpm typecheck`,
-  `pnpm build`, smoke tests. Then merge into `main`.
+## 4. Remaining
+- Merge `fix/site-aois` into `main` after a visual check.
+- **Re-export the prospectivity layers once** (`python -m prospectivity.classify_export`, offline) so class breaks
+  use real Jenks (`jenkspy` is now installed and in `requirements.txt`). Scores do not change; ~0.15% of cells
+  (20 of 12,934) change band.
+- Two "confidence" numbers exist: reserve-zone scores (0.24-0.97, offline "Pipeline B" kriged RF surface via
+  `import_prospectivity_scores`) and the per-site map layers (trained ensemble, e.g. Nagpur 0.01-0.68). They come
+  from different pipelines and are not comparable; unify before showing both to a user.
 
 ## 5. Known issues
-- The `oresight-api` Docker image is stale and lacks `/equipment/metrics` until rebuilt (`docker compose build api`).
 - `tests/test_smoke.py::test_simulate_after_differs_from_before` is xfail pending Tasks 2/3: the shortfall model is
   non-monotonic in downtime (baseline: `equipment_down` points the right way on only 212/365 days at Balaghat).
-- `pnpm typecheck` needs `pnpm install` to add typescript (`tsc` is missing locally).
 - NDVI tile week 1 (Aug 26 - Sep 2) is `no_data`: all six scenes were 97-100% cloud.
 - Balaghat has 17.6% no-data map cells (no clear Sentinel-2 pixel in a window); Bhandara 4.4%, Nagpur 0.03%.
-- `jenkspy` is not installed; class breaks use the built-in 1-D k-means fallback.
+- `/equipment/metrics` windows end at the data's last day (Aug 24-30), not today; availability is ~99.5%+ everywhere
+  (seed data has few downtime events).
 
 ## 6. Test suite warning
 The full backend suite writes to the demo DB. After ANY full run, rerun `python -m scripts.rebuild_demo_db` and
 `python -m scripts.backfill_equipment_status_log` (from `oresight-backend/`).
+Order matters: `rebuild_demo_db` -> tests -> `rebuild_demo_db` again (`export_contract` also leaves
+status-flip history that breaks `test_equipment_status_down_creates_risk_event` until the DB is rebuilt).
 Fast tests that are safe: `python -m pytest prospectivity gee_pipeline gis -q`.
 
 ## 7. GEE setup (for whoever runs GEE steps next)

@@ -151,9 +151,16 @@ makes "Moderate" a relative term and breaks cross-model comparison.
 
 ### 3.2 Analysis resolution vs render resolution (Parts 5.2 / 7)
 
-Analysis runs at the specified **100 m** cells. That yields 89,071 cells across
-the three sites; as individual GeoJSON polygons that is ~40–55 MB, far too heavy
-for a browser layer.
+Analysis runs at the specified **100 m** cells. That yields 114,760 cells across
+the three sites (`python -m prospectivity.grid`):
+
+| Site | Area (km²) | Width × height (m) | Cols × rows | Bbox cells | In-polygon cells |
+|---|---|---|---|---|---|
+| Balaghat | 810.8 (811.3 in UTM) | 34,807 × 23,507 | 349 × 236 | 82,364 | 81,147 |
+| Nagpur | 142.5 | 11,541 × 12,618 | 116 × 127 | 14,732 | 14,248 |
+| Bhandara | 193.5 | 16,139 × 12,191 | 162 × 122 | 19,764 | 19,365 |
+
+As individual GeoJSON polygons that is tens of MB, far too heavy for a browser layer.
 
 Export therefore takes an `aggregate` factor (default 3 → **300 m** render
 cells), and each exported cell carries the **mean** of its constituent 100 m
@@ -168,7 +175,7 @@ cells, so the click-detail panel still shows real per-cell values. Use
   142.5 km², Bhandara 193.5 km²). These are the AOIs defined in
   `data/moil_sites.json`: each one is the bounding box of that site's MOIL
   mines plus a 5 km buffer, and PostGIS is seeded from the same file, so the
-  polygon here and the box on the map cannot differ. (Before that change the
+  polygon here and the box on the map cannot differ. (HISTORICAL — superseded: before that change the
   areas were 371.0 / 294.4 / 225.4 km², boxes centred on Nagpur city and
   Bhandara town that contained none of the mines they were named after.)
 - Per-site grids at a fixed 100 m cell size, dimensions derived from real

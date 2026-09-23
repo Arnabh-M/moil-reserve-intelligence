@@ -6,6 +6,31 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -225,13 +250,345 @@
         }
       }
     },
+    "/equipment/metrics": {
+      "get": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "Fleet equipment performance metrics",
+        "description": "Availability, failures, MTBF, MTTR, and maintenance-due status for every machine (optionally filtered to one site) plus fleet totals, over an analysis window. Declared before /{equipment_id} routes so 'metrics' is never read as an id. See docs/EQUIPMENT_METRICS.md for every definition and formula.",
+        "operationId": "get_fleet_equipment_metrics_equipment_metrics_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site's equipment",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site's equipment"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Window start date (YYYY-MM-DD)",
+              "title": "Start"
+            },
+            "description": "Window start date (YYYY-MM-DD)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Window end date (YYYY-MM-DD)",
+              "title": "End"
+            },
+            "description": "Window end date (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentMetricsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/equipment/{equipment_id}/metrics": {
+      "get": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "One equipment unit's performance metrics",
+        "description": "Same fields as one entry in GET /equipment/metrics's 'equipment' array, plus a weekly downtime/availability series and the raw downtime events used to compute them, over an analysis window. See docs/EQUIPMENT_METRICS.md for every definition and formula.",
+        "operationId": "get_one_equipment_metrics_equipment__equipment_id__metrics_get",
+        "parameters": [
+          {
+            "name": "equipment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Equipment Id"
+            }
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Window start date (YYYY-MM-DD)",
+              "title": "Start"
+            },
+            "description": "Window start date (YYYY-MM-DD)"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Window end date (YYYY-MM-DD)",
+              "title": "End"
+            },
+            "description": "Window end date (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentDetailMetricsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/equipment/history": {
+      "get": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "Site-wide equipment status history",
+        "description": "Newest-first status-change history across a site (or every site).",
+        "operationId": "list_equipment_history_equipment_history_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only rows changed at or after this time",
+              "title": "Since"
+            },
+            "description": "Only rows changed at or after this time"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EquipmentStatusLogOut"
+                  },
+                  "title": "Response List Equipment History Equipment History Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/equipment/{equipment_id}/history": {
+      "get": {
+        "tags": [
+          "equipment"
+        ],
+        "summary": "One equipment unit's status history",
+        "description": "Cursor-paginated (on `changed_at`), newest-first. Pass the previous\npage's `next_cursor` as `before` to fetch the next page.",
+        "operationId": "get_equipment_history_equipment__equipment_id__history_get",
+        "parameters": [
+          {
+            "name": "equipment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Equipment Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cursor: only rows changed before this time",
+              "title": "Before"
+            },
+            "description": "Cursor: only rows changed before this time"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquipmentHistoryPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/equipment/{equipment_id}/status": {
       "post": {
         "tags": [
           "equipment"
         ],
         "summary": "Update an equipment's status",
-        "description": "Update an equipment's status and reason. Transitioning it from 'up' to\n'down' also opens a high-severity `equipment_failure` risk event for its\nsite \u2014 re-posting 'down' while it's already down (e.g. just to update the\nreason text) does not open a second one.",
+        "description": "Update an equipment's status and reason. Transitioning it from 'up' to\n'down' also opens a high-severity `equipment_failure` risk event for its\nsite \u2014 re-posting 'down' while it's already down (e.g. just to update the\nreason text) does not open a second one.\n\nAlso writes one `equipment_status_log` row in the same transaction as the\nstatus update (Field Intake Hardening \u00a72.1) \u2014 if the log insert fails,\nthe whole request fails, so history is never silently incomplete. If that\nrow pushes the equipment's log count within\n`EQUIPMENT_FLAP_WINDOW_HOURS` above `EQUIPMENT_FLAP_THRESHOLD`, one\nmedium-severity `equipment_flapping` risk event is opened (deduped the\nsame way as `equipment_failure`), and the response's additive `flapping`\nfield reflects the current flap state regardless of whether a new event\nwas opened.",
         "operationId": "update_equipment_status_equipment__equipment_id__status_post",
         "parameters": [
           {
@@ -271,6 +628,54 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/production/shortfall-reasons": {
+      "get": {
+        "tags": [
+          "production"
+        ],
+        "summary": "List the shortfall-reason vocabulary",
+        "description": "The backend-owned source of truth for the Production tab's shortfall\nchips, so the frontend doesn't hardcode a second copy that can drift.",
+        "operationId": "list_shortfall_reasons_production_shortfall_reasons_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ShortfallReasonOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Shortfall Reasons Production Shortfall Reasons Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/production/thresholds": {
+      "get": {
+        "tags": [
+          "production"
+        ],
+        "summary": "Get the variance-classification thresholds",
+        "description": "The same on_target/slightly_below/significantly_below cut points the\nserver uses to compute `variance_class`, so the frontend's live preview\nnever drifts from what gets persisted.",
+        "operationId": "get_thresholds_production_thresholds_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionThresholdsOut"
                 }
               }
             }
@@ -352,7 +757,7 @@
           "production"
         ],
         "summary": "Record a day's production",
-        "description": "Insert a new production record. Returns 409 if one already exists for\nthis site and date.",
+        "description": "Insert a new production record. Returns 409 if one already exists for\nthis site, date, and shift.\n\nCross-field validation (operating_hours + downtime_hours <= 24, an\n'other' shortfall reason requiring shortfall_other_note) is enforced by\nthe request schema itself. The significantly-below-requires-a-reason\nrule can't live in the schema \u2014 it depends on the computed variance \u2014\nso it's checked here instead.",
         "operationId": "create_production_record_production_post",
         "requestBody": {
           "required": true,
@@ -366,6 +771,59 @@
         },
         "responses": {
           "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionRecordOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/production/{record_id}": {
+      "patch": {
+        "tags": [
+          "production"
+        ],
+        "summary": "Edit a production record within the edit window",
+        "description": "Partially update a production record and log every changed field to\n`production_record_audit`.\n\n- Unknown id -> 404.\n- Outside `PRODUCTION_EDIT_WINDOW_HOURS` since creation -> 403. (A\n  supervisor-role bypass is planned for the auth phase \u2014 not implemented\n  yet, so today this is a hard cutoff for everyone; see\n  IMPLEMENTATION_NOTES.md.)\n- Same operating_hours+downtime_hours<=24 and significantly_below-needs-\n  a-reason rules as POST, re-checked against the *resulting* record\n  (existing values merged with whatever this PATCH changes).",
+        "operationId": "update_production_record_production__record_id__patch",
+        "parameters": [
+          {
+            "name": "record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Record Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductionRecordUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -650,6 +1108,115 @@
         }
       }
     },
+    "/shift-plan": {
+      "post": {
+        "tags": [
+          "shift-plan"
+        ],
+        "summary": "Add a recommendation option to the shift plan",
+        "description": "Persist one chosen recommendation option.\n\n`site_id` is taken from the referenced risk event, not the request body.\n\n- Unknown `risk_event_id` -> 404 (shared `get_risk_event_or_404`).\n- Bad option shape (unknown `option_type`, impact/confidence out of\n  range, blank description) -> 422 via the global validation handler.\n- Postgres unreachable -> 503 (app-level handler).\n- Any other write failure -> 502, so the caller gets a clear \"upstream\n  failed\" instead of an opaque 500.",
+        "operationId": "add_to_shift_plan_shift_plan_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShiftPlanEntryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShiftPlanEntryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "shift-plan"
+        ],
+        "summary": "List a site's shift plan entries (newest first)",
+        "description": "Return every shift plan entry for a site, most recently added first.\n\n- Unknown `site_id` -> 404.\n- A site with no entries yet -> a normal 200 `[]`, not an error.",
+        "operationId": "list_shift_plan_shift_plan_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "The site whose shift plan to return",
+              "title": "Site Id"
+            },
+            "description": "The site whose shift plan to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShiftPlanEntryOut"
+                  },
+                  "title": "Response List Shift Plan Shift Plan Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/simulate/training-ranges": {
+      "get": {
+        "tags": [
+          "simulation"
+        ],
+        "summary": "Training data ranges for condition-type hints",
+        "description": "Return per-condition-type severity/duration statistics derived from the\ntraining data CSVs.  Used by the Simulator UI to show honest range hints\non each ConditionCard (e.g. \"Typical range in training data: 0\u20135% severity,\n0.1\u20131.9 days\").  Returns 503 if the ranges file hasn't been produced yet.",
+        "operationId": "training_ranges_simulate_training_ranges_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/simulate": {
       "post": {
         "tags": [
@@ -836,6 +1403,308 @@
         }
       }
     },
+    "/blast-events": {
+      "get": {
+        "tags": [
+          "blasting"
+        ],
+        "summary": "List blast events",
+        "description": "Return blast events, newest planned date first.",
+        "operationId": "list_blast_events_blast_events_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site's blasts",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site's blasts"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status: planned/completed/delayed/cancelled",
+              "title": "Status"
+            },
+            "description": "Filter by status: planned/completed/delayed/cancelled"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlastEventOut"
+                  },
+                  "title": "Response List Blast Events Blast Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "blasting"
+        ],
+        "summary": "Plan a blast",
+        "description": "Log a planned blast. Always starts at status `planned`; the outcome is\nrecorded later via PATCH.",
+        "operationId": "create_blast_event_blast_events_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlastEventCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlastEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/blast-events/summary": {
+      "get": {
+        "tags": [
+          "blasting"
+        ],
+        "summary": "Tonnes lost grouped by delay reason",
+        "description": "Aggregate lost tonnage by delay reason across `delayed` and `cancelled`\nblasts. Completed and still-planned blasts are excluded: nothing is lost\nyet on a blast that either fired or has not come due.\n\n`tonnes_lost` is expected minus whatever was actually recovered, treating a\nmissing actual yield as zero.",
+        "operationId": "get_blast_delay_summary_blast_events_summary_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to one site's blasts",
+              "title": "Site Id"
+            },
+            "description": "Filter to one site's blasts"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only blasts planned on/after this date",
+              "title": "From"
+            },
+            "description": "Only blasts planned on/after this date"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only blasts planned on/before this date",
+              "title": "To"
+            },
+            "description": "Only blasts planned on/before this date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BlastDelaySummaryRow"
+                  },
+                  "title": "Response Get Blast Delay Summary Blast Events Summary Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/blast-events/{blast_event_id}": {
+      "get": {
+        "tags": [
+          "blasting"
+        ],
+        "summary": "Get one blast event",
+        "description": "Return a single blast event, or 404 if it does not exist.",
+        "operationId": "get_blast_event_blast_events__blast_event_id__get",
+        "parameters": [
+          {
+            "name": "blast_event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Blast Event Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlastEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "blasting"
+        ],
+        "summary": "Record a blast's outcome",
+        "description": "Update a blast's outcome.\n\n- Moving to `delayed`/`cancelled` requires a `delay_reason`, either in this\n  request or already stored on the row -> otherwise 422.\n- Moving to `completed` requires `actual_date` and `actual_yield_tonnes`\n  -> otherwise 422.",
+        "operationId": "update_blast_event_blast_events__blast_event_id__patch",
+        "parameters": [
+          {
+            "name": "blast_event_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Blast Event Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlastEventUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlastEventOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/demo/scenarios": {
       "get": {
         "tags": [
@@ -887,10 +1756,466 @@
           }
         }
       }
+    },
+    "/config/upload-limits": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Get the survey-report upload limits",
+        "description": "The single source of truth for `POST /reports/upload`'s size/type\nlimits, so the Geology tab's dropzone copy and client-side check never\ndrift from what the server actually enforces.",
+        "operationId": "get_upload_limits_config_upload_limits_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Upload Limits Config Upload Limits Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/weather/current": {
+      "get": {
+        "tags": [
+          "weather"
+        ],
+        "summary": "Get current meteorological conditions for a site",
+        "description": "Return live current weather sampled at the site's centroid from Open-Meteo.\n\nValidates that the site exists, extracts its WGS84 centroid coordinates,\nfetches live observation values, optionally persists the record, and returns\na normalized response.",
+        "operationId": "get_current_weather_weather_current_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "ID of the mine site",
+              "title": "Site Id"
+            },
+            "description": "ID of the mine site"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentWeatherResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/weather/forecast": {
+      "get": {
+        "tags": [
+          "weather"
+        ],
+        "summary": "Get hourly meteorological forecast for a site",
+        "description": "Return hourly meteorological forecast sampled at the site's centroid from Open-Meteo.\n\nValidates that the site exists, extracts its WGS84 centroid coordinates,\nfetches short-term hourly forecast data, and returns normalized forecast steps.",
+        "operationId": "get_forecast_weather_weather_forecast_get",
+        "parameters": [
+          {
+            "name": "site_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "ID of the mine site",
+              "title": "Site Id"
+            },
+            "description": "ID of the mine site"
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 168,
+              "minimum": 1,
+              "description": "Forecast horizon in hours (1-168)",
+              "default": 48,
+              "title": "Hours"
+            },
+            "description": "Forecast horizon in hours (1-168)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastWeatherResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "BlastDelaySummaryRow": {
+        "properties": {
+          "delay_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "permit_pending",
+                  "weather_hold",
+                  "safety_hold",
+                  "equipment_unavailable",
+                  "explosive_supply"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Reason"
+          },
+          "event_count": {
+            "type": "integer",
+            "title": "Event Count"
+          },
+          "expected_yield_tonnes": {
+            "type": "number",
+            "title": "Expected Yield Tonnes"
+          },
+          "actual_yield_tonnes": {
+            "type": "number",
+            "title": "Actual Yield Tonnes"
+          },
+          "tonnes_lost": {
+            "type": "number",
+            "title": "Tonnes Lost"
+          }
+        },
+        "type": "object",
+        "required": [
+          "delay_reason",
+          "event_count",
+          "expected_yield_tonnes",
+          "actual_yield_tonnes",
+          "tonnes_lost"
+        ],
+        "title": "BlastDelaySummaryRow",
+        "description": "One delay reason's contribution to lost tonnes. Only `delayed` and\n`cancelled` blasts are counted \u2014 a completed blast lost nothing.",
+        "example": {
+          "actual_yield_tonnes": 0.0,
+          "delay_reason": "permit_pending",
+          "event_count": 3,
+          "expected_yield_tonnes": 5400.0,
+          "tonnes_lost": 5400.0
+        }
+      },
+      "BlastEventCreate": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "reserve_zone_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reserve Zone Id"
+          },
+          "planned_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Planned Date"
+          },
+          "expected_yield_tonnes": {
+            "type": "number",
+            "maximum": 100000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Expected Yield Tonnes",
+            "description": "Planned tonnes from this blast; must be positive"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "planned_date",
+          "expected_yield_tonnes"
+        ],
+        "title": "BlastEventCreate",
+        "example": {
+          "expected_yield_tonnes": 1800.0,
+          "notes": "Bench 4 north face, twin-row pattern.",
+          "planned_date": "2026-09-10",
+          "reserve_zone_id": 3,
+          "site_id": 1
+        }
+      },
+      "BlastEventOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "reserve_zone_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reserve Zone Id"
+          },
+          "planned_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Planned Date"
+          },
+          "actual_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Date"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "planned",
+              "completed",
+              "delayed",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "delay_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "permit_pending",
+                  "weather_hold",
+                  "safety_hold",
+                  "equipment_unavailable",
+                  "explosive_supply"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Reason"
+          },
+          "expected_yield_tonnes": {
+            "type": "number",
+            "title": "Expected Yield Tonnes"
+          },
+          "actual_yield_tonnes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Yield Tonnes"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "site_id",
+          "reserve_zone_id",
+          "planned_date",
+          "actual_date",
+          "status",
+          "delay_reason",
+          "expected_yield_tonnes",
+          "actual_yield_tonnes",
+          "notes",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BlastEventOut",
+        "example": {
+          "created_at": "2026-09-07T09:15:00Z",
+          "delay_reason": "permit_pending",
+          "expected_yield_tonnes": 1800.0,
+          "id": 7,
+          "notes": "District explosives permit renewal still with the controller.",
+          "planned_date": "2026-09-10",
+          "reserve_zone_id": 3,
+          "site_id": 1,
+          "status": "delayed",
+          "updated_at": "2026-09-07T11:40:00Z"
+        }
+      },
+      "BlastEventUpdate": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "planned",
+                  "completed",
+                  "delayed",
+                  "cancelled"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "actual_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Date"
+          },
+          "delay_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "permit_pending",
+                  "weather_hold",
+                  "safety_hold",
+                  "equipment_unavailable",
+                  "explosive_supply"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Reason"
+          },
+          "actual_yield_tonnes": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Yield Tonnes",
+            "description": "Tonnes actually recovered; non-negative"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "title": "BlastEventUpdate",
+        "description": "Partial update. Cross-field rules (a delayed/cancelled blast needs a\n`delay_reason`; a completed one needs `actual_date` + `actual_yield_tonnes`)\ndepend on the stored row, so the router enforces them, not this schema.",
+        "example": {
+          "actual_date": "2026-09-11",
+          "actual_yield_tonnes": 1725.5,
+          "notes": "Fired a day late; fragmentation within spec.",
+          "status": "completed"
+        }
+      },
       "Body_upload_report_reports_upload_post": {
         "properties": {
           "file": {
@@ -905,6 +2230,72 @@
           "file"
         ],
         "title": "Body_upload_report_reports_upload_post"
+      },
+      "CascadeResult": {
+        "properties": {
+          "shift_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shift Days"
+          },
+          "entities_affected": {
+            "type": "integer",
+            "title": "Entities Affected"
+          },
+          "blocking_count": {
+            "type": "integer",
+            "title": "Blocking Count"
+          },
+          "cascade_severity": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low",
+              "moderate",
+              "high"
+            ],
+            "title": "Cascade Severity"
+          },
+          "cascade_adjusted_impact": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cascade Adjusted Impact"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "impacted": {
+            "items": {
+              "$ref": "#/components/schemas/ImpactedEntity"
+            },
+            "type": "array",
+            "title": "Impacted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "shift_days",
+          "entities_affected",
+          "blocking_count",
+          "cascade_severity",
+          "cascade_adjusted_impact",
+          "explanation"
+        ],
+        "title": "CascadeResult",
+        "description": "Downstream ripple impact of acting on a recommendation option \u2014 a\ndeterministic graph-traversal + rule-evaluation result, never\nmodel-generated. Optional/additive: absent or null whenever cascade\ncomputation isn't available or fails (see cascade_service.compute_cascade)."
       },
       "CausalGraphOut": {
         "properties": {
@@ -1000,6 +2391,294 @@
               "type": "RiskEvent"
             }
           ]
+        }
+      },
+      "ConditionInput": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "equipment_down",
+              "delay_blasting",
+              "rainfall_event"
+            ],
+            "title": "Type"
+          },
+          "equipment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Equipment"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 365.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "ConditionInput"
+      },
+      "ConditionOODStatus": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index",
+            "default": 0
+          },
+          "scenario_type": {
+            "type": "string",
+            "title": "Scenario Type"
+          },
+          "out_of_distribution": {
+            "type": "boolean",
+            "title": "Out Of Distribution",
+            "default": false
+          },
+          "severity_out_of_distribution": {
+            "type": "boolean",
+            "title": "Severity Out Of Distribution",
+            "default": false
+          },
+          "duration_out_of_distribution": {
+            "type": "boolean",
+            "title": "Duration Out Of Distribution",
+            "default": false
+          },
+          "severity_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity Value"
+          },
+          "duration_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Value"
+          },
+          "severity_valid_range": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity Valid Range"
+          },
+          "duration_valid_range": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Valid Range"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario_type"
+        ],
+        "title": "ConditionOODStatus"
+      },
+      "CurrentWeatherResponse": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_name": {
+            "type": "string",
+            "title": "Site Name"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "temperature_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature C"
+          },
+          "relative_humidity_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Humidity Pct"
+          },
+          "precipitation_mm": {
+            "type": "number",
+            "title": "Precipitation Mm",
+            "default": 0.0
+          },
+          "rain_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rain Mm"
+          },
+          "wind_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Speed Kmh"
+          },
+          "wind_direction_deg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Direction Deg"
+          },
+          "weather_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather Code"
+          },
+          "weather_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather Description"
+          },
+          "is_forecast": {
+            "type": "boolean",
+            "title": "Is Forecast",
+            "default": false
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "open-meteo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "site_name",
+          "latitude",
+          "longitude",
+          "timestamp"
+        ],
+        "title": "CurrentWeatherResponse",
+        "example": {
+          "is_forecast": false,
+          "latitude": 21.87,
+          "longitude": 80.23,
+          "precipitation_mm": 0.0,
+          "rain_mm": 0.0,
+          "relative_humidity_pct": 86.0,
+          "site_id": 1,
+          "site_name": "Balaghat Mine",
+          "source": "open-meteo",
+          "temperature_c": 25.7,
+          "timestamp": "2026-09-08T17:15:00Z",
+          "weather_code": 1,
+          "weather_description": "Mainly clear",
+          "wind_direction_deg": 233.0,
+          "wind_speed_kmh": 0.9
         }
       },
       "DemoScenarioOut": {
@@ -1101,6 +2780,564 @@
           "site_name": "Nagpur"
         }
       },
+      "DowntimeEventOut": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "hours": {
+            "type": "number",
+            "title": "Hours"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "hours",
+          "reason",
+          "category",
+          "source"
+        ],
+        "title": "DowntimeEventOut"
+      },
+      "DowntimeHoursByCategory": {
+        "properties": {
+          "planned_maintenance": {
+            "type": "number",
+            "title": "Planned Maintenance"
+          },
+          "failure": {
+            "type": "number",
+            "title": "Failure"
+          },
+          "spare_parts_wait": {
+            "type": "number",
+            "title": "Spare Parts Wait"
+          },
+          "operational": {
+            "type": "number",
+            "title": "Operational"
+          },
+          "weather": {
+            "type": "number",
+            "title": "Weather"
+          },
+          "other": {
+            "type": "number",
+            "title": "Other"
+          }
+        },
+        "type": "object",
+        "required": [
+          "planned_maintenance",
+          "failure",
+          "spare_parts_wait",
+          "operational",
+          "weather",
+          "other"
+        ],
+        "title": "DowntimeHoursByCategory",
+        "description": "Downtime hours split by reason category \u2014 see\napp/constants/equipment_assumptions.py for the reason -> category map."
+      },
+      "EquipmentDetailMetricsOut": {
+        "properties": {
+          "equipment_id": {
+            "type": "integer",
+            "title": "Equipment Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "equipment_type": {
+            "type": "string",
+            "title": "Equipment Type"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Status"
+          },
+          "physical_availability_pct": {
+            "type": "number",
+            "title": "Physical Availability Pct"
+          },
+          "overall_availability_pct": {
+            "type": "number",
+            "title": "Overall Availability Pct"
+          },
+          "failures": {
+            "type": "integer",
+            "title": "Failures"
+          },
+          "mtbf_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mtbf Hours"
+          },
+          "mttr_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mttr Hours"
+          },
+          "downtime_hours": {
+            "type": "number",
+            "title": "Downtime Hours"
+          },
+          "downtime_hours_by_category": {
+            "$ref": "#/components/schemas/DowntimeHoursByCategory"
+          },
+          "top_failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Failure Reason"
+          },
+          "last_maintenance_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Maintenance At"
+          },
+          "days_since_last_maintenance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Since Last Maintenance"
+          },
+          "next_maintenance_due": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Maintenance Due"
+          },
+          "maintenance_status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "due_soon",
+              "overdue",
+              "unknown"
+            ],
+            "title": "Maintenance Status"
+          },
+          "utilisation_pct": {
+            "type": "null",
+            "title": "Utilisation Pct"
+          },
+          "utilisation_note": {
+            "type": "string",
+            "title": "Utilisation Note"
+          },
+          "weekly": {
+            "items": {
+              "$ref": "#/components/schemas/WeeklyMetricsPoint"
+            },
+            "type": "array",
+            "title": "Weekly"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/DowntimeEventOut"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "equipment_id",
+          "name",
+          "equipment_type",
+          "site_id",
+          "status",
+          "physical_availability_pct",
+          "overall_availability_pct",
+          "failures",
+          "mtbf_hours",
+          "mttr_hours",
+          "downtime_hours",
+          "downtime_hours_by_category",
+          "top_failure_reason",
+          "last_maintenance_at",
+          "days_since_last_maintenance",
+          "next_maintenance_due",
+          "maintenance_status",
+          "utilisation_note",
+          "weekly",
+          "events"
+        ],
+        "title": "EquipmentDetailMetricsOut",
+        "description": "GET /equipment/{equipment_id}/metrics response body \u2014 the same\nfields as one \"equipment\" array entry above, plus weekly and events. No\nwindow/assumptions/data_note wrapper (unlike the fleet endpoint)."
+      },
+      "EquipmentHistoryPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EquipmentStatusLogOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "EquipmentHistoryPage",
+        "description": "Cursor-paginated page of status-log rows, newest first."
+      },
+      "EquipmentMetricsAssumptions": {
+        "properties": {
+          "maintenance_interval_days": {
+            "type": "integer",
+            "title": "Maintenance Interval Days"
+          },
+          "due_soon_days": {
+            "type": "integer",
+            "title": "Due Soon Days"
+          },
+          "categories": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Categories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "maintenance_interval_days",
+          "due_soon_days",
+          "categories"
+        ],
+        "title": "EquipmentMetricsAssumptions"
+      },
+      "EquipmentMetricsEntryOut": {
+        "properties": {
+          "equipment_id": {
+            "type": "integer",
+            "title": "Equipment Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "equipment_type": {
+            "type": "string",
+            "title": "Equipment Type"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down"
+            ],
+            "title": "Status"
+          },
+          "physical_availability_pct": {
+            "type": "number",
+            "title": "Physical Availability Pct"
+          },
+          "overall_availability_pct": {
+            "type": "number",
+            "title": "Overall Availability Pct"
+          },
+          "failures": {
+            "type": "integer",
+            "title": "Failures"
+          },
+          "mtbf_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mtbf Hours"
+          },
+          "mttr_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mttr Hours"
+          },
+          "downtime_hours": {
+            "type": "number",
+            "title": "Downtime Hours"
+          },
+          "downtime_hours_by_category": {
+            "$ref": "#/components/schemas/DowntimeHoursByCategory"
+          },
+          "top_failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top Failure Reason"
+          },
+          "last_maintenance_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Maintenance At"
+          },
+          "days_since_last_maintenance": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Since Last Maintenance"
+          },
+          "next_maintenance_due": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Maintenance Due"
+          },
+          "maintenance_status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "due_soon",
+              "overdue",
+              "unknown"
+            ],
+            "title": "Maintenance Status"
+          },
+          "utilisation_pct": {
+            "type": "null",
+            "title": "Utilisation Pct"
+          },
+          "utilisation_note": {
+            "type": "string",
+            "title": "Utilisation Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "equipment_id",
+          "name",
+          "equipment_type",
+          "site_id",
+          "status",
+          "physical_availability_pct",
+          "overall_availability_pct",
+          "failures",
+          "mtbf_hours",
+          "mttr_hours",
+          "downtime_hours",
+          "downtime_hours_by_category",
+          "top_failure_reason",
+          "last_maintenance_at",
+          "days_since_last_maintenance",
+          "next_maintenance_due",
+          "maintenance_status",
+          "utilisation_note"
+        ],
+        "title": "EquipmentMetricsEntryOut",
+        "description": "One machine's metrics, as returned inside GET /equipment/metrics's\n\"equipment\" array, and as the base of GET /equipment/{id}/metrics\n(which adds `weekly` and `events` \u2014 see EquipmentDetailMetricsOut)."
+      },
+      "EquipmentMetricsOut": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "window": {
+            "$ref": "#/components/schemas/EquipmentMetricsWindow"
+          },
+          "assumptions": {
+            "$ref": "#/components/schemas/EquipmentMetricsAssumptions"
+          },
+          "fleet": {
+            "$ref": "#/components/schemas/FleetMetricsOut"
+          },
+          "equipment": {
+            "items": {
+              "$ref": "#/components/schemas/EquipmentMetricsEntryOut"
+            },
+            "type": "array",
+            "title": "Equipment"
+          },
+          "data_note": {
+            "type": "string",
+            "title": "Data Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "window",
+          "assumptions",
+          "fleet",
+          "equipment",
+          "data_note"
+        ],
+        "title": "EquipmentMetricsOut",
+        "description": "GET /equipment/metrics response body."
+      },
+      "EquipmentMetricsWindow": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "hours": {
+            "type": "number",
+            "title": "Hours"
+          },
+          "data_through": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Through"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end",
+          "hours",
+          "data_through"
+        ],
+        "title": "EquipmentMetricsWindow"
+      },
       "EquipmentOut": {
         "properties": {
           "id": {
@@ -1153,6 +3390,11 @@
               }
             ],
             "title": "Status Reason"
+          },
+          "flapping": {
+            "type": "boolean",
+            "title": "Flapping",
+            "default": false
           }
         },
         "type": "object",
@@ -1169,6 +3411,7 @@
         "title": "EquipmentOut",
         "example": {
           "equipment_type": "Excavator",
+          "flapping": false,
           "id": 16,
           "last_status_change": "2026-08-30T05:11:27.578760+00:00",
           "name": "Excavator BAL-1",
@@ -1177,6 +3420,81 @@
           "status": "down",
           "status_reason": "Hydraulic pump failure - spare part on order, ETA 3 days"
         }
+      },
+      "EquipmentStatusLogOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "equipment_id": {
+            "type": "integer",
+            "title": "Equipment Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "old_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Status"
+          },
+          "new_status": {
+            "type": "string",
+            "title": "New Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "changed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Changed At"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "equipment_id",
+          "site_id",
+          "old_status",
+          "new_status",
+          "reason",
+          "changed_by",
+          "changed_at",
+          "source"
+        ],
+        "title": "EquipmentStatusLogOut"
       },
       "EquipmentStatusUpdate": {
         "properties": {
@@ -1191,13 +3509,24 @@
           "reason": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 5000
               },
               {
                 "type": "null"
               }
             ],
             "title": "Reason"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "bulk",
+              "sync"
+            ],
+            "title": "Source",
+            "default": "manual"
           }
         },
         "type": "object",
@@ -1207,6 +3536,7 @@
         "title": "EquipmentStatusUpdate",
         "example": {
           "reason": "Engine overheating - pulled for inspection",
+          "source": "manual",
           "status": "down"
         }
       },
@@ -1278,6 +3608,260 @@
           "structure_type": "fold_axis"
         }
       },
+      "FleetMetricsOut": {
+        "properties": {
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id"
+          },
+          "equipment_count": {
+            "type": "integer",
+            "title": "Equipment Count"
+          },
+          "physical_availability_pct": {
+            "type": "number",
+            "title": "Physical Availability Pct"
+          },
+          "overall_availability_pct": {
+            "type": "number",
+            "title": "Overall Availability Pct"
+          },
+          "failures": {
+            "type": "integer",
+            "title": "Failures"
+          },
+          "mtbf_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mtbf Hours"
+          },
+          "mttr_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mttr Hours"
+          },
+          "downtime_hours_by_category": {
+            "$ref": "#/components/schemas/DowntimeHoursByCategory"
+          },
+          "maintenance_overdue_count": {
+            "type": "integer",
+            "title": "Maintenance Overdue Count"
+          },
+          "maintenance_due_soon_count": {
+            "type": "integer",
+            "title": "Maintenance Due Soon Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "equipment_count",
+          "physical_availability_pct",
+          "overall_availability_pct",
+          "failures",
+          "mtbf_hours",
+          "mttr_hours",
+          "downtime_hours_by_category",
+          "maintenance_overdue_count",
+          "maintenance_due_soon_count"
+        ],
+        "title": "FleetMetricsOut"
+      },
+      "ForecastWeatherPoint": {
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Forecast valid time in UTC"
+          },
+          "temperature_c": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature C",
+            "description": "2m air temperature in Celsius"
+          },
+          "relative_humidity_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relative Humidity Pct",
+            "description": "Relative humidity %"
+          },
+          "precipitation_mm": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Precipitation Mm",
+            "description": "Precipitation in mm",
+            "default": 0.0
+          },
+          "rain_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rain Mm",
+            "description": "Liquid rain in mm"
+          },
+          "wind_speed_kmh": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Speed Kmh",
+            "description": "10m wind speed in km/h"
+          },
+          "wind_direction_deg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 360.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wind Direction Deg",
+            "description": "Wind direction in degrees"
+          },
+          "weather_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather Code",
+            "description": "WMO weather code (0-99)"
+          },
+          "weather_description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weather Description",
+            "description": "Human-readable WMO weather description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "timestamp"
+        ],
+        "title": "ForecastWeatherPoint",
+        "example": {
+          "precipitation_mm": 1.2,
+          "rain_mm": 1.2,
+          "relative_humidity_pct": 88.0,
+          "temperature_c": 25.4,
+          "timestamp": "2026-09-08T18:00:00Z",
+          "weather_code": 61,
+          "weather_description": "Slight rain",
+          "wind_direction_deg": 210.0,
+          "wind_speed_kmh": 6.8
+        }
+      },
+      "ForecastWeatherResponse": {
+        "properties": {
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "site_name": {
+            "type": "string",
+            "title": "Site Name"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "forecast_horizon_hours": {
+            "type": "integer",
+            "title": "Forecast Horizon Hours"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "open-meteo"
+          },
+          "forecast": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastWeatherPoint"
+            },
+            "type": "array",
+            "title": "Forecast"
+          }
+        },
+        "type": "object",
+        "required": [
+          "site_id",
+          "site_name",
+          "latitude",
+          "longitude",
+          "forecast_horizon_hours",
+          "forecast"
+        ],
+        "title": "ForecastWeatherResponse",
+        "example": {
+          "forecast": [],
+          "forecast_horizon_hours": 48,
+          "latitude": 21.87,
+          "longitude": 80.23,
+          "site_id": 1,
+          "site_name": "Balaghat Mine",
+          "source": "open-meteo"
+        }
+      },
       "GraphEdge": {
         "properties": {
           "source": {
@@ -1336,6 +3920,65 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ImpactedEntity": {
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "hops": {
+            "type": "integer",
+            "title": "Hops"
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "blocking",
+              "shifted",
+              "downstream",
+              "informational"
+            ],
+            "title": "Classification"
+          },
+          "path": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Path"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_id",
+          "entity_type",
+          "name",
+          "hops",
+          "classification",
+          "path"
+        ],
+        "title": "ImpactedEntity",
+        "description": "One entity reached while tracing a recommendation's ripple/cascade\neffect through the causal graph. See app/services/cascade_service.py."
       },
       "JobStatusOut": {
         "properties": {
@@ -1447,6 +4090,24 @@
           "twin_last_updated": "2026-08-31T05:11:27.578760+00:00"
         }
       },
+      "MineralCandidate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "confidence"
+        ],
+        "title": "MineralCandidate"
+      },
       "ProductionRecordCreate": {
         "properties": {
           "site_id": {
@@ -1458,17 +4119,109 @@
             "format": "date",
             "title": "Date"
           },
+          "shift": {
+            "type": "string",
+            "enum": [
+              "day",
+              "night",
+              "general"
+            ],
+            "title": "Shift",
+            "default": "general"
+          },
           "actual_output": {
             "type": "number",
+            "maximum": 100000.0,
             "minimum": 0.0,
             "title": "Actual Output",
             "description": "Tonnes actually produced; must be non-negative"
           },
           "target_output": {
             "type": "number",
+            "maximum": 100000.0,
             "exclusiveMinimum": 0.0,
             "title": "Target Output",
             "description": "Planned tonnes target; must be positive"
+          },
+          "operating_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 24.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operating Hours"
+          },
+          "downtime_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 24.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downtime Hours"
+          },
+          "material_processed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Processed"
+          },
+          "quality_grade": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Grade"
+          },
+          "shortfall_reasons": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "equipment_failure",
+                "maintenance",
+                "weather",
+                "material_availability",
+                "labour_shortage",
+                "geological_conditions",
+                "safety_stoppage",
+                "other"
+              ]
+            },
+            "type": "array",
+            "title": "Shortfall Reasons"
+          },
+          "shortfall_other_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Other Note"
           }
         },
         "type": "object",
@@ -1482,6 +4235,12 @@
         "example": {
           "actual_output": 1180.0,
           "date": "2026-08-31",
+          "downtime_hours": 2.0,
+          "material_processed": 1150.0,
+          "operating_hours": 22.0,
+          "quality_grade": 32.5,
+          "shift": "day",
+          "shortfall_reasons": [],
           "site_id": 1,
           "target_output": 1250.0
         }
@@ -1500,6 +4259,10 @@
             "type": "string",
             "format": "date",
             "title": "Date"
+          },
+          "shift": {
+            "type": "string",
+            "title": "Shift"
           },
           "actual_output": {
             "anyOf": [
@@ -1533,6 +4296,125 @@
               }
             ],
             "title": "Variance Pct"
+          },
+          "variance_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variance Class"
+          },
+          "operating_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operating Hours"
+          },
+          "downtime_hours": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downtime Hours"
+          },
+          "material_processed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Processed"
+          },
+          "quality_grade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Grade"
+          },
+          "shortfall_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Reasons"
+          },
+          "shortfall_other_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Other Note"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By"
           }
         },
         "type": "object",
@@ -1540,18 +4422,185 @@
           "id",
           "site_id",
           "date",
+          "shift",
           "actual_output",
           "target_output",
-          "variance_pct"
+          "variance_pct",
+          "variance_class",
+          "operating_hours",
+          "downtime_hours",
+          "material_processed",
+          "quality_grade",
+          "shortfall_reasons",
+          "shortfall_other_note",
+          "created_at",
+          "updated_at",
+          "created_by",
+          "updated_by"
         ],
         "title": "ProductionRecordOut",
         "example": {
           "actual_output": 712.4,
+          "created_at": "2026-08-29T18:05:00Z",
+          "created_by": "system",
           "date": "2026-08-29",
+          "downtime_hours": 1.0,
           "id": 42,
+          "material_processed": 730.0,
+          "operating_hours": 11.5,
+          "quality_grade": 31.2,
+          "shift": "day",
+          "shortfall_reasons": [
+            "equipment_failure"
+          ],
           "site_id": 1,
           "target_output": 1062.5,
+          "variance_class": "significantly_below",
           "variance_pct": -32.96
+        }
+      },
+      "ProductionRecordUpdate": {
+        "properties": {
+          "actual_output": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Output"
+          },
+          "target_output": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Output"
+          },
+          "operating_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 24.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operating Hours"
+          },
+          "downtime_hours": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 24.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Downtime Hours"
+          },
+          "material_processed": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Processed"
+          },
+          "quality_grade": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Grade"
+          },
+          "shortfall_reasons": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "equipment_failure",
+                    "maintenance",
+                    "weather",
+                    "material_availability",
+                    "labour_shortage",
+                    "geological_conditions",
+                    "safety_stoppage",
+                    "other"
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Reasons"
+          },
+          "shortfall_other_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shortfall Other Note"
+          }
+        },
+        "type": "object",
+        "title": "ProductionRecordUpdate",
+        "description": "Partial update for PATCH /production/{id}. `site_id`/`date`/`shift`\nare the record's identity (and its uniqueness key) and are not editable\nhere \u2014 create a new record instead if the shift itself was wrong.",
+        "example": {
+          "actual_output": 1195.0,
+          "quality_grade": 33.0
+        }
+      },
+      "ProductionThresholdsOut": {
+        "properties": {
+          "on_target_min_pct": {
+            "type": "number",
+            "title": "On Target Min Pct",
+            "default": -3.0
+          },
+          "slightly_below_min_pct": {
+            "type": "number",
+            "title": "Slightly Below Min Pct",
+            "default": -12.0
+          }
+        },
+        "type": "object",
+        "title": "ProductionThresholdsOut",
+        "example": {
+          "on_target_min_pct": -3.0,
+          "slightly_below_min_pct": -12.0
         }
       },
       "RecommendationOption": {
@@ -1580,6 +4629,16 @@
             "maximum": 1.0,
             "minimum": 0.0,
             "title": "Confidence"
+          },
+          "cascade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CascadeResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -1676,6 +4735,113 @@
             "type": "array",
             "title": "Warnings",
             "default": []
+          },
+          "site": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site"
+          },
+          "report_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Date"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "report_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Type"
+          },
+          "page_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Count"
+          },
+          "mineral_candidates": {
+            "items": {
+              "$ref": "#/components/schemas/MineralCandidate"
+            },
+            "type": "array",
+            "title": "Mineral Candidates",
+            "default": []
+          },
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Locations",
+            "default": []
+          },
+          "estimated_grade_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Grade Summary"
+          },
+          "geological_observations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Geological Observations",
+            "default": []
+          },
+          "extracted_text_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extracted Text Preview"
+          },
+          "extraction_method": {
+            "type": "string",
+            "title": "Extraction Method",
+            "default": "none"
           }
         },
         "type": "object",
@@ -1807,6 +4973,158 @@
           "site_name": "Nagpur"
         }
       },
+      "ShiftPlanEntryCreate": {
+        "properties": {
+          "risk_event_id": {
+            "type": "integer",
+            "title": "Risk Event Id"
+          },
+          "option_type": {
+            "type": "string",
+            "enum": [
+              "reschedule",
+              "redeploy",
+              "adjust_plan"
+            ],
+            "title": "Option Type"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Description"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "projected_impact": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Projected Impact"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_event_id",
+          "option_type",
+          "description",
+          "projected_impact",
+          "confidence"
+        ],
+        "title": "ShiftPlanEntryCreate",
+        "example": {
+          "confidence": 0.8,
+          "description": "Redeploy Haul Truck HT-303 from Bhandara to Nagpur to cover Haul Truck HT-302.",
+          "option_type": "redeploy",
+          "projected_impact": 77.0,
+          "risk_event_id": 5,
+          "target_id": "eq_bhandara_06"
+        }
+      },
+      "ShiftPlanEntryOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "risk_event_id": {
+            "type": "integer",
+            "title": "Risk Event Id"
+          },
+          "site_id": {
+            "type": "integer",
+            "title": "Site Id"
+          },
+          "option_type": {
+            "type": "string",
+            "title": "Option Type"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "projected_impact": {
+            "type": "number",
+            "title": "Projected Impact"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "risk_event_id",
+          "site_id",
+          "option_type",
+          "description",
+          "target_id",
+          "projected_impact",
+          "confidence",
+          "created_at"
+        ],
+        "title": "ShiftPlanEntryOut",
+        "example": {
+          "confidence": 0.8,
+          "created_at": "2026-09-08T14:20:00Z",
+          "description": "Redeploy Haul Truck HT-303 from Bhandara to Nagpur to cover Haul Truck HT-302.",
+          "id": 3,
+          "option_type": "redeploy",
+          "projected_impact": 77.0,
+          "risk_event_id": 5,
+          "site_id": 2,
+          "target_id": "eq_bhandara_06"
+        }
+      },
+      "ShortfallReasonOut": {
+        "properties": {
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label"
+        ],
+        "title": "ShortfallReasonOut"
+      },
       "SimStateSnapshot": {
         "properties": {
           "reserve_confidence": {
@@ -1850,6 +5168,65 @@
             "maximum": 90.0,
             "minimum": 1.0,
             "title": "Duration Days"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ConditionInput"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "site_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SiteContextInput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "current_reserve_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Reserve Confidence"
+          },
+          "recent_production_variance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Production Variance"
           }
         },
         "type": "object",
@@ -1882,6 +5259,39 @@
           },
           "updated_graph": {
             "$ref": "#/components/schemas/CausalGraphOut"
+          },
+          "uncertainty": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UncertaintyMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "out_of_distribution": {
+            "type": "boolean",
+            "title": "Out Of Distribution",
+            "default": false
+          },
+          "conditions_ood": {
+            "items": {
+              "$ref": "#/components/schemas/ConditionOODStatus"
+            },
+            "type": "array",
+            "title": "Conditions Ood"
+          },
+          "out_of_distribution_warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Out Of Distribution Warning"
           }
         },
         "type": "object",
@@ -1908,6 +5318,17 @@
             "production_forecast_tonnes": 1187.3,
             "reserve_confidence": 0.67,
             "risk_score": 0.42
+          },
+          "conditions_ood": [],
+          "out_of_distribution": false,
+          "uncertainty": {
+            "downtime_uncertainty_days": 0.5,
+            "model_mae": 0.1177,
+            "model_rmse": 0.158,
+            "production_impact_uncertainty_tonnes": 137.7,
+            "reserve_confidence_uncertainty": 0.007,
+            "residual_std": 0.153,
+            "risk_uncertainty": 0.306
           },
           "updated_graph": {
             "edges": [
@@ -1951,6 +5372,45 @@
             ]
           }
         }
+      },
+      "SiteContextInput": {
+        "properties": {
+          "reserve_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reserve Confidence"
+          },
+          "production_variance": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Production Variance"
+          },
+          "active_conditions_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Conditions Count"
+          }
+        },
+        "type": "object",
+        "title": "SiteContextInput"
       },
       "SiteNoteCreate": {
         "properties": {
@@ -2136,13 +5596,56 @@
           "active_risk_count": 2,
           "avg_reserve_confidence": 0.67,
           "belt_name": "Balaghat Manganese Belt",
-          "centroid_lat": 21.8,
-          "centroid_lon": 80.19,
+          "centroid_lat": 21.9105,
+          "centroid_lon": 80.347,
           "district": "Balaghat",
           "id": 1,
           "name": "Balaghat",
           "state": "Madhya Pradesh"
         }
+      },
+      "UncertaintyMetrics": {
+        "properties": {
+          "model_rmse": {
+            "type": "number",
+            "title": "Model Rmse"
+          },
+          "model_mae": {
+            "type": "number",
+            "title": "Model Mae"
+          },
+          "residual_std": {
+            "type": "number",
+            "title": "Residual Std"
+          },
+          "production_impact_uncertainty_tonnes": {
+            "type": "number",
+            "title": "Production Impact Uncertainty Tonnes"
+          },
+          "risk_uncertainty": {
+            "type": "number",
+            "title": "Risk Uncertainty"
+          },
+          "reserve_confidence_uncertainty": {
+            "type": "number",
+            "title": "Reserve Confidence Uncertainty"
+          },
+          "downtime_uncertainty_days": {
+            "type": "number",
+            "title": "Downtime Uncertainty Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_rmse",
+          "model_mae",
+          "residual_std",
+          "production_impact_uncertainty_tonnes",
+          "risk_uncertainty",
+          "reserve_confidence_uncertainty",
+          "downtime_uncertainty_days"
+        ],
+        "title": "UncertaintyMetrics"
       },
       "ValidationError": {
         "properties": {
@@ -2183,6 +5686,35 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WeeklyMetricsPoint": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Week Start"
+          },
+          "downtime_hours": {
+            "type": "number",
+            "title": "Downtime Hours"
+          },
+          "failures": {
+            "type": "integer",
+            "title": "Failures"
+          },
+          "physical_availability_pct": {
+            "type": "number",
+            "title": "Physical Availability Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start",
+          "downtime_hours",
+          "failures",
+          "physical_availability_pct"
+        ],
+        "title": "WeeklyMetricsPoint"
       }
     }
   }

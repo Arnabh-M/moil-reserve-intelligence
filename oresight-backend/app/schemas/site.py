@@ -13,8 +13,8 @@ class SiteOut(BaseModel):
                 "belt_name": "Balaghat Manganese Belt",
                 "district": "Balaghat",
                 "state": "Madhya Pradesh",
-                "centroid_lat": 21.80,
-                "centroid_lon": 80.19,
+                "centroid_lat": 21.9105,
+                "centroid_lon": 80.347,
                 "active_risk_count": 2,
                 "avg_reserve_confidence": 0.67,
             }

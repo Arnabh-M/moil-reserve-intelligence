@@ -11,3 +11,4 @@ neo4j
 pandas
 numpy
 jupyter
+jenkspy>=0.4
