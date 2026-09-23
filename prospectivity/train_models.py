@@ -164,8 +164,11 @@ def evaluate_spatial_cv(
     model_evals = {name: {"aucs": [], "accs": [], "importances": []} for name in build_models()}
 
     for fold_idx, (train_idx, val_idx) in enumerate(folds):
-        train_sub = df.iloc[train_idx]
-        val_sub = df.iloc[val_idx]
+        # Rows with a missing feature (cloud-masked pixel: no Earth Engine value) are
+        # dropped, never imputed. Folds are shared with the other configuration, so
+        # both are evaluated on the same spatial split; only unusable rows differ.
+        train_sub = df.iloc[train_idx].dropna(subset=features)
+        val_sub = df.iloc[val_idx].dropna(subset=features)
 
         X_tr, y_tr = train_sub[features].values, train_sub["is_deposit"].values
         X_val, y_val = val_sub[features].values, val_sub["is_deposit"].values
@@ -279,8 +282,9 @@ def train_dual_configurations(
                 ),
             )
             try:
-                X_full = df[chosen_features].values
-                y_full = df["is_deposit"].values
+                fit_df = df.dropna(subset=chosen_features)  # missing values are dropped, not imputed
+                X_full = fit_df[chosen_features].values
+                y_full = fit_df["is_deposit"].values
                 model.fit(X_full, y_full)
 
                 path = os.path.join(MODEL_DIR, f"{name}_{site_id}.pkl")
@@ -305,6 +309,20 @@ def train_dual_configurations(
             saved_model_results.append(m_res)
 
     return config_a_results, config_b_results, saved_model_results
+
+
+def _usable_rows_lines() -> list[str]:
+    """Per-site count of training points with every satellite feature present."""
+    out = ["Training points with all satellite features present (others are dropped, not imputed):", ""]
+    for site in ("balaghat", "nagpur", "bhandara"):
+        path = os.path.join("data", "cache", f"training_features_{site}.csv")
+        if not os.path.exists(path):
+            continue
+        df = pd.read_csv(path)
+        ok = int(df[SATELLITE_FEATURES].notna().all(axis=1).sum())
+        out.append(f"- {site.title()}: {ok} of {len(df)}")
+    out.append("")
+    return out
 
 
 def write_results_markdown(
@@ -347,6 +365,18 @@ def write_results_markdown(
         "   - Structural features above, plus 9 pending satellite & terrain features computed from Sentinel-2 and Copernicus DEM:",
         "     `ndvi_anomaly`, `ndri`, `ndwi`, `iron_oxide_index`, `clay_index`, `manganese_spectral_ratio`, `slope`, `aspect`, `terrain_ruggedness`.",
         "",
+        "### Satellite feature windows (Sentinel-2 L2A, SCL cloud-masked; Copernicus GLO30 DEM)",
+        "- `ndvi_anomaly`: median NDVI of the **last 90 days** minus the median NDVI of the **same 90-day calendar window",
+        "  (same days of year) in each of the previous 3 years**, so matching windows are compared.",
+        "- `ndri`, `ndwi`, `iron_oxide_index`, `clay_index`, `manganese_spectral_ratio`: median composite of the most recent",
+        "  completed **dry season (1 Feb - 31 May)**, when vegetation does not dominate the signal.",
+        "- `slope`, `aspect`, `terrain_ruggedness`: GLO30 DEM on its native 30 m grid.",
+        "- **Superseded:** an earlier single-ISO-week definition (7-day composite vs same-ISO-week baseline) left ~76% of",
+        "  pixels without an anomaly in monsoon and is no longer used. Results from it are not comparable and are not shown.",
+        "- A cell or training point with any missing feature (no clear Earth Engine pixel) is **dropped, never imputed**:",
+        "  it is excluded from that fold's training/validation rows and shown as no-data on the map.",
+        "",
+        *_usable_rows_lines(),
         "### Spatial Cross-Validation Methodology",
         "- Data points were partitioned along each site's primary spatial geographic axis to ensure test folds occupy distinct spatial zones (preventing spatial autocorrelation leakage).",
         "- Stratification was enforced across all 5 folds to preserve class balance (~1:4 deposit to non-deposit).",
@@ -401,15 +431,26 @@ def write_results_markdown(
             lines.append(f"| `{f}` | {ftype} | {val:+.4f} | {note} |")
         lines.append("")
 
+    all_aucs = [
+        r[m]["mean_auc"]
+        for results in (config_a_results, config_b_results)
+        for r in results.values()
+        for m in r
+        if np.isfinite(r[m]["mean_auc"])
+    ]
+    lo, hi = (min(all_aucs), max(all_aucs)) if all_aucs else (float("nan"), float("nan"))
+
     lines.extend([
         "---",
         "",
         "## 4. Key Takeaways & Recommendations for SIH 2026",
         "",
-        "1. **Near-Chance Baseline on Synthetic Labels:**",
-        "   Across both configurations, the mean AUC-ROC hovers near ~0.45 – 0.55 (statistical chance). Permutation importance",
-        "   for satellite indices is minimal (< 0.03), confirming that the model honestly reflects the synthetic nature of the labels",
-        "   without fabricating artificial correlations.",
+        "1. **Chance-Level Skill on Synthetic Labels:**",
+        f"   Across both configurations the mean AUC-ROC ranges {lo:.2f} - {hi:.2f} (chance is 0.50; several cells are below it).",
+        "   With 83-91 points per site and ~1:4 class balance, fold-to-fold std is often as large as any difference between",
+        "   configurations, and the labels carry no geophysical signal, so none of these differences is evidence that a",
+        "   configuration or feature is better. Permutation importances are noise for the same reason.",
+        "   The map score is an **ensemble agreement index** across three models, **not a probability of ore**.",
         "",
         "2. **Production Export Selection:**",
         "   Downstream map assets and classified confidence GeoJSON layers use the configuration supported by the cross-validation",

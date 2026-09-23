@@ -68,6 +68,17 @@ DEM_FALLBACK = "USGS/SRTMGL1_003"                # 30 m fallback
 SCL_MASK_VALUES = [3, 8, 9, 10]
 
 BASELINE_YEARS = 3          # Part 1.1 — 3 prior years for the seasonal median
+# Window definitions (supersede the earlier single-ISO-week definition, which left
+# ~76% of pixels without an NDVI anomaly in monsoon: week 39 had no usable scene in
+# 2 of 3 baseline years).
+#   * current composite / anomaly window: the last CURRENT_WINDOW_DAYS days;
+#   * anomaly baseline: the SAME calendar window (same days of year) in each of the
+#     previous BASELINE_YEARS years, so matching windows are compared;
+#   * spectral alteration indices: dry-season (Feb 1 - May 31) composite of the most
+#     recent completed dry season, when vegetation does not mask the mineral signal.
+CURRENT_WINDOW_DAYS = 90
+DRY_SEASON_START_MONTH = 2
+DRY_SEASON_END_MONTH = 5   # inclusive; window ends 1 June (exclusive)
 BASELINE_CLOUD_PCT = 20     # Part 1.1 — <20% strict cloud cover filter
 RETRY_CLOUD_PCT = int(os.environ.get("S2_RETRY_CLOUD_PCT", "60"))
 # Conservative retry threshold for cloudy/monsoon weeks when strict 20% yields 0 scenes,
@@ -399,38 +410,56 @@ class BaselineCache:
             json.dump(payload, fh, indent=2)
 
 
-def seasonal_ndvi_baseline(ee, geometry, reference_date: datetime, years: int = BASELINE_YEARS):
-    """
-    Part 1.1 — Per-pixel MEDIAN NDVI for the SAME calendar week across the last
-    `years` available years, cloud-masked and <20% cloud cover.
+def _shift_years(d: datetime, years: int) -> datetime:
+    """Same calendar day `years` earlier (29 Feb maps to 28 Feb)."""
+    try:
+        return d.replace(year=d.year - years)
+    except ValueError:
+        return d.replace(year=d.year - years, day=28)
 
-    Using the same ISO week each year controls for phenology: comparing this
-    week's NDVI against an annual mean would confound seasonal greening with a
-    genuine anomaly.
+
+def current_window(reference_date: datetime, days: int = CURRENT_WINDOW_DAYS):
+    """(start, end) of the current composite window: the last `days` days."""
+    return reference_date - timedelta(days=days), reference_date
+
+
+def baseline_windows(reference_date: datetime, years: int = BASELINE_YEARS, days: int = CURRENT_WINDOW_DAYS):
+    """The SAME calendar window (same days of year) in each of the previous `years` years."""
+    start, end = current_window(reference_date, days)
+    return [(_shift_years(start, k), _shift_years(end, k)) for k in range(1, years + 1)]
+
+
+def dry_season_window(reference_date: datetime):
+    """Feb 1 - Jun 1 (exclusive) of the most recent COMPLETED dry season."""
+    year = reference_date.year if reference_date.month > DRY_SEASON_END_MONTH else reference_date.year - 1
+    start = datetime(year, DRY_SEASON_START_MONTH, 1, tzinfo=timezone.utc)
+    end = datetime(year, DRY_SEASON_END_MONTH + 1, 1, tzinfo=timezone.utc)
+    return start, end
+
+
+def seasonal_ndvi_baseline(ee, geometry, reference_date: datetime, years: int = BASELINE_YEARS,
+                           days: int = CURRENT_WINDOW_DAYS):
     """
-    iso_week = reference_date.isocalendar().week
+    Part 1.1 — Per-pixel MEDIAN NDVI over the SAME calendar window (same days of
+    year, `days` long) in each of the previous `years` years, cloud-masked.
+
+    Matching the window each year controls for phenology: comparing this
+    season's NDVI against an annual mean would confound seasonal greening with a
+    genuine anomaly. (Supersedes the earlier single-ISO-week baseline.)
+    """
     yearly = []
 
-    for offset in range(1, years + 1):
-        year = reference_date.year - offset
-        # Reconstruct the same ISO week in the prior year.
-        try:
-            week_start = datetime.fromisocalendar(year, iso_week, 1).replace(tzinfo=timezone.utc)
-        except ValueError:
-            # ISO week 53 does not exist in every year — skip that year.
-            logger.warning("ISO week %d does not exist in %d; skipping baseline year", iso_week, year)
-            continue
-        week_end = week_start + timedelta(days=7)
-
-        coll = _s2_collection(ee, geometry, week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d"))
+    for offset, (w_start, w_end) in enumerate(baseline_windows(reference_date, years, days), start=1):
+        coll = _s2_collection(ee, geometry, w_start.strftime("%Y-%m-%d"), w_end.strftime("%Y-%m-%d"))
         if coll.size().getInfo() > 0:
             yearly.append(coll.map(compute_ndvi).median())
         else:
-            logger.warning("ISO week %d in year %d has 0 usable scenes; skipping year in baseline composite", iso_week, year)
+            logger.warning("Baseline window %s..%s (%d yr back) has 0 usable scenes; skipping year",
+                           w_start.date(), w_end.date(), offset)
 
     if not yearly:
         raise GEELayerError(
-            f"No baseline imagery for ISO week {iso_week} across the last {years} years"
+            f"No baseline imagery for the {days}-day window across the last {years} years"
         )
 
     return ee.ImageCollection.fromImages(yearly).median().rename("ndvi_baseline")
@@ -438,13 +467,13 @@ def seasonal_ndvi_baseline(ee, geometry, reference_date: datetime, years: int = 
 
 def seasonal_ndvi_anomaly(ee, geometry, reference_date: datetime):
     """
-    Part 1.1 — anomaly = current_week_NDVI - 3yr_seasonal_median_NDVI.
+    Part 1.1 — anomaly = current_90d_NDVI - 3yr_seasonal_median_NDVI (same days of year).
 
     This anomaly (NOT raw NDVI) is what feeds the classifier and the map.
     Negative values = vegetation loss vs the seasonal norm, the signal of
     interest for surface disturbance / exposure.
     """
-    week_start = reference_date - timedelta(days=7)
+    week_start, _ = current_window(reference_date)
     coll = _s2_collection(ee, geometry, week_start.strftime("%Y-%m-%d"), reference_date.strftime("%Y-%m-%d"))
     if coll.size().getInfo() == 0:
         raise GEELayerError(
@@ -469,21 +498,32 @@ def terrain_features(ee, geometry, dem_asset: str = DEM_COLLECTION):
     would be.
     """
     try:
-        dem = ee.ImageCollection(dem_asset).select("DEM").mosaic()
+        dem_coll = ee.ImageCollection(dem_asset).select("DEM")
+        # mosaic() drops the source projection (it becomes a 1-degree default),
+        # so ee.Terrain then computes slope/aspect on ~110 km pixels: slope 0
+        # and a constant aspect everywhere. Restore the native DEM projection.
+        dem_proj = dem_coll.first().projection()
+        dem = dem_coll.mosaic().setDefaultProjection(dem_proj)
     except Exception:  # noqa: BLE001 — GLO30 is a collection, SRTM is an Image
         dem = ee.Image(dem_asset).select("elevation")
+        dem_proj = dem.projection()
 
-    terrain = ee.Terrain.products(dem).clip(geometry)
+    terrain = ee.Terrain.products(dem)
 
     ruggedness = dem.reduceNeighborhood(
         reducer=ee.Reducer.stdDev(),
         kernel=ee.Kernel.square(radius=2, units="pixels"),  # 5x5
-    ).rename("terrain_ruggedness").clip(geometry)
+    ).rename("terrain_ruggedness")
 
+    # Pin the computation to the DEM's own grid. Without this the features are
+    # evaluated at whatever scale the caller samples at (10 m), on a
+    # nearest-neighbour-upsampled DEM, which is not 30 m slope.
     return (
         terrain.select("slope").rename("slope")
         .addBands(terrain.select("aspect").rename("aspect"))
         .addBands(ruggedness)
+        .reproject(dem_proj)
+        .clip(geometry)
     )
 
 
@@ -530,22 +570,21 @@ def build_feature_stack(ee, geometry, reference_date: datetime | None = None) ->
     """
     reference_date = reference_date or datetime.now(timezone.utc)
 
-    # Single cloud-masked composite for the current week, shared by the
-    # non-temporal indices so they are all derived from identical pixels.
-    week_start = reference_date - timedelta(days=7)
-    current_coll = with_gee_retry(
-        lambda: _s2_collection(
-            ee, geometry,
-            week_start.strftime("%Y-%m-%d"),
-            reference_date.strftime("%Y-%m-%d"),
-        ),
-        what="s2_current_week_collection",
+    # Single cloud-masked DRY-SEASON composite (Feb-May, most recent completed
+    # season), shared by the mineral/alteration indices so they are all derived
+    # from identical pixels. Over monsoon vegetation these indices would mostly
+    # measure the canopy, not the ground. ndvi_anomaly builds its own current
+    # 90-day composite and same-window baseline.
+    dry_start, dry_end = dry_season_window(reference_date)
+    dry_coll = with_gee_retry(
+        lambda: _s2_collection(ee, geometry, dry_start.strftime("%Y-%m-%d"), dry_end.strftime("%Y-%m-%d")),
+        what="s2_dry_season_collection",
     )
-    if current_coll.size().getInfo() == 0:
+    if dry_coll.size().getInfo() == 0:
         raise GEELayerError(
-            f"No Sentinel-2 imagery available between {week_start.strftime('%Y-%m-%d')} and {reference_date.strftime('%Y-%m-%d')}"
+            f"No Sentinel-2 imagery available between {dry_start.strftime('%Y-%m-%d')} and {dry_end.strftime('%Y-%m-%d')}"
         )
-    current = current_coll.median()
+    current = dry_coll.median()
 
     layers: dict[str, Callable] = {
         "ndvi_anomaly": lambda: seasonal_ndvi_anomaly(ee, geometry, reference_date),

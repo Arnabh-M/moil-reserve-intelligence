@@ -50,13 +50,13 @@ unconfirmed deposit locations, then set `labels_are_synthetic = False`.
 
 | # | Feature | Status |
 |---|---------|--------|
-| 1.1 | Seasonal NDVI anomaly (3-yr same-ISO-week median baseline) | Implemented, blocked on GEE |
-| 1.2 | NDRI `(B11-B3)/(B11+B3)` | Implemented, blocked on GEE |
-| 1.3 | NDWI `(B3-B8)/(B3+B8)` — negative indicator | Implemented, blocked on GEE |
-| 1.4 | Iron-oxide ratio `B4/B2` | Implemented, blocked on GEE |
-| 1.5 | Clay mineral index `B11/B12` | Implemented, blocked on GEE |
+| 1.1 | Seasonal NDVI anomaly (90-day window vs the same 90 days of year in each of the 3 prior years) | Implemented, live — see 2.0 |
+| 1.2 | NDRI `(B11-B3)/(B11+B3)` | Implemented, live (dry-season composite) — see 2.0 |
+| 1.3 | NDWI `(B3-B8)/(B3+B8)` — negative indicator | Implemented, live (dry-season composite) — see 2.0 |
+| 1.4 | Iron-oxide ratio `B4/B2` | Implemented, live (dry-season composite) — see 2.0 |
+| 1.5 | Clay mineral index `B11/B12` | Implemented, live (dry-season composite) — see 2.0 |
 | 1.6 | Manganese spectral ratio | Implemented **with caveat — see 2.1** |
-| 1.7 | Slope / aspect / terrain ruggedness (COPERNICUS GLO30) | Implemented, blocked on GEE |
+| 1.7 | Slope / aspect / terrain ruggedness (COPERNICUS GLO30) | Implemented, live — see 2.0 |
 | 1.8 | Structural lineament density | **Computable offline** — verified correct |
 | 1.9 | Stratigraphic favorability | **SKIPPED — see 2.2** |
 | 1.10 | SCL cloud masking (3, 8, 9, 10) | Implemented on current *and* baseline pulls |
@@ -64,6 +64,26 @@ unconfirmed deposit locations, then set `labels_are_synthetic = False`.
 Note on 1.4: the iron-oxide ratio previously existed only in the tile-rendering
 path and never reached the classifier, despite being the most geologically
 relevant band ratio available. It is now part of the feature stack.
+
+### 2.0 Feature windows (this definition supersedes the earlier single-ISO-week one)
+
+| Feature group | Window |
+|---|---|
+| `ndvi_anomaly` | Median NDVI of the **last 90 days** minus the median NDVI of the **same 90-day calendar window (same days of year)** in each of the previous **3 years**. The windows match, so the anomaly is not confounded by season. |
+| `ndri`, `ndwi`, `iron_oxide_index`, `clay_index`, `manganese_spectral_ratio` | Median composite of the most recent completed **dry season (1 Feb – 31 May)**. Over monsoon vegetation these mineral/alteration ratios mostly measure the canopy, not the ground. |
+| `slope`, `aspect`, `terrain_ruggedness` | Copernicus GLO30 DEM on its native 30 m grid (the DEM's projection is restored after `mosaic()`; without that `ee.Terrain` returned slope 0 and a constant aspect). |
+
+All Sentinel-2 pulls use SCL cloud masking. **Superseded:** the first implementation used a 7-day
+current composite against a single same-ISO-week baseline. In monsoon that left ~76% of pixels
+without an NDVI anomaly (ISO week 39 had no usable scene in 2 of 3 baseline years), so it is no
+longer used, and any numbers derived from it are not comparable with the current ones.
+
+Cells and training points that still lack a feature (no clear pixel in a window) are **dropped, never
+imputed**: excluded from model fitting and CV rows, and exported as no-data on the map.
+
+**Planned improvement:** the dry-season composite year is "most recent completed", so it moves with
+the calendar; pin it (or use a multi-year dry-season median) once labelled data exists to test
+whether it matters.
 
 ### 2.1 The manganese ratio is a weak proxy, not a mineral detection
 

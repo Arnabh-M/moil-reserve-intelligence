@@ -192,7 +192,7 @@ def export_site_geojson(
 
     agg_centers = np.column_stack([mean_by_bin(centers[:, 0]), mean_by_bin(centers[:, 1])])
     agg_score = mean_by_bin(ensemble["ensemble_score"])
-    agg_agree = np.rint(mean_by_bin(ensemble["agreement_count"])).astype(int)
+    agg_agree = np.rint(np.nan_to_num(mean_by_bin(ensemble["agreement_count"]), nan=0.0)).astype(int)  # NaN bins are skipped below
     agg_factors = {name: mean_by_bin(vals) for name, vals in factors.items()}
     agg_quality = mean_by_bin(data_quality)
 
@@ -529,15 +529,33 @@ def generate_exports_from_models(
 
         feat_df = pd.DataFrame(factors)
 
+        # Score only cells whose model features are ALL present. A cell with a
+        # cloud-masked (missing) feature is left as no-data: tree models would
+        # otherwise route the NaN down a default branch and emit a confident-looking
+        # score for a cell we know nothing about.
+        needed = sorted({f for m in models.values() for f in m["features"]})
+        complete = np.isfinite(feat_df[needed].to_numpy(dtype=float)).all(axis=1)
+        n_cells = len(complete)
+        logger.info("%s: %d/%d cells have every feature (%.1f%%); the rest are exported as no-data",
+                    site_id, int(complete.sum()), n_cells, 100.0 * complete.mean())
+
         surfaces = {}
         for m_name, m_dict in models.items():
             model = m_dict["model"]
             m_features = m_dict["features"]
-            X = feat_df[m_features].values
+            X = feat_df.loc[complete, m_features].values
             surfaces[m_name] = model.predict_proba(X)[:, 1]
 
-        ensemble = algebraic_overlay(surfaces)
-        data_quality = np.ones(len(centers))
+        ens = algebraic_overlay(surfaces)
+        ensemble = dict(ens)
+        ensemble["ensemble_score"] = np.full(n_cells, np.nan)
+        ensemble["ensemble_score"][complete] = ens["ensemble_score"]
+        ensemble["band_index"] = np.full(n_cells, np.nan)
+        ensemble["band_index"][complete] = ens["band_index"]
+        # NaN (not 0) for no-data cells so render-cell averaging ignores them
+        ensemble["agreement_count"] = np.full(n_cells, np.nan)
+        ensemble["agreement_count"][complete] = ens["agreement_count"]
+        data_quality = complete.astype(float)
 
         provenance = {
             "status": "TRAINED_MODEL_SCORES",
