@@ -53,6 +53,11 @@ python gee_pipeline/export_site_daily_climate.py --start 2025-01-01 --end 2026-0
 
 # Dry-run offline verification (deterministic physical simulation, no network required):
 python gee_pipeline/export_site_daily_climate.py --dry-run
+
+# Re-fetch ONLY NDVI (live) and merge into the existing CSV, leaving rainfall/
+# soil-moisture/LST columns byte-for-byte unchanged (verified via a before/after
+# hash of those columns). Requires an existing CSV and live GEE credentials.
+python gee_pipeline/export_site_daily_climate.py --only-ndvi
 ```
 
 Outputs written:
@@ -87,13 +92,13 @@ The CSV is read directly by the downstream shortfall forecaster and Watcher inte
 | 6 | `soil_moisture_source` | String enum | — | `"SMAP_L4"` or empty `""` |
 | 7 | `lst_day_c` | Float (2 decimal places) | °C | Daytime land surface temperature. Empty if unobserved / cloud-occluded. |
 | 8 | `lst_source` | String enum | — | `"MODIS_MOD11A1"` or empty `""` |
-| 9 | `ndvi` | Float (4 decimal places) | [-1, 1] | Sentinel-2 NDVI with 30-day carry-forward. Empty if unobserved. |
-| 10 | `ndvi_age_days` | Integer (0 to 30) | days | Days since the last clear Sentinel-2 acquisition (0 on acquisition day). |
-| 11 | `ndvi_source` | String enum | — | `"S2_SR"` or empty `""` |
+| 9 | `ndvi` | Float (4 decimal places) | [-1, 1] | Sentinel-2 NDVI **median composite** over the `NDVI_COMPOSITE_DAYS`-day window containing this date (live mode). Empty if that window had no cloud-free images. |
+| 10 | `ndvi_age_days` | Integer, always `0` when `ndvi` is present | days | Historically "days since the last clear acquisition" under a carry-forward model. Live mode no longer carries values forward across windows, so this is fixed at `0` for every date with a composite value, and empty otherwise. Kept for column-contract compatibility (dry-run mode still uses the original acquisition/carry-forward semantics — see §4.4 below). |
+| 11 | `ndvi_source` | String enum | — | Live mode: `"S2_median_{N}d"` (e.g. `"S2_median_10d"`, reflecting `NDVI_COMPOSITE_DAYS`). Dry-run mode: `"S2_SR"`. Empty `""` if unobserved. |
 
 ### Integrity Rules
 1. **Row Uniqueness & Completeness**: Exactly one row per `(site_id, date)`. Every calendar date in the requested range is guaranteed to be present with zero gaps or duplicates.
-2. **Missing Values**: Missing observations are strictly **empty cells** (`,,`). Never `0`, never `NaN`, and never interpolated (except for the explicitly documented NDVI 30-day carry-forward).
+2. **Missing Values**: Missing observations are strictly **empty cells** (`,,`). Never `0`, never `NaN`. Live-mode NDVI is never interpolated or carried forward past its own composite window; dry-run NDVI uses the documented 30-day carry-forward (§4.4).
 3. **Sorting**: Rows are sorted strictly by `site_id` (alphabetically), then by `date` (chronologically).
 4. **Column Extensibility**: New columns may only be appended at the end. Existing columns are never renamed, reordered, or removed.
 
@@ -127,13 +132,17 @@ The CSV is read directly by the downstream shortfall forecaster and Watcher inte
   - Filtered using `QC_Day` mandatory QA flags (bits 0–1): keeps only pixels where LST was produced with good or acceptable quality (`(QC_Day & 2) == 0`).
   - **Coverage Threshold**: If fewer than 20% of the site's pixels have clear, valid LST retrievals on a given day (e.g. during heavy monsoon cloud cover), the day is recorded as empty. No synthetic interpolation is applied.
 
-### 4. NDVI (Sentinel-2 Harmonized L2A)
+### 4. NDVI (Sentinel-2 Harmonized L2A) — live mode: median composites, not point acquisitions
+
 - **Collection**: `COPERNICUS/S2_SR_HARMONIZED`
 - **Bands**: `B8` (NIR, 842 nm), `B4` (Red, 665 nm), `SCL` (Scene Classification Layer)
-- **Scale**: 30 m (`bestEffort=True`, `tileScale=4`)
-- **Cloud Masking**: Cloud shadow (3), medium cloud probability (8), high cloud probability (9), and thin cirrus (10) are masked via `prospectivity.gee_features.mask_s2_clouds`.
-- **Acquisition Filter**: An acquisition is accepted only if at least 30% of the site's pixels are clear.
-- **Carry-Forward Model**: The latest valid mean NDVI is carried forward daily with `ndvi_age_days` indicating the age of the observation. If more than 30 days elapse without a clear acquisition, both `ndvi` and `ndvi_age_days` revert to empty cells.
+- **Cloud Masking**: Cloud shadow (3), medium cloud probability (8), high cloud probability (9), and thin cirrus (10) are masked via `prospectivity.gee_features.mask_s2_clouds`, per-image, before compositing.
+- **Windowing**: The requested date range is split into consecutive, non-overlapping `NDVI_COMPOSITE_DAYS`-day windows (default **10**, overridable via the `NDVI_COMPOSITE_DAYS` environment variable). Every day inside a window is assigned that window's single composite value — there is **no carry-forward** across windows.
+- **Compositing**: For each window, all cloud-masked Sentinel-2 images intersecting the site are converted to per-image NDVI, then combined with `.median()` into **one** composite image. Exactly **one** `reduceRegion(mean)` (scale 30 m, `bestEffort=True`, `maxPixels=1e9`) is run against that composite — not one per source image.
+- **Why compositing, not per-image reduction**: an earlier per-image approach (`.map(fn).getInfo()` over a whole window's `ImageCollection`, each mapped call running its own `reduceRegion`) fired many concurrent server-side aggregations per request and reliably tripped GEE's "Too many concurrent aggregations" (HTTP 429) quota once a window held more than a couple of acquisitions. Reducing to one composite image per window means at most one or two `reduceRegion` calls per window, run **sequentially** with a 1 s pause between windows.
+- **Coverage Threshold**: A window is recorded as empty (`ndvi`, `ndvi_age_days`, `ndvi_source` all empty for every day in that window) if it has zero images after filtering, or if fewer than `NDVI_MIN_VALID_FRACTION` (default **10%**) of the site's pixels are cloud-free in the composite. No interpolation or cross-window carry-forward is applied.
+- **`--only-ndvi` mode**: re-fetches only this product and merges it into the existing CSV; rainfall/soil-moisture/LST rows are read back and rewritten byte-for-byte unchanged (verified with a SHA-256 hash of those columns before and after — the write is refused if it doesn't match).
+- **Retry/backoff**: NDVI composite and site-pixel-count requests use longer backoff than the other products (start 5 s, doubling, up to 5 attempts) since they're the layer most exposed to the concurrency quota.
 
 ---
 
@@ -147,7 +156,7 @@ Satellite data products operate on varying latency schedules:
 | **GPM IMERG** | NASA GSFC | ~2–3 days | Leaves the most recent 1–2 days empty. |
 | **SMAP L4** | NASA GSFC / GMAO | ~3–5 days | Recent 3–5 days empty. |
 | **MODIS MOD11A1** | NASA LP DAAC | ~1–2 days | Recent 1–2 days empty. |
-| **Sentinel-2 L2A** | ESA Copernicus | ~2–5 days revisit | Carried forward up to 30 days; empty if older than 30 days. |
+| **Sentinel-2 L2A** | ESA Copernicus | ~2–5 days revisit | Composited per `NDVI_COMPOSITE_DAYS`-day window (default 10); a window with no cloud-free images or <10% valid-pixel coverage is empty for every day in that window (no carry-forward). |
 
 ---
 
@@ -164,6 +173,9 @@ Covered test cases:
 - Missing values serialized as empty cells (never 0 or NaN).
 - MODIS DN to Celsius scaling (`val * 0.02 - 273.15`).
 - IMERG half-hourly mm/hr sum conversion ($\times 0.5$).
-- NDVI 30-day carry-forward cut-off (day 30 valid, day 31 empty).
+- NDVI 30-day carry-forward cut-off (day 30 valid, day 31 empty) — dry-run mode only.
+- NDVI composite-window assignment (live mode): every day in a window gets that window's value with `ndvi_age_days == 0`; a `None`-valued window stays empty for every day in it, with no bleed from neighboring windows.
+- `chunk_date_ranges` partitions a date range into consecutive, non-overlapping, gap-free windows of the requested length.
+- `NDVI_COMPOSITE_DAYS` is overridable via its environment variable.
 - Priority rules (CHIRPS prioritized over IMERG).
 - Physical validation of monsoon wet-season dynamics.

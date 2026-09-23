@@ -10,9 +10,13 @@ import pytest
 
 from gee_pipeline.export_site_daily_climate import (
     COLUMNS,
+    NDVI_COMPOSITE_DAYS,
+    NDVI_SOURCE_LABEL,
     convert_lst,
     convert_imerg_daily,
     compute_daily_ndvi_series,
+    assign_ndvi_window_values,
+    chunk_date_ranges,
     format_cell,
     merge_daily_features,
     generate_dry_run_dataset,
@@ -230,6 +234,97 @@ def test_chirps_priority_over_imerg():
     # Row 3 (d3): Empty
     assert rows[2]["rainfall_mm"] is None
     assert rows[2]["rainfall_source"] == ""
+
+
+def test_ndvi_composite_window_assignment():
+    """
+    Verifies the NDVI composite-window model (replacing per-image acquisition
+    carry-forward for the live fetch path):
+    - Every date inside a window gets that window's single value.
+    - ndvi_age_days is always 0 when a value is present (no aging/carry-forward).
+    - A window with value None (no images / low coverage) is empty for every
+      date in that window, not interpolated from a neighboring window.
+    - A date with no covering window at all is empty.
+    """
+    w1_start, w1_end = date(2025, 6, 1), date(2025, 6, 10)
+    w2_start, w2_end = date(2025, 6, 11), date(2025, 6, 20)
+    window_results = [
+        (w1_start, w1_end, 0.4567),
+        (w2_start, w2_end, None),  # e.g. low valid-pixel coverage that window
+    ]
+
+    dates = [w1_start + timedelta(days=i) for i in range(20)]  # covers both windows
+    dates.append(date(2025, 7, 1))  # outside any window
+
+    series = assign_ndvi_window_values(window_results, dates)
+    assert len(series) == len(dates)
+
+    # Every day of window 1 gets the same value, age 0, labeled source.
+    for i in range(10):
+        val, age, src = series[i]
+        assert val == 0.4567
+        assert age == 0
+        assert src == NDVI_SOURCE_LABEL
+
+    # Every day of window 2 (value None) is empty, not carried forward from window 1.
+    for i in range(10, 20):
+        val, age, src = series[i]
+        assert val is None
+        assert age is None
+        assert src == ""
+
+    # A date outside any window is also empty.
+    val, age, src = series[20]
+    assert val is None
+    assert age is None
+    assert src == ""
+
+
+def test_ndvi_composite_window_rounds_to_4_decimals():
+    """NDVI composite means must be rounded to 4 decimal places, matching the CSV contract."""
+    w_start, w_end = date(2025, 8, 1), date(2025, 8, 10)
+    window_results = [(w_start, w_end, 0.123456789)]
+    dates = [w_start]
+
+    series = assign_ndvi_window_values(window_results, dates)
+    val, _, _ = series[0]
+    assert val == 0.1235
+
+
+def test_chunk_date_ranges_partitions_without_gaps_or_overlap():
+    """The window-splitting helper NDVI composites rely on must fully cover the
+    range with consecutive, non-overlapping windows of the requested length."""
+    start_dt = date(2025, 1, 1)
+    end_dt = date(2025, 1, 25)
+    windows = chunk_date_ranges(start_dt, end_dt, chunk_days=10)
+
+    assert windows[0] == (date(2025, 1, 1), date(2025, 1, 10))
+    assert windows[1] == (date(2025, 1, 11), date(2025, 1, 20))
+    assert windows[2] == (date(2025, 1, 21), date(2025, 1, 25))  # final short window
+
+    # No gaps or overlaps: each window starts the day after the previous ends.
+    for i in range(len(windows) - 1):
+        assert windows[i + 1][0] == windows[i][1] + timedelta(days=1)
+
+    # Full coverage of the requested range.
+    assert windows[0][0] == start_dt
+    assert windows[-1][1] == end_dt
+
+
+def test_ndvi_composite_days_env_override(monkeypatch):
+    """NDVI_COMPOSITE_DAYS must be overridable via the NDVI_COMPOSITE_DAYS env var."""
+    import importlib
+    import gee_pipeline.export_site_daily_climate as mod
+
+    monkeypatch.setenv("NDVI_COMPOSITE_DAYS", "5")
+    try:
+        importlib.reload(mod)
+        assert mod.NDVI_COMPOSITE_DAYS == 5
+        assert mod.NDVI_SOURCE_LABEL == "S2_median_5d"
+    finally:
+        monkeypatch.delenv("NDVI_COMPOSITE_DAYS", raising=False)
+        importlib.reload(mod)
+        assert mod.NDVI_COMPOSITE_DAYS == 10  # restored to default
 
 
 def test_dry_run_generator_integrity():

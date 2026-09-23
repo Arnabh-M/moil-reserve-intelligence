@@ -21,13 +21,16 @@ Contract:
 from __future__ import annotations
 
 import argparse
+import csv
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
+import hashlib
 import json
 import logging
 import math
 import os
 import sys
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -39,6 +42,7 @@ if PROJECT_ROOT not in sys.path:
 
 from gee_pipeline.ee_auth import get_ee
 from geo_utils import SITE_BBOXES
+from prospectivity.gee_features import mask_s2_clouds, with_gee_retry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -60,6 +64,30 @@ COLUMNS = [
 ]
 
 DEFAULT_SITES = ["balaghat", "nagpur", "bhandara"]
+
+NON_NDVI_COLUMNS = [
+    "site_id", "date", "rainfall_mm", "rainfall_source",
+    "soil_moisture_m3m3", "soil_moisture_source", "lst_day_c", "lst_source",
+]
+
+# ---------------------------------------------------------------------------
+# NDVI composite configuration
+#
+# Sentinel-2 NDVI is fetched as cloud-masked MEDIAN COMPOSITES over windows of
+# NDVI_COMPOSITE_DAYS, one reduceRegion per window (not one per image). This
+# replaces a prior per-image .map(...).getInfo() approach that fired one
+# reduceRegion per image concurrently server-side and reliably tripped GEE's
+# "Too many concurrent aggregations" (HTTP 429) quota on 90-day chunks.
+#
+# Every day inside a window receives that window's single composite value.
+# There is no carry-forward across windows: a window with no images, or with
+# fewer than NDVI_MIN_VALID_FRACTION of the site's pixels cloud-free, is
+# recorded as missing (empty cells) for every day in that window.
+# ---------------------------------------------------------------------------
+S2_COLLECTION_ID = "COPERNICUS/S2_SR_HARMONIZED"
+NDVI_COMPOSITE_DAYS = int(os.environ.get("NDVI_COMPOSITE_DAYS", "10"))
+NDVI_MIN_VALID_FRACTION = 0.10
+NDVI_SOURCE_LABEL = f"S2_median_{NDVI_COMPOSITE_DAYS}d"
 
 # ---------------------------------------------------------------------------
 # Pure Post-Processing Functions (Isolated for Offline Unit Testing)
@@ -117,6 +145,44 @@ def compute_daily_ndvi_series(
             age = (current_date - last_date).days
             if 0 <= age <= max_age_days:
                 results.append((round(last_val, 4), age, "S2_SR"))
+            else:
+                results.append((None, None, ""))
+        else:
+            results.append((None, None, ""))
+
+    return results
+
+
+def assign_ndvi_window_values(
+    window_results: List[Tuple[date, date, Optional[float]]],
+    all_dates: List[date],
+) -> List[Tuple[Optional[float], Optional[int], str]]:
+    """
+    Assigns each date in `all_dates` the NDVI value of the composite window
+    (inclusive [w_start, w_end], length NDVI_COMPOSITE_DAYS) it falls into.
+
+    Unlike the acquisition carry-forward model above, there is no aging: a
+    composite window's value applies uniformly to every day inside it, and
+    ndvi_age_days is fixed at 0 for those days (composite windows are not
+    "observations" that get stale — see NDVI_SOURCE_LABEL / meta.json for the
+    method note). A date with no matching window, or whose window's value is
+    None (no images / low valid-pixel coverage), is recorded as missing.
+
+    `window_results` must be sorted ascending and non-overlapping (as produced
+    by chunk_date_ranges).
+    """
+    results: List[Tuple[Optional[float], Optional[int], str]] = []
+    win_idx = 0
+    n_wins = len(window_results)
+
+    for current_date in all_dates:
+        while win_idx < n_wins and current_date > window_results[win_idx][1]:
+            win_idx += 1
+
+        if win_idx < n_wins and window_results[win_idx][0] <= current_date <= window_results[win_idx][1]:
+            val = window_results[win_idx][2]
+            if val is not None:
+                results.append((round(val, 4), 0, NDVI_SOURCE_LABEL))
             else:
                 results.append((None, None, ""))
         else:
@@ -428,6 +494,153 @@ def chunk_date_ranges(start_date: date, end_date: date, chunk_days: int = 90) ->
     return chunks
 
 
+def compute_site_total_pixels(ee, ee_geom, scale: int = 30) -> Optional[int]:
+    """
+    Counts the total number of scale-m pixels covering the site geometry, once
+    per site. Used as the denominator for each NDVI composite window's
+    valid-pixel fraction, so it isn't recomputed per window.
+    """
+    def fetch():
+        val = (
+            ee.Image.constant(1)
+            .reduceRegion(reducer=ee.Reducer.count(), geometry=ee_geom, scale=scale, bestEffort=True, maxPixels=1e9)
+            .get("constant")
+            .getInfo()
+        )
+        return val
+
+    try:
+        val = with_gee_retry(fetch, what="NDVI site pixel count", attempts=5, base_delay=5.0)
+        return int(val) if val is not None else None
+    except Exception as exc:
+        logger.warning("Could not compute total site pixel count for NDVI coverage check: %s", exc)
+        return None
+
+
+def fetch_ndvi_composites(
+    ee,
+    site_key: str,
+    ee_geom,
+    start_date: date,
+    end_date: date,
+    composite_days: int = NDVI_COMPOSITE_DAYS,
+    min_valid_fraction: float = NDVI_MIN_VALID_FRACTION,
+) -> Tuple[List[Tuple[date, date, Optional[float]]], List[Dict[str, Any]]]:
+    """
+    Fetches Sentinel-2 NDVI as sequential cloud-masked MEDIAN COMPOSITES over
+    `composite_days`-day windows, ONE reduceRegion (mean) call per window, run
+    sequentially with a pause between windows.
+
+    This deliberately avoids `.map(fn).getInfo()` over a whole collection: that
+    pattern fires one reduceRegion per image concurrently server-side and
+    reliably trips GEE's "Too many concurrent aggregations" (429) quota once a
+    window has more than a couple of Sentinel-2 acquisitions. Here, cloud
+    masking + NDVI are still computed per-image via `.map()`, but the
+    reduceRegion is only ever run once, against the window's `.median()`
+    composite image.
+
+    Returns:
+      - window_results: list of (window_start, window_end, ndvi_mean_or_None),
+        sorted ascending, covering [start_date, end_date] with no gaps.
+      - diagnostics: list of per-window dicts (image_count, ndvi_mean,
+        valid_fraction, status) for inspection/verification.
+    """
+    windows = chunk_date_ranges(start_date, end_date, chunk_days=composite_days)
+    total_pixels = compute_site_total_pixels(ee, ee_geom)
+
+    window_results: List[Tuple[date, date, Optional[float]]] = []
+    diagnostics: List[Dict[str, Any]] = []
+
+    for w_start, w_end in windows:
+        w_start_str = w_start.strftime("%Y-%m-%d")
+        w_end_str = w_end.strftime("%Y-%m-%d")
+        w_end_exclusive_str = (w_end + timedelta(days=1)).strftime("%Y-%m-%d")
+
+        def fetch_window():
+            col = (
+                ee.ImageCollection(S2_COLLECTION_ID)
+                .filterDate(w_start_str, w_end_exclusive_str)
+                .filterBounds(ee_geom)
+            )
+            count = col.size()
+
+            def to_ndvi(img):
+                # mask_s2_clouds() (prospectivity.gee_features) ends in .copyProperties(),
+                # which always returns a generic ee.Element (GEE API quirk) — cast back to
+                # ee.Image so Image-only methods like normalizedDifference() are available.
+                masked = ee.Image(mask_s2_clouds(img, ee))
+                return masked.normalizedDifference(["B8", "B4"]).rename("ndvi")
+
+            composite = ee.Image(col.map(to_ndvi).median())
+            valid_mask = composite.select("ndvi").mask()
+
+            mean_dict = composite.reduceRegion(
+                reducer=ee.Reducer.mean(), geometry=ee_geom, scale=30, bestEffort=True, maxPixels=1e9,
+            )
+            valid_dict = valid_mask.reduceRegion(
+                reducer=ee.Reducer.sum(), geometry=ee_geom, scale=30, bestEffort=True, maxPixels=1e9,
+            )
+            combined = ee.Dictionary({
+                "image_count": count,
+                "ndvi_mean": mean_dict.get("ndvi"),
+                "valid_pixels": valid_dict.get("ndvi"),
+            })
+            return combined.getInfo()
+
+        try:
+            info = with_gee_retry(
+                fetch_window, what=f"S2 NDVI composite {site_key} {w_start_str}", attempts=5, base_delay=5.0
+            )
+        except Exception as exc:
+            logger.warning(
+                "NDVI composite failed permanently for %s window %s to %s: %s", site_key, w_start_str, w_end_str, exc
+            )
+            window_results.append((w_start, w_end, None))
+            diagnostics.append({
+                "window_start": w_start_str, "window_end": w_end_str,
+                "image_count": None, "ndvi_mean": None, "valid_fraction": None, "status": "failed",
+            })
+            time.sleep(1.0)
+            continue
+
+        image_count = int(info.get("image_count") or 0)
+        ndvi_mean = info.get("ndvi_mean")
+        valid_pixels = info.get("valid_pixels")
+        valid_fraction = (
+            float(valid_pixels) / float(total_pixels) if (total_pixels and valid_pixels is not None) else None
+        )
+
+        if image_count == 0 or ndvi_mean is None:
+            window_results.append((w_start, w_end, None))
+            status = "no_images" if image_count == 0 else "no_data"
+        elif valid_fraction is not None and valid_fraction < min_valid_fraction:
+            window_results.append((w_start, w_end, None))
+            status = "low_coverage"
+        else:
+            window_results.append((w_start, w_end, float(ndvi_mean)))
+            status = "ok"
+
+        diagnostics.append({
+            "window_start": w_start_str,
+            "window_end": w_end_str,
+            "image_count": image_count,
+            "ndvi_mean": round(float(ndvi_mean), 4) if ndvi_mean is not None else None,
+            "valid_fraction": round(valid_fraction, 4) if valid_fraction is not None else None,
+            "status": status,
+        })
+        logger.info(
+            "NDVI composite %s %s..%s: images=%d ndvi_mean=%s valid_frac=%s status=%s",
+            site_key, w_start_str, w_end_str, image_count,
+            f"{ndvi_mean:.4f}" if ndvi_mean is not None else "None",
+            f"{valid_fraction:.3f}" if valid_fraction is not None else "None",
+            status,
+        )
+
+        time.sleep(1.0)  # pause between windows to stay under the concurrency quota
+
+    return window_results, diagnostics
+
+
 def fetch_live_climate_dataset(
     ee,
     sites: List[str],
@@ -437,16 +650,15 @@ def fetch_live_climate_dataset(
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Extracts daily satellite features from live Earth Engine using batch reducers
-    and chunked queries.
+    and chunked queries. NDVI is fetched separately (see fetch_ndvi_composites)
+    as sequential median composites, independent of the 90-day chunking used
+    for the other products.
     """
-    from prospectivity.gee_features import mask_s2_clouds, with_gee_retry
-
     # 1. Dataset verification
     chirps_id = "UCSB-CHG/CHIRPS/DAILY"
     imerg_id = "NASA/GPM_L3/IMERG_V07"
     smap_id = verify_dataset_id(ee, ["NASA/SMAP/SPL4SMGP/008", "NASA/SMAP/SPL4SMGP/007"])
     modis_id = "MODIS/061/MOD11A1"
-    s2_id = "COPERNICUS/S2_SR_HARMONIZED"
 
     curr = start_date
     all_dates: List[date] = []
@@ -461,7 +673,16 @@ def fetch_live_climate_dataset(
         "rainfall": {"dataset_id": chirps_id, "latest_date": None, "valid_count": 0},
         "soil_moisture": {"dataset_id": smap_id, "latest_date": None, "valid_count": 0},
         "lst": {"dataset_id": modis_id, "latest_date": None, "valid_count": 0},
-        "ndvi": {"dataset_id": s2_id, "latest_date": None, "valid_count": 0},
+        "ndvi": {
+            "dataset_id": S2_COLLECTION_ID,
+            "latest_date": None,
+            "valid_count": 0,
+            "composite_days": NDVI_COMPOSITE_DAYS,
+            "method": (
+                f"{NDVI_COMPOSITE_DAYS}-day cloud-masked (SCL) median composite; "
+                "one reduceRegion(mean) per window, not per image"
+            ),
+        },
     }
 
     for site in sites:
@@ -474,7 +695,6 @@ def fetch_live_climate_dataset(
         imerg_data: Dict[date, float] = {}
         smap_data: Dict[date, float] = {}
         lst_data: Dict[date, float] = {}
-        acquisitions: Dict[date, float] = {}
 
         logger.info("Processing site '%s' over %d date chunks...", site_key, len(date_chunks))
 
@@ -633,57 +853,17 @@ def fetch_live_climate_dataset(
             except Exception as exc:
                 logger.warning("MODIS LST fetch failed for %s (%s): %s", site_key, c_start_str, exc)
 
-            # E. Sentinel-2 NDVI with SCL Cloud Masking
-            def fetch_s2():
-                col = (
-                    ee.ImageCollection(s2_id)
-                    .filterDate(c_start_str, c_end_exclusive)
-                    .filterBounds(ee_geom)
-                )
-                def process_s2(img):
-                    # mask_s2_clouds() ends in .copyProperties(), which always returns a
-                    # generic ee.Element (GEE API quirk) — cast back to ee.Image so
-                    # Image-only methods like normalizedDifference() are available.
-                    masked = ee.Image(mask_s2_clouds(img, ee))
-                    ndvi = masked.normalizedDifference(["B8", "B4"]).rename("ndvi")
-                    # Clear mask is where mask == 1
-                    clear_mask = masked.select("B4").mask()
-                    mean_dict = ndvi.reduceRegion(
-                        reducer=ee.Reducer.mean(),
-                        geometry=ee_geom,
-                        scale=30,
-                        bestEffort=True,
-                        tileScale=4,
-                        maxPixels=1e8,
-                    )
-                    clear_fraction = clear_mask.reduceRegion(
-                        reducer=ee.Reducer.mean(),
-                        geometry=ee_geom,
-                        scale=30,
-                        bestEffort=True,
-                        tileScale=4,
-                        maxPixels=1e8,
-                    ).get("B4")
-                    return ee.Feature(None, {
-                        "date": img.date().format("YYYY-MM-dd"),
-                        "ndvi": mean_dict.get("ndvi"),
-                        "clear_fraction": clear_fraction,
-                    })
-                return col.map(process_s2).getInfo()["features"]
-
-            try:
-                features = with_gee_retry(fetch_s2, what=f"Sentinel-2 NDVI {site_key} {c_start_str}")
-                for feat in features:
-                    props = feat["properties"]
-                    ndvi_val = props.get("ndvi")
-                    clear_frac = props.get("clear_fraction")
-                    if ndvi_val is not None and clear_frac is not None and float(clear_frac) >= 0.30:
-                        d_obj = datetime.strptime(props["date"], "%Y-%m-%d").date()
-                        acquisitions[d_obj] = round(float(ndvi_val), 4)
-            except Exception as exc:
-                logger.warning("Sentinel-2 fetch failed for %s (%s): %s", site_key, c_start_str, exc)
-
-        ndvi_series = compute_daily_ndvi_series(acquisitions, all_dates, max_age_days=30)
+        # NDVI: fetched once per site over the whole [start_date, end_date] range as
+        # sequential median composites (see fetch_ndvi_composites), independent of
+        # the 90-day chunking above.
+        window_results, ndvi_diag = fetch_ndvi_composites(ee, site_key, ee_geom, start_date, end_date)
+        ok_windows = sum(1 for d in ndvi_diag if d["status"] == "ok")
+        failed_windows = sum(1 for d in ndvi_diag if d["status"] == "failed")
+        logger.info(
+            "NDVI composites for '%s': %d/%d windows ok, %d failed permanently",
+            site_key, ok_windows, len(ndvi_diag), failed_windows,
+        )
+        ndvi_series = assign_ndvi_window_values(window_results, all_dates)
         rows = merge_daily_features(
             all_dates,
             site_key,
@@ -817,6 +997,167 @@ def print_site_summary(rows: List[Dict[str, Any]], sites: List[str]) -> None:
     print("=" * 76 + "\n")
 
 
+def load_csv_rows(csv_path: str) -> List[Dict[str, str]]:
+    """Reads the CSV preserving each cell's exact original string — no reparsing
+    or reformatting — so non-NDVI columns can be written back byte-identical."""
+    with open(csv_path, "r", encoding="utf-8", newline="") as fh:
+        reader = csv.DictReader(fh)
+        if reader.fieldnames != COLUMNS:
+            raise ValueError(f"CSV column mismatch: {reader.fieldnames} != {COLUMNS}")
+        return list(reader)
+
+
+def hash_non_ndvi_columns(rows: List[Dict[str, str]]) -> str:
+    """SHA-256 over every row's non-NDVI cells, in file order. Used to verify
+    --only-ndvi never alters rainfall/soil-moisture/LST data."""
+    h = hashlib.sha256()
+    for r in rows:
+        h.update("|".join(r[c] for c in NON_NDVI_COLUMNS).encode("utf-8"))
+        h.update(b"\n")
+    return h.hexdigest()
+
+
+def write_csv_rows(csv_path: str, rows: List[Dict[str, str]]) -> None:
+    with open(csv_path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(",".join(COLUMNS) + "\n")
+        for r in rows:
+            fh.write(",".join(r[c] for c in COLUMNS) + "\n")
+
+
+def run_ndvi_only_update(
+    start_str: str = "2025-01-01",
+    end_str: Optional[str] = None,
+    sites: Optional[List[str]] = None,
+    out_csv: Optional[str] = None,
+    out_meta: Optional[str] = None,
+) -> None:
+    """
+    Re-fetches ONLY NDVI (live GEE, median-composite method) for the given date
+    range and sites, and merges it into the existing CSV in place. Rainfall,
+    soil moisture, and LST cells are carried over byte-for-byte unchanged from
+    the existing file — verified with a before/after hash of those columns;
+    the write is refused if that hash ever changes.
+    """
+    start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+    end_date = datetime.strptime(end_str, "%Y-%m-%d").date() if end_str else datetime.now(timezone.utc).date()
+    if start_date > end_date:
+        raise ValueError(f"Start date ({start_date}) cannot be after end date ({end_date}).")
+
+    target_sites = [s.strip().lower() for s in (sites or DEFAULT_SITES)]
+    csv_path = out_csv or os.path.join(PROJECT_ROOT, "data", "satellite_daily_features.csv")
+    meta_path = out_meta or os.path.join(PROJECT_ROOT, "data", "satellite_daily_features.meta.json")
+
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"--only-ndvi requires an existing CSV at {csv_path}")
+
+    logger.info("NDVI-only update: %s to %s for sites: %s", start_date, end_date, target_sites)
+
+    rows = load_csv_rows(csv_path)
+    before_hash = hash_non_ndvi_columns(rows)
+    row_index = {(r["site_id"], r["date"]): r for r in rows}
+
+    ee = get_ee(dry_run=False)
+    if ee is None:
+        raise RuntimeError("--only-ndvi requires live Earth Engine; dry-run is not supported for this mode.")
+
+    shapely_geoms, geom_sources = resolve_site_geometries(target_sites)
+
+    curr = start_date
+    all_dates: List[date] = []
+    while curr <= end_date:
+        all_dates.append(curr)
+        curr += timedelta(days=1)
+
+    total_updated = 0
+    total_skipped_no_row = 0
+    per_site_diag: Dict[str, List[Dict[str, Any]]] = {}
+    ndvi_valid_count = 0
+    ndvi_latest_date = None
+
+    for site in target_sites:
+        site_key = site.lower()
+        geom = shapely_geoms[site_key]
+        minx, miny, maxx, maxy = geom.bounds
+        ee_geom = ee.Geometry.Rectangle([minx, miny, maxx, maxy])
+
+        window_results, diag = fetch_ndvi_composites(ee, site_key, ee_geom, start_date, end_date)
+        per_site_diag[site_key] = diag
+        ndvi_series = assign_ndvi_window_values(window_results, all_dates)
+
+        for i, dt in enumerate(all_dates):
+            dt_str = dt.strftime("%Y-%m-%d")
+            key = (site_key, dt_str)
+            row = row_index.get(key)
+            if row is None:
+                total_skipped_no_row += 1
+                continue
+            val, age, src = ndvi_series[i]
+            row["ndvi"] = format_cell(val, precision=4)
+            row["ndvi_age_days"] = format_cell(age)
+            row["ndvi_source"] = src or ""
+            total_updated += 1
+            if val is not None:
+                ndvi_valid_count += 1
+                if ndvi_latest_date is None or dt_str > ndvi_latest_date:
+                    ndvi_latest_date = dt_str
+
+    after_hash = hash_non_ndvi_columns(rows)
+    if before_hash != after_hash:
+        raise RuntimeError(
+            "--only-ndvi integrity check failed: rainfall/soil-moisture/LST columns "
+            "changed in memory. Aborting write — CSV on disk is untouched."
+        )
+    logger.info("Integrity check passed: rainfall/soil-moisture/LST columns unchanged (hash %s...).", before_hash[:12])
+
+    write_csv_rows(csv_path, rows)
+    logger.info(
+        "NDVI-only update complete: %d row-dates updated, %d had no matching existing CSV row.",
+        total_updated, total_skipped_no_row,
+    )
+
+    meta: Dict[str, Any] = {}
+    if os.path.exists(meta_path):
+        with open(meta_path, "r", encoding="utf-8") as fh:
+            meta = json.load(fh)
+
+    meta["generated_at"] = datetime.now(timezone.utc).isoformat()
+    meta.setdefault("products", {})
+    meta["products"]["ndvi"] = {
+        "dataset_id": S2_COLLECTION_ID,
+        "band": "NDVI=(B8-B4)/(B8+B4)",
+        "scale_m": 30,
+        "units": "unitless [-1, 1]",
+        "latest_valid_date": ndvi_latest_date,
+        "valid_day_count": ndvi_valid_count,
+        "composite_days": NDVI_COMPOSITE_DAYS,
+        "method": (
+            f"{NDVI_COMPOSITE_DAYS}-day cloud-masked (SCL) median composite; "
+            "one reduceRegion(mean) per window, not per image"
+        ),
+        "min_valid_pixel_fraction": NDVI_MIN_VALID_FRACTION,
+        "last_ndvi_only_update": {
+            "start": start_date.strftime("%Y-%m-%d"),
+            "end": end_date.strftime("%Y-%m-%d"),
+            "sites": target_sites,
+        },
+    }
+    with open(meta_path, "w", encoding="utf-8") as fh:
+        json.dump(meta, fh, indent=2)
+    logger.info("Updated meta.json NDVI block and generated_at.")
+
+    print("\n" + "=" * 76)
+    print(" NDVI-ONLY UPDATE SUMMARY")
+    print("=" * 76)
+    for site_key, diag in per_site_diag.items():
+        ok = sum(1 for d in diag if d["status"] == "ok")
+        failed = sum(1 for d in diag if d["status"] == "failed")
+        no_img = sum(1 for d in diag if d["status"] == "no_images")
+        low_cov = sum(1 for d in diag if d["status"] == "low_coverage")
+        print(f"  {site_key}: {ok}/{len(diag)} windows ok | failed={failed} no_images={no_img} low_coverage={low_cov}")
+    print(f"  Non-NDVI columns verified byte-for-byte unchanged (hash {before_hash[:12]}...).")
+    print("=" * 76 + "\n")
+
+
 def run_export(
     start_str: str = "2025-01-01",
     end_str: Optional[str] = None,
@@ -916,6 +1257,9 @@ def run_export(
                 "units": "unitless [-1, 1]",
                 "latest_valid_date": product_stats["ndvi"]["latest_date"],
                 "valid_day_count": product_stats["ndvi"]["valid_count"],
+                "composite_days": product_stats["ndvi"].get("composite_days"),
+                "method": product_stats["ndvi"].get("method"),
+                "min_valid_pixel_fraction": NDVI_MIN_VALID_FRACTION,
             },
         }
 
@@ -945,9 +1289,27 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Generate deterministic simulated data without GEE.")
     parser.add_argument("--out-csv", default=None, help="Custom output CSV path.")
     parser.add_argument("--out-meta", default=None, help="Custom output metadata JSON path.")
+    parser.add_argument(
+        "--only-ndvi", action="store_true",
+        help="Re-fetch ONLY NDVI (live) and merge into the existing CSV, leaving rainfall/"
+             "soil-moisture/LST columns byte-for-byte unchanged. Requires an existing CSV "
+             "and live GEE credentials (incompatible with --dry-run).",
+    )
 
     args = parser.parse_args()
     site_list = [s.strip() for s in args.sites.split(",") if s.strip()]
+
+    if args.only_ndvi:
+        if args.dry_run:
+            raise SystemExit("--only-ndvi and --dry-run are mutually exclusive.")
+        run_ndvi_only_update(
+            start_str=args.start,
+            end_str=args.end,
+            sites=site_list,
+            out_csv=args.out_csv,
+            out_meta=args.out_meta,
+        )
+        return
 
     run_export(
         start_str=args.start,

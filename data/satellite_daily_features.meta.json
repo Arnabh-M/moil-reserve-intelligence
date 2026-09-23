@@ -1,7 +1,7 @@
 {
   "pipeline": "MOIL Reserve Intelligence \u2014 Site Daily Climate & Satellite Exporter",
   "script_version": "1.0.0",
-  "generated_at": "2026-09-22T19:07:51.689754+00:00",
+  "generated_at": "2026-09-23T02:42:34.718760+00:00",
   "start": "2025-01-01",
   "end": "2026-09-22",
   "simulated": false,
@@ -40,8 +40,20 @@
       "band": "NDVI=(B8-B4)/(B8+B4)",
       "scale_m": 30,
       "units": "unitless [-1, 1]",
-      "latest_valid_date": null,
-      "valid_day_count": 0
+      "latest_valid_date": "2026-09-22",
+      "valid_day_count": 1630,
+      "composite_days": 10,
+      "method": "10-day cloud-masked (SCL) median composite; one reduceRegion(mean) per window, not per image",
+      "min_valid_pixel_fraction": 0.1,
+      "last_ndvi_only_update": {
+        "start": "2025-01-01",
+        "end": "2026-09-22",
+        "sites": [
+          "balaghat",
+          "nagpur",
+          "bhandara"
+        ]
+      }
     }
   },
   "columns": [
