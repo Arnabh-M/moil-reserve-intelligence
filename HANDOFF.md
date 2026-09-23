@@ -1,4 +1,13 @@
-# Handoff — branch `fix/site-aois` (Phases 1-5 done; ready for a visual check, then merge to `main`)
+# Handoff — branches `fix/site-aois` + `fix/unify-confidence-scale` (stacked; ready for a visual check, then merge)
+
+> **ZONE CONFIDENCE SCORES DROPPED, ON PURPOSE — NOT A BUG.** `reserve_zones.confidence_score` now comes from the
+> same trained-model map layer as the heatmap (one source). Before -> after, e.g. Nagpur North 0.947 -> 0.211,
+> Nagpur South 0.957 -> 0.326, Bhandara East 0.919 -> 0.367; site averages now Balaghat 0.24 / Nagpur 0.26 /
+> Bhandara 0.36 (KPI 0.29). The old high numbers came from a kriged surface that used synthetic fields and none of
+> the real satellite features, so they were disconnected from the map, not evidence of better prospectivity. Do not
+> "fix" the lower values. Labels are synthetic; the score is an ensemble agreement index, not a probability of ore.
+> Consequence for the UI: every zone now reads "Exploration" with an amber/red badge (<0.7 / <0.4 thresholds
+> unchanged); per-cell hotspots reach 0.68-0.87 (see section 4).
 
 ## 1. What this branch changed
 - **Corrected site boxes.** Nagpur and Bhandara were centred on the cities, 30-50 km from any real MOIL mine;
@@ -25,14 +34,20 @@ indices from the Feb-May dry-season composite; terrain at native 30 m. Cells wit
   `rebuild_demo_db` + `backfill_equipment_status_log` afterwards (see section 5).
 - `prospectivity/METHODOLOGY.md`: site areas, grid dimensions and feature windows are current.
 
-## 4. Remaining
-- Merge `fix/site-aois` into `main` after a visual check.
+## 4. Remaining / demo notes
+- Merge `fix/site-aois`, then `fix/unify-confidence-scale`, into `main` after a visual check.
 - **Re-export the prospectivity layers once** (`python -m prospectivity.classify_export`, offline) so class breaks
-  use real Jenks (`jenkspy` is now installed and in `requirements.txt`). Scores do not change; ~0.15% of cells
-  (20 of 12,934) change band.
-- Two "confidence" numbers exist: reserve-zone scores (0.24-0.97, offline "Pipeline B" kriged RF surface via
-  `import_prospectivity_scores`) and the per-site map layers (trained ensemble, e.g. Nagpur 0.01-0.68). They come
-  from different pipelines and are not comparable; unify before showing both to a user.
+  use real Jenks (`jenkspy` is installed). Scores do not change; ~0.15% of cells change band. Then rerun
+  `python -m scripts.import_prospectivity_scores` (zone means are unaffected by banding, but keep them in sync).
+- **One confidence source (done).** `import_prospectivity_scores.py` reads
+  `oresight-frontend/public/prospectivity/{site}.geojson` (`ensemble_confidence_score`) and stores the mean over
+  cells inside each zone (NULL if none). The kriging chain (`build_confidence_surface.py`,
+  `export_reserve_zones.py`, `train_reserve_classifier.py`, `reserve_classifier.pkl`, `confidence_surface.npz`,
+  `data/reserve_zones.geojson`) was deleted. Neo4j `OreZone.confidence_score` (hardcoded seed values, never read)
+  was removed from `seed_graph.cypher`, `seed_scenario_a.py` and the report-upload default.
+- Demo hotspots (real per-cell scores): Bhandara `bhandara_1680` 0.724 (21.5264, 79.7655, interior, 3/3 models);
+  Nagpur `nagpur_258` 0.684 (21.4436, 79.2335, 1.6 km inside); Balaghat: `balaghat_23` 0.867 is only 13 m from the
+  west box edge, so prefer interior `balaghat_522` 0.851 (21.8656, 80.1985, 2.0 km inside, 3/3 models).
 
 ## 5. Known issues
 - `tests/test_smoke.py::test_simulate_after_differs_from_before` is xfail pending Tasks 2/3: the shortfall model is
@@ -60,4 +75,4 @@ Fast tests that are safe: `python -m pytest prospectivity gee_pipeline gis -q`.
   `gis/tiles/*` to `oresight-frontend/public/tiles/`); prospectivity `python -m prospectivity.feature_cache --force`
   (~15 min), `python -m prospectivity.train_models --allow-synthetic`, `python -m prospectivity.classify_export`;
   zone scores from `oresight-backend/`: `python -m scripts.import_prospectivity_scores`
-  (use the backend `venv`, it needs geoalchemy2).
+  (use the backend `venv`, it needs geoalchemy2; must run AFTER classify_export, it reads its GeoJSONs).

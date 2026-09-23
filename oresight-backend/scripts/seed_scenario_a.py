@@ -34,7 +34,7 @@ never supposed to be touched.
 
 Fresh, dedicated nodes created for this scenario:
   - BlastPlan  bp_bal_rain_01
-  - OreZone    oz_bal_rain_01 (same confidence_score/grade_estimate as
+  - OreZone    oz_bal_rain_01 (same grade_estimate as
     oz_bal_01, since narratively it's "the same zone" -- just not the same
     graph node, to keep this subgraph isolated)
   - RiskEvent  risk_event_balaghat_rain_01, external_ref = the Postgres
@@ -166,7 +166,8 @@ def main() -> None:
             session.run(
                 """
                 MERGE (z:OreZone {id: $zone_id})
-                SET z.site_id = $site_id, z.confidence_score = 0.82, z.grade_estimate = 38.5
+                SET z.site_id = $site_id, z.grade_estimate = 38.5
+                REMOVE z.confidence_score
                 """,
                 zone_id=ORE_ZONE_ID,
                 site_id=neo4j_site_id,

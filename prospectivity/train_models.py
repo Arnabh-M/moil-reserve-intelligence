@@ -460,6 +460,17 @@ def write_results_markdown(
         "   To deploy this system for actual MOIL manganese exploratory drilling:",
         "   - Ingest surveyed borehole intercepts and drillcore assays (from GSI / MOIL Central India archives).",
         "   - Retrain using the exact same pipeline harness with `labels_are_synthetic = False`.",
+        "",
+        '---',
+        '',
+        '## 5. Where the reserve-zone confidence comes from',
+        '',
+        'Reserve-zone confidence (`reserve_zones.confidence_score`: `/reserve-zones`, zone panel, `/sites`, `/kpi`) and the map',
+        "heatmap now share ONE source: the per-cell `ensemble_confidence_score` from the models evaluated above. A zone's",
+        'score is the mean of the heatmap cells inside it. The earlier kriging-based score (synthetic fields, no real',
+        'satellite features) is retired; zone scores dropped when it was removed (e.g. Nagpur North 0.947 -> 0.211), which is',
+        'correct, not a regression. As everywhere in this report, the labels are synthetic and the score is an ensemble',
+        'agreement index, not a probability of ore.',
     ])
 
     os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)

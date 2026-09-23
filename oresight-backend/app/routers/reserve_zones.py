@@ -26,7 +26,11 @@ def list_reserve_zones(
 ) -> dict:
     """Return reserve zone polygons as a GeoJSON FeatureCollection. Each
     feature's `confidence_score` property drives the frontend's map colour
-    ramp.
+    ramp. It is the mean of the trained-model map layer's
+    `ensemble_confidence_score` over the cells inside the zone (see
+    scripts/import_prospectivity_scores.py), i.e. the same source as the
+    prospectivity heatmap; null when no map cell falls inside the zone. It is an
+    ensemble agreement index on synthetic labels, not a probability of ore.
     """
     if site_id is not None:
         get_site_or_404(db, site_id)

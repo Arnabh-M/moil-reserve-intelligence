@@ -28,80 +28,40 @@ None of this is real MOIL production or exploration data — see Limitations.
 
 ## Models used
 
-### Reserve Prospectivity Classifier — Random Forest
+### Reserve prospectivity and zone confidence — ONE source
 
-`RandomForestClassifier(n_estimators=200, max_depth=5)` vs.
-`XGBClassifier(n_estimators=200, max_depth=3)`, compared on a stratified
-80/20 split of `training_features.csv` (40 labeled points total, 8 in the
-test fold), 4 features (`dist_to_nearest_structure`, `structural_density`,
-`synthetic_ndvi`, `synthetic_elevation`), predicting `is_confirmed_deposit`.
+`reserve_zones.confidence_score` (served by `GET /reserve-zones`, shown in the zone
+detail panel, averaged into `/sites` and `/kpi/summary`) and the map heatmap now come
+from the **same** model output:
 
-**Actual measured result (this session, `train_reserve_classifier.py`):**
+1. `prospectivity.train_models` trains per-site Random Forest, XGBoost and Naive Bayes
+   classifiers on 9 Sentinel-2 / DEM features plus 2 structural features, with 5-fold
+   spatial cross-validation (results and honesty statement: `prospectivity/RESULTS.md`).
+2. `prospectivity.classify_export` scores every 100 m grid cell and writes the per-site
+   map layers `oresight-frontend/public/prospectivity/{site}.geojson`
+   (`ensemble_confidence_score` per cell).
+3. `oresight-backend/scripts/import_prospectivity_scores.py` sets each zone's
+   `confidence_score` to the **mean** `ensemble_confidence_score` of the map cells whose
+   centroid is inside the zone polygon (3 dp). A zone with no cells gets NULL (logged), not
+   a made-up value.
 
-| Model | AUC-ROC | Precision | Recall | F1 |
-|---|---|---|---|---|
-| RandomForestClassifier (winner) | 0.875 | 0.800 | 1.000 | 0.889 |
-| XGBClassifier | 0.875 | 0.750 | 0.750 | 0.750 |
+**The scores dropped when this was unified (e.g. Nagpur North 0.947 → 0.211), and that is
+correct.** The earlier zone numbers came from a separate kriged surface, built from a
+4-feature classifier that used synthetic NDVI/elevation fields and none of the real
+satellite features, so it disagreed with the heatmap by an order of magnitude. That
+pipeline (`build_confidence_surface.py`, `export_reserve_zones.py`,
+`train_reserve_classifier.py`, `models/reserve_classifier.pkl`, `data/reserve_zones.geojson`,
+`data/confidence_surface.npz`) has been retired and removed; git history has it. The lower
+numbers are not a regression.
 
-Single 80/20 split, 8-point test fold. Because 8 test points make a single
-split coarse, the label was also checked with **5-fold stratified CV across
-3 seeds** (RandomForest mean AUC **0.773**, per-seed 0.79 / 0.81 / 0.72;
-XGBoost mean 0.715) and a **label-shuffle permutation test** (real 5-fold CV
-AUC 0.773 vs. a shuffled-label null of mean 0.49 / p95 0.71; permutation
-**p = 0.005**). `dist_to_nearest_structure` dominates RandomForest feature
-importance (~0.45), consistent with how the label is generated. Per-feature
-point-biserial correlation with the label: `dist_to_nearest_structure`
-r = −0.57 (p = 0.0001), `structural_density` r = +0.58 (p = 0.0001),
-`synthetic_ndvi` and `synthetic_elevation` near zero and non-significant
-(they are weak secondary terms in the label rule by design).
+The caveats still apply: the deposit labels are **synthetic**, cross-validated AUCs are
+chance-level, and the score is an **ensemble agreement index, not a probability of ore**.
+It is a relative prioritisation signal for where to ground-truth next.
 
-This is a deliberately moderate signal, not a near-perfect separator: CV
-folds still swing between ~0.56 and ~1.0, and n = 40 keeps every estimate
-wide. It is honest signal, though — an earlier version of the generator
-assigned `is_confirmed_deposit` independently of the features, which
-permutation-tested at true AUC ≈ 0.5 (chance) regardless of model or sample
-size; that is the version this replaced.
-
-### From classifier to `reserve_zones.confidence_score`
-
-The number served by `GET /reserve-zones` and averaged into
-`GET /kpi/summary` is **the kriged Random Forest prospectivity probability,
-averaged over each zone** — not a count of confirmed deposits. The offline
-chain (`generate_datasets.py` → `generate_features.py` →
-`train_reserve_classifier.py` → `build_confidence_surface.py` →
-`export_reserve_zones.py`) does this:
-
-1. `predict_proba` from the trained Random Forest for every point on a
-   50×50 grid over the combined site bounding box.
-2. `PyKrige.OrdinaryKriging` smooths those grid probabilities (spherical vs.
-   exponential variogram picked by 5-fold CV on a 200-point subsample —
-   exponential won this run, ~7.5 km range), then the surface is resampled
-   onto a clean 100×100 lon/lat cell grid. This run's kriged surface:
-   min 0.006, max 0.982, mean 0.167 — most of the combined bounding box is
-   far from any mapped structure and scores low, with prospectivity
-   concentrating into hot spots along the structural lines, which is the
-   intended behaviour of a classifier that actually keys on
-   structural proximity.
-3. `export_reserve_zones.py` writes the cells (each with a continuous
-   `confidence_score` in [0, 1] and a lowercase `site_id`) to
-   `data/reserve_zones.geojson`.
-4. `scripts/import_prospectivity_scores.py` (run by `rebuild_demo_db.py`
-   immediately after `import_p2_data`) sets each Postgres
-   `reserve_zones.confidence_score` to the mean of the grid cells whose
-   centroid falls inside that zone's polygon, rounded to 3 dp. Zones with
-   no cell inside keep their prior value.
-
-This replaced the earlier `confidence_score = confirmed / total` over the
-handful of ground-truth points nearest each zone, which could only ever be
-0.0, 0.5, 0.67 or 1.0 — a sample-size artifact, not a confidence gradient.
-`estimated_grade_pct` / `estimated_depth_m` are unaffected: those still
-come from `deposit_ground_truth.csv` via `import_p2_data`.
-
-The caveats above carry straight through: the surface is a smoothed
-projection of a moderate-signal classifier (CV AUC ≈ 0.77) trained on 40
-**synthetic** points whose labels were generated from those same features,
-so the per-zone score is a **relative prioritisation signal — where to
-ground-truth next — not a confirmed-reserve probability.**
+Before the kriging chain, `confidence_score` was `confirmed / total` over the handful of
+ground-truth points nearest each zone (only ever 0.0, 0.5, 0.67 or 1.0).
+`estimated_grade_pct` / `estimated_depth_m` are unaffected: they still come from
+`deposit_ground_truth.csv` via `import_p2_data`.
 
 ### Shortfall Forecaster — XGBoost Regressor
 

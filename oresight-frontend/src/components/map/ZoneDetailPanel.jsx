@@ -12,8 +12,10 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
     message: '',
   });
 
-  const confidenceScore = zone ? (zone.confidence_score ?? zone.confidence ?? 0) : 0;
-  const confidencePct = Math.round(confidenceScore * 100);
+  const rawConfidence = zone ? (zone.confidence_score ?? zone.confidence ?? null) : null;
+  const hasConfidence = rawConfidence !== null;
+  const confidenceScore = hasConfidence ? rawConfidence : 0;
+  const confidencePct = hasConfidence ? Math.round(confidenceScore * 100) : null;
   const zoneName = zone ? (zone.zone_name || zone.name || (zone.id ? `Zone #${zone.id}` : 'Reserve Zone')) : '';
   const gradePct = zone ? (zone.estimated_grade_pct ?? zone.grade_percent ?? zone.grade_estimate) : null;
 
@@ -135,7 +137,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
           <div className="rounded-xl border border-border bg-bg/50 p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-text-secondary">Confidence Score</span>
-              <Badge variant={confidenceVariant}>{confidencePct}%</Badge>
+              <Badge variant={hasConfidence ? confidenceVariant : 'unconfirmed'}>{hasConfidence ? `${confidencePct}%` : 'n/a'}</Badge>
             </div>
             <div className="h-2 w-full rounded-full bg-border overflow-hidden">
               <div
@@ -146,11 +148,11 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
                     ? 'bg-warning'
                     : 'bg-danger'
                 }`}
-                style={{ width: `${Math.min(Math.max(confidencePct, 5), 100)}%` }}
+                style={{ width: hasConfidence ? `${Math.min(Math.max(confidencePct, 5), 100)}%` : '0%' }}
               />
             </div>
             <p className="mt-2 text-[11px] text-text-secondary">
-              Score: <span className="font-semibold text-navy">{Number(confidenceScore).toFixed(4)}</span>
+              Score: <span className="font-semibold text-navy">{hasConfidence ? Number(confidenceScore).toFixed(4) : 'n/a (no map cells in this zone)'}</span>
             </p>
           </div>
 
@@ -176,7 +178,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
                 </span>
               </div>
               <p className="text-sm font-bold text-navy">
-                {confidenceScore >= 0.6 ? 'High Prospect' : 'Exploration'}
+                {hasConfidence && confidenceScore >= 0.6 ? 'High Prospect' : 'Exploration'}
               </p>
             </div>
           </div>

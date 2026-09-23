@@ -15,8 +15,8 @@ simulation**, and a **live operations dashboard** across three MOIL mine sites:
 OreSight answers four questions a mine planner asks every day:
 
 1. **Where is the ore likely to be?** — a Random Forest prospectivity classifier
-   over structural-geology and remote-sensing proxies, kriged into a continuous
-   confidence surface and exported as map-ready reserve zones.
+   over Sentinel-2, DEM and structural-geology features; the per-cell ensemble score
+   drives the map heatmap and each reserve zone's confidence is its mean.
 2. **What is going wrong right now?** — a Watcher agent polls production and
    equipment telemetry, raises risk events, and mirrors them into a Neo4j causal
    graph.
@@ -118,10 +118,10 @@ graph path — explainability is a hard design constraint, not a feature.
        │                          │                     │
 ┌──────▼───────────┐   ┌──────────▼──────────┐   ┌──────▼─────────────┐
 │ PostgreSQL 16    │   │ Neo4j 5 (+APOC)     │   │ ML ARTIFACTS       │
-│ + PostGIS 3.4    │   │ Causal knowledge    │   │ reserve_classifier │
+│ + PostGIS 3.4    │   │ Causal knowledge    │   │ per-site rf/nb/xgb │
 │ + pgvector       │   │ graph: MineSite,    │   │ shortfall XGBoost  │
 │ Sites, equipment,│   │ Equipment, OreZone, │   │ rf_/xgb_ per-site  │
-│ production, risk,│   │ BlastPlan, Weather, │   │ kriged confidence  │
+│ production, risk,│   │ BlastPlan, Weather, │   │ zone confidence    │
 │ zones, notes,    │   │ RiskEvent + CAUSES/ │   │ surface (.npz)     │
 │ blasts, weather  │   │ AFFECTS/DEPENDS_ON  │   │ NDVI/elev fields   │
 └──────────────────┘   └─────────────────────┘   └────────────────────┘
@@ -162,10 +162,10 @@ graph path — explainability is a hard design constraint, not a feature.
 ## 4. Features
 
 ### 4.1 Reserve Prospectivity & Mapping
-- Random Forest / XGBoost deposit classifier over structural + remote-sensing
-  features, with the better model auto-selected and persisted.
-- **Ordinary Kriging** smoothing (variogram model chosen by 5-fold CV) of the
-  50×50 prediction grid, resampled to a clean 100×100 lon/lat cell grid.
+- Per-site Random Forest / XGBoost / Naive Bayes classifiers over structural +
+  remote-sensing features (5-fold spatial CV), scored on a 100 m grid.
+- Reserve-zone confidence = mean of that same per-cell score inside each zone
+  (`scripts/import_prospectivity_scores.py`); one source for heatmap and zones.
 - GeoJSON reserve-zone export with per-cell `confidence_score` and `site_id`.
 - Interactive MapLibre map: raster prospectivity overlay with opacity control,
   structural-lines GeoJSON, layer toggles, confidence legend, NDVI time slider,
@@ -254,7 +254,7 @@ over.
 
 | Capability | Status |
 |---|---|
-| Three-site reserve map with kriged confidence surface | Live |
+| Three-site reserve map (trained-ensemble heatmap; zone confidence = heatmap mean) | Live |
 | Prospectivity classifier + GeoJSON zone export | Live |
 | Shortfall forecaster (XGBoost) | Live |
 | Neo4j causal graph + 3-hop traversal endpoint | Live |
@@ -345,9 +345,7 @@ AIML_Manganese_MOIL/
 │   ├── generate_datasets.py        # Day 1 — synthetic production/downtime/ground truth
 │   ├── geo_utils.py                # Shared geospatial helpers
 │   ├── generate_features.py        # Part 1 — structural lines + training features
-│   ├── train_reserve_classifier.py # Part 2 — RF vs XGBoost, best model persisted
-│   ├── build_confidence_surface.py # Part 3 — kriged 100×100 confidence surface
-│   ├── export_reserve_zones.py     # Part 4 — surface → reserve_zones.geojson
+│   ├── prospectivity/              # Parts 2-4 — per-site models, map layers, zone-confidence source
 │   ├── shortfall_features_wip.py   # Part 5 — shortfall feature engineering
 │   ├── train_shortfall_model.py    # Day 3 — XGBoost shortfall forecaster
 │   └── finalize_shortfall_model.py
@@ -471,9 +469,8 @@ Environment: `VITE_API_BASE_URL` (default `http://localhost:8000`),
 pip install -r requirements.txt   # root env
 python generate_datasets.py
 python generate_features.py           # Part 1
-python train_reserve_classifier.py    # Part 2
-python build_confidence_surface.py    # Part 3
-python export_reserve_zones.py        # Part 4
+python -m prospectivity.train_models --allow-synthetic   # Part 2
+python -m prospectivity.classify_export                  # Part 3/4
 python shortfall_features_wip.py      # Part 5 (independent)
 python train_shortfall_model.py
 ```

@@ -169,6 +169,20 @@ cells, so the click-detail panel still shows real per-cell values. Use
 
 ---
 
+### 3.3 Zone confidence = mean of this layer (single source)
+
+`reserve_zones.confidence_score` in the database (and so `/reserve-zones`, the zone panel,
+`/sites` and `/kpi/summary`) is the **mean `ensemble_confidence_score` of the 300 m render
+cells whose centroid lies inside the zone**, computed by
+`oresight-backend/scripts/import_prospectivity_scores.py` from the per-site GeoJSONs this
+module exports. It replaces the earlier kriged-surface score (a separate 4-feature
+synthetic-field classifier), which is retired. Zone scores are therefore on the same scale
+as the heatmap: mostly 0.2-0.4 (cell scores are right-skewed, so a zone's mean sits above its
+median), with hotspot cells up to ~0.87. A zone with no cells is NULL, never a default. It is an
+ensemble agreement index on synthetic labels, **not a probability of ore**.
+
+---
+
 ## 4. What IS real and verified
 
 - Site boundary polygons retrieved from PostGIS (Balaghat 810.8 km², Nagpur

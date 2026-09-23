@@ -969,7 +969,7 @@
           "reserve-zones"
         ],
         "summary": "Get reserve zones as GeoJSON",
-        "description": "Return reserve zone polygons as a GeoJSON FeatureCollection. Each\nfeature's `confidence_score` property drives the frontend's map colour\nramp.",
+        "description": "Return reserve zone polygons as a GeoJSON FeatureCollection. Each\nfeature's `confidence_score` property drives the frontend's map colour\nramp. It is the mean of the trained-model map layer's\n`ensemble_confidence_score` over the cells inside the zone (see\nscripts/import_prospectivity_scores.py), i.e. the same source as the\nprospectivity heatmap; null when no map cell falls inside the zone. It is an\nensemble agreement index on synthetic labels, not a probability of ore.",
         "operationId": "list_reserve_zones_reserve_zones_get",
         "parameters": [
           {

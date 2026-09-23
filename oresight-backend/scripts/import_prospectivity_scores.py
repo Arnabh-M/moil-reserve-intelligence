@@ -1,48 +1,43 @@
-"""Overwrite reserve_zones.confidence_score with the trained RF + PyKrige
-prospectivity surface (repo-root "Pipeline B").
+"""Set reserve_zones.confidence_score from the trained-model map layer.
 
-Source (repo root, one level above oresight-backend/):
-    data/reserve_zones.geojson  -> reserve_zones.confidence_score
+ONE SOURCE OF TRUTH. The number stored here (and therefore served by
+GET /reserve-zones, shown in the zone detail panel and averaged into
+/sites and /kpi/summary) is the same `ensemble_confidence_score` the map
+heatmap draws, aggregated up to each zone polygon:
 
-That GeoJSON is the committed output of the offline chain
-(generate_datasets -> generate_features -> train_reserve_classifier ->
-build_confidence_surface -> export_reserve_zones): a FeatureCollection of
-small rectangular grid cells, each carrying a continuous
-`confidence_score` in [0, 1] (kriged RandomForest prospectivity
-probability) and a LOWERCASE STRING `site_id` ("balaghat"/"nagpur"/
-"bhandara").
+    repo-root prospectivity.classify_export
+        -> oresight-frontend/public/prospectivity/{site}.geojson
+        -> this script -> reserve_zones.confidence_score
 
-Why this script exists: scripts/import_p2_data.py's
-`_update_reserve_zone_stats` sets `confidence_score = len(confirmed) /
-len(group)` where `group` is the handful of ground-truth point deposits
-that land nearest a zone box. With 3-6 points per zone that ratio can
-only take a few values (0.0, 0.5, 0.67, 1.0) -- a sample-size artifact,
-not a real confidence gradient. This replaces that column (and only that
-column) with the zone-averaged kriged probability, which is continuous.
-grade/depth are left exactly as import_p2_data computed them -- those
-still come from the CSV and are still correct.
+The per-site GeoJSONs are the committed output of the trained per-site
+models (prospectivity/train_models.py: the 9 Sentinel-2 / DEM features plus
+structural features, scored by RF + XGBoost + Naive Bayes). The old kriged
+surface (build_confidence_surface -> data/reserve_zones.geojson) used
+synthetic fields, not the real features, and has been retired; it is not read
+anywhere.
 
 What it does, per Postgres ReserveZone row:
-  1. Take every grid cell in the GeoJSON whose centroid falls INSIDE the
-     zone's `geom` polygon (boundary-exclusive containment, matching
-     PostGIS ST_Contains semantics -- done here with shapely on the
-     GeoAlchemy2 geometry so there's no per-cell DB round trip).
-  2. The zone's new `confidence_score` = mean of those cells'
-     `confidence_score`, rounded to 3 dp. `last_updated` is bumped too.
-  3. If a zone contains ZERO cells, its existing value is LEFT UNCHANGED
-     and a warning names it -- no 0.0 fallback, no interpolation, no
-     silent skip.
+  1. Take every map cell of that site whose centroid falls INSIDE the zone's
+     `geom` polygon (boundary-exclusive, like PostGIS ST_Contains).
+  2. confidence_score = arithmetic MEAN of those cells'
+     `ensemble_confidence_score`, rounded to 3 dp. Render cells are equal
+     size, so this is area-weighted, and it is exactly the set of cells the
+     heatmap draws inside the zone. (Cell scores are right-skewed, so the mean
+     sits above the median; the mean is used so that the zone number is the
+     average colour the map shows there.)
+  3. A zone with ZERO cells inside gets confidence_score = NULL and a logged
+     reason. No score is invented, and the old value is not kept (it came from
+     a different, retired pipeline).
 
-The GeoJSON `site_id` string is mapped to the integer `sites.id` via
-`import_p2_data._site_name_for_csv_id` (lowercase(Site.name) convention),
-and used as a redundant guard alongside the geometric test.
+Refuses to run on a GeoJSON whose provenance is not TRAINED_MODEL_SCORES
+(e.g. the `--demo` placeholder scores).
 
-Idempotent: same GeoJSON in, same `confidence_score` out on every re-run.
-No inserts, no deletes, no geometry changes.
+Idempotent: same GeoJSONs in, same scores out. No inserts, deletes or
+geometry changes.
 
-Run from oresight-backend/, AFTER scripts.import_p2_data (which
-overwrites confidence_score every run and would otherwise clobber this)
-and BEFORE the scenario seeds:
+Run from oresight-backend/, AFTER scripts.import_p2_data (which overwrites
+confidence_score with a placeholder ratio every run) and BEFORE the scenario
+seeds:
 
     python -m scripts.import_prospectivity_scores
 """
@@ -62,95 +57,79 @@ sys.path.insert(0, str(BACKEND_ROOT))
 from geoalchemy2.shape import to_shape  # noqa: E402
 from shapely.geometry import Point, shape  # noqa: E402
 from sqlalchemy import select  # noqa: E402
-from sqlalchemy.orm import Session  # noqa: E402
 
 from app.db import SessionLocal  # noqa: E402
 from app.models import ReserveZone, Site  # noqa: E402
-from scripts.import_p2_data import _site_name_for_csv_id  # noqa: E402
 
-SURFACE_GEOJSON = REPO_ROOT / "data" / "reserve_zones.geojson"
+PROSPECTIVITY_DIR = REPO_ROOT / "oresight-frontend" / "public" / "prospectivity"
+SCORE_FIELD = "ensemble_confidence_score"
+REQUIRED_STATUS = "TRAINED_MODEL_SCORES"
 
 
-def _load_surface_cells(path: Path) -> list[tuple[Point, float, str]]:
-    """Return [(centroid, confidence_score, site_id_str), ...] for every
-    grid cell in the exported prospectivity surface.
+def load_site_cells(path: Path, site_key: str) -> list[tuple[Point, float]]:
+    """[(centroid, ensemble_confidence_score), ...] for one site's map layer.
+
+    Raises SystemExit if the file is missing or is not trained-model output.
     """
+    if not path.exists():
+        raise SystemExit(
+            f"prospectivity map layer not found: {path}\n"
+            "Generate it first: python -m prospectivity.train_models --allow-synthetic && "
+            "python -m prospectivity.classify_export (repo root)."
+        )
     with path.open(encoding="utf-8") as f:
         fc = json.load(f)
 
-    cells: list[tuple[Point, float, str]] = []
-    for feature in fc.get("features", []):
-        props = feature.get("properties", {})
-        centroid = shape(feature["geometry"]).centroid
-        cells.append(
-            (centroid, float(props["confidence_score"]), str(props["site_id"]))
-        )
-    return cells
-
-
-def _site_id_by_surface_key(db: Session) -> dict[str, int]:
-    """Map each lowercase GeoJSON site_id string to the integer sites.id,
-    via import_p2_data's lowercase(Site.name) convention.
-    """
-    mapping: dict[str, int] = {}
-    for site in db.scalars(select(Site)).all():
-        mapping[site.name.lower()] = site.id
-    return mapping
-
-
-def import_scores() -> dict:
-    if not SURFACE_GEOJSON.exists():
+    status = (fc.get("provenance") or {}).get("status")
+    if status != REQUIRED_STATUS:
         raise SystemExit(
-            f"prospectivity surface not found: {SURFACE_GEOJSON}\n"
-            "Run the offline chain first (generate_datasets -> generate_features "
-            "-> train_reserve_classifier -> build_confidence_surface -> "
-            "export_reserve_zones)."
+            f"{path.name}: provenance status is {status!r}, expected {REQUIRED_STATUS!r}. "
+            "Refusing to write placeholder scores onto reserve zones."
         )
+    if fc.get("site_id") != site_key:
+        raise SystemExit(f"{path.name}: site_id is {fc.get('site_id')!r}, expected {site_key!r}")
 
-    cells = _load_surface_cells(SURFACE_GEOJSON)
+    return [
+        (shape(feat["geometry"]).centroid, float(feat["properties"][SCORE_FIELD]))
+        for feat in fc.get("features", [])
+    ]
 
+
+def aggregate_zone_score(polygon, cells: list[tuple[Point, float]]) -> tuple[float | None, int]:
+    """(mean score rounded to 3 dp, number of cells) for cells whose centroid is
+    inside `polygon`; (None, 0) when no cell is inside."""
+    scores = [score for centroid, score in cells if polygon.contains(centroid)]
+    if not scores:
+        return None, 0
+    return round(fmean(scores), 3), len(scores)
+
+
+def import_scores(prospectivity_dir: Path = PROSPECTIVITY_DIR) -> dict:
     db = SessionLocal()
     try:
-        surface_key_to_site_id = _site_id_by_surface_key(db)
+        sites = {site.id: site.name.lower() for site in db.scalars(select(Site)).all()}
+        cells_by_site = {
+            site_id: load_site_cells(prospectivity_dir / f"{key}.geojson", key)
+            for site_id, key in sites.items()
+        }
 
         zones = db.scalars(
             select(ReserveZone).order_by(ReserveZone.site_id, ReserveZone.id)
         ).all()
 
         rows: list[dict] = []
-        updated = 0
         empty_zones: list[str] = []
         now = datetime.now(timezone.utc)
 
         for zone in zones:
             polygon = to_shape(zone.geom)
-            contained = [
-                score
-                for centroid, score, site_key in cells
-                if surface_key_to_site_id.get(site_key) == zone.site_id
-                and polygon.contains(centroid)
-            ]
-
+            after, n_cells = aggregate_zone_score(polygon, cells_by_site.get(zone.site_id, []))
             before = zone.confidence_score
-            if not contained:
-                empty_zones.append(zone.zone_name or f"zone#{zone.id}")
-                rows.append(
-                    {
-                        "id": zone.id,
-                        "site_id": zone.site_id,
-                        "zone_name": zone.zone_name,
-                        "before": before,
-                        "after": before,
-                        "cells": 0,
-                        "changed": False,
-                    }
-                )
-                continue
-
-            after = round(fmean(contained), 3)
+            name = zone.zone_name or f"zone#{zone.id}"
+            if after is None:
+                empty_zones.append(name)
             zone.confidence_score = after
             zone.last_updated = now
-            updated += 1
             rows.append(
                 {
                     "id": zone.id,
@@ -158,7 +137,7 @@ def import_scores() -> dict:
                     "zone_name": zone.zone_name,
                     "before": before,
                     "after": after,
-                    "cells": len(contained),
+                    "cells": n_cells,
                     "changed": before != after,
                 }
             )
@@ -171,9 +150,9 @@ def import_scores() -> dict:
         db.close()
 
     return {
-        "surface_cells": len(cells),
+        "map_cells": sum(len(c) for c in cells_by_site.values()),
         "zones_total": len(zones),
-        "zones_scored": updated,
+        "zones_scored": len(zones) - len(empty_zones),
         "zones_changed": sum(1 for r in rows if r["changed"]),
         "zones_empty": empty_zones,
         "rows": rows,
@@ -181,12 +160,12 @@ def import_scores() -> dict:
 
 
 def _print_summary(summary: dict) -> None:
-    print("\nOreSight prospectivity-score import summary")
+    print("\nOreSight zone confidence import (source: trained-model map layer)")
     print("-" * 72)
     print(
-        f"  surface cells loaded: {summary['surface_cells']}   "
+        f"  map cells loaded: {summary['map_cells']}   "
         f"zones: {summary['zones_total']}   "
-        f"surface-scored: {summary['zones_scored']}   "
+        f"scored: {summary['zones_scored']}   "
         f"values changed this run: {summary['zones_changed']}"
     )
     print("-" * 72)
@@ -204,9 +183,9 @@ def _print_summary(summary: dict) -> None:
 
     if summary["zones_empty"]:
         print(
-            "\n  WARNING: no prospectivity grid cell centroid fell inside these "
-            "zones; their existing confidence_score was LEFT UNCHANGED "
-            f"(not zeroed, not interpolated): {', '.join(summary['zones_empty'])}"
+            "\n  WARNING: no map cell centroid fell inside these zones, so their "
+            "confidence_score was set to NULL (not zeroed, not interpolated, not "
+            f"carried over): {', '.join(summary['zones_empty'])}"
         )
 
 

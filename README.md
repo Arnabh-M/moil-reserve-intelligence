@@ -77,7 +77,7 @@ It answers the four questions a mine planner asks every day:
 
 | # | Question | How MANGANEX answers it |
 |---|---|---|
-| 1 | **Where is the ore likely to be?** | Random Forest / XGBoost prospectivity classifier over structural-geology and remote-sensing proxies, **kriged** into a continuous confidence surface and exported as map-ready reserve zones. |
+| 1 | **Where is the ore likely to be?** | Per-site Random Forest / XGBoost / Naive Bayes ensemble over Sentinel-2, DEM and structural-geology features, scored on a 100 m grid and exported as the map heatmap; each reserve zone's confidence is the mean of that same heatmap over the zone. |
 | 2 | **What is going wrong right now?** | A **Watcher agent** polls production and equipment telemetry, raises risk events, and mirrors them into a **Neo4j causal graph**. |
 | 3 | **What happens if I do nothing?** | A **Simulator agent** runs trained shortfall-forecaster projections plus a real graph traversal to show the blast-plan → ore-zone → output ripple. |
 | 4 | **What should I do instead?** | A **Planner agent** proposes reschedule / redeploy / adjust-plan options, each scored by an actual simulation run, with a deterministic **cascade (ripple-impact)** analysis attached. |
@@ -135,7 +135,7 @@ flowchart TB
 
     API --> PG[("🐘 PostgreSQL 16<br/>+ PostGIS 3.4 + pgvector<br/>sites · equipment · production<br/>risk · zones · notes · blasts · weather")]
     API --> NEO[("🕸️ Neo4j 5 + APOC<br/>Causal knowledge graph<br/>MineSite · Equipment · OreZone<br/>BlastPlan · Weather · RiskEvent")]
-    API --> ML[["🧠 ML Artifacts<br/>reserve_classifier.pkl<br/>shortfall XGBoost<br/>per-site rf_/xgb_ models<br/>kriged surface .npz"]]
+    API --> ML[["🧠 ML Artifacts<br/>shortfall XGBoost<br/>per-site rf_/nb_/xgb_ models"]]
     S7 --> OM(["🌦️ Open-Meteo API<br/>ECMWF · GFS · ICON"])
 ```
 
@@ -166,10 +166,10 @@ flowchart TB
        │                          │                     │
 ┌──────▼───────────┐   ┌──────────▼──────────┐   ┌──────▼─────────────┐
 │ PostgreSQL 16    │   │ Neo4j 5 (+APOC)     │   │ ML ARTIFACTS       │
-│ + PostGIS 3.4    │   │ Causal knowledge    │   │ reserve_classifier │
+│ + PostGIS 3.4    │   │ Causal knowledge    │   │ per-site rf/nb/xgb │
 │ + pgvector       │   │ graph: MineSite,    │   │ shortfall XGBoost  │
 │ Sites, equipment,│   │ Equipment, OreZone, │   │ rf_/xgb_ per-site  │
-│ production, risk,│   │ BlastPlan, Weather, │   │ kriged confidence  │
+│ production, risk,│   │ BlastPlan, Weather, │   │ zone confidence    │
 │ zones, notes,    │   │ RiskEvent + CAUSES/ │   │ surface (.npz)     │
 │ blasts, weather  │   │ AFFECTS/DEPENDS_ON  │   │ NDVI/elev fields   │
 └──────────────────┘   └─────────────────────┘   └────────────────────┘
@@ -257,10 +257,11 @@ flowchart LR
 ```mermaid
 flowchart LR
     GD["generate_datasets.py<br/>synthetic production,<br/>downtime, ground truth"] --> GF["generate_features.py<br/>structural lines +<br/>training features"]
-    GF --> TR["train_reserve_classifier.py<br/>RandomForest vs XGBoost"]
-    TR --> CS["build_confidence_surface.py<br/>50×50 grid → Ordinary Kriging<br/>→ 100×100 surface"]
-    CS --> EX["export_reserve_zones.py<br/>reserve_zones.geojson"]
-    EX --> MAP[["🗺️ /reserve-zones → MapLibre"]]
+    GF --> TR["prospectivity.train_models<br/>per-site RF / XGBoost / NB<br/>(9 satellite + structural features)"]
+    TR --> EX["prospectivity.classify_export<br/>per-cell ensemble_confidence_score<br/>public/prospectivity/{site}.geojson"]
+    EX --> MAP[["🗺️ heatmap → MapLibre"]]
+    EX --> ZC["import_prospectivity_scores<br/>zone mean → reserve_zones.confidence_score"]
+    ZC --> ZAPI[["/reserve-zones, zone panel"]]
 
     GD --> SF["shortfall_features_wip.py<br/>feature engineering"]
     SF --> TS["train_shortfall_model.py<br/>XGBRegressor (time split)"]
@@ -345,7 +346,7 @@ Four tabs — each **lazy-loaded behind its own error boundary** so one broken t
 
 | Capability | Status |
 |---|---|
-| Three-site reserve map with kriged confidence surface | 🟢 Live |
+| Three-site reserve map (trained-ensemble heatmap; zone confidence = heatmap mean) | 🟢 Live |
 | Prospectivity classifier + GeoJSON zone export | 🟢 Live |
 | Shortfall forecaster (XGBoost) | 🟢 Live |
 | Neo4j causal graph + 3-hop traversal endpoint | 🟢 Live |
@@ -502,9 +503,7 @@ moil-reserve-intelligence/
 ├── generate_datasets.py           # Synthetic production / downtime / ground truth
 ├── geo_utils.py                   # Shared geospatial helpers
 ├── generate_features.py           # Structural lines + training features
-├── train_reserve_classifier.py    # RF vs XGBoost, best model persisted
-├── build_confidence_surface.py    # Kriged 100×100 confidence surface
-├── export_reserve_zones.py        # Surface → reserve_zones.geojson
+├── prospectivity/                 # Per-site models, map layers, zone-confidence source (see its METHODOLOGY.md)
 ├── shortfall_features_wip.py      # Shortfall feature engineering
 ├── train_shortfall_model.py       # XGBoost shortfall forecaster
 ├── finalize_shortfall_model.py
@@ -628,9 +627,10 @@ pip install -r requirements.txt       # root env
 python -m scripts.build_site_aois     # Site AOIs — run first, see below
 python generate_datasets.py
 python generate_features.py           # Part 1 — features + structural_lines.geojson
-python train_reserve_classifier.py    # Part 2 — classifier
-python build_confidence_surface.py    # Part 3 — kriging
-python export_reserve_zones.py        # Part 4 — GeoJSON
+python -m prospectivity.feature_cache --force            # GEE features (live Earth Engine)
+python -m prospectivity.train_models --allow-synthetic   # Part 2 — per-site models
+python -m prospectivity.classify_export                  # Part 3/4 — map layers
+# then, from oresight-backend/: python -m scripts.import_prospectivity_scores
 python shortfall_features_wip.py      # Part 5 — independent
 python train_shortfall_model.py
 python finalize_shortfall_model.py
@@ -695,8 +695,7 @@ still render on the **MOIL Mines** map layer as faded, dark-ringed markers.
 Everything reads that one file:
 
 - `geo_utils.SITE_BBOXES` / `COMBINED_BBOX` / `SITE_AOIS` / `MINES`
-- `generate_datasets.py`, `generate_features.py`, `build_confidence_surface.py`,
-  `export_reserve_zones.py`, `gis/*`, `gee_pipeline/*`
+- `generate_datasets.py`, `generate_features.py`, `gis/*`, `gee_pipeline/*`
 - `oresight-backend/app/seed_dev.py` → `sites.geom` and `sites.centroid` in Postgres
 - `oresight-frontend/src/lib/map.js` → site bounds, map centre, raster overlay
   corners, the mines layer

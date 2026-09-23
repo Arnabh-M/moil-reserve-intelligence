@@ -100,7 +100,6 @@ def _write_graph(
                 SET z.deposit_id = $deposit_id,
                     z.grade_estimate = $grade,
                     z.depth_m = $depth,
-                    z.confidence_score = coalesce(z.confidence_score, 0.5),
                     z.source = 'report_upload',
                     z.site_id = coalesce($site_id, z.site_id)
                 """,

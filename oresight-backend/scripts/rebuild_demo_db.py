@@ -35,10 +35,12 @@ them — the same way a human would run them one at a time):
   5. scripts.import_prospectivity_scores
                                  << MUST run AFTER step 3. Overwrites each
                                  reserve_zones.confidence_score with the
-                                 zone-averaged kriged RF prospectivity
-                                 probability from the committed
-                                 data/reserve_zones.geojson (repo-root
-                                 "Pipeline B"). Step 3's
+                                 zone-averaged `ensemble_confidence_score`
+                                 of the trained-model map layer (committed
+                                 oresight-frontend/public/prospectivity/
+                                 {site}.geojson, from prospectivity.
+                                 classify_export) -- the SAME numbers the map
+                                 heatmap draws. Step 3's
                                  _update_reserve_zone_stats sets
                                  confidence_score = confirmed/total over the
                                  3-6 nearest ground-truth points -- a
@@ -51,9 +53,8 @@ them — the same way a human would run them one at a time):
                                  Only confidence_score + last_updated change;
                                  grade/depth (still from the CSV, still
                                  correct) and geometry are untouched. Zones
-                                 with no grid cell inside their polygon keep
-                                 their existing value and are named in a
-                                 warning.
+                                 with no map cell inside their polygon get
+                                 NULL and are named in a warning.
   6. scripts.load_graph --reset  wipe + reload Neo4j from seed_graph.cypher.
   7. scripts.seed_scenario_a     Balaghat rainfall -> dedicated neo4j causal
                                  chain (WeatherEvent->BlastPlan->OreZone->
@@ -90,7 +91,7 @@ STEPS: list[tuple[str, list[str]]] = [
     ("scripts.import_p2_data  (real roster; DELETES synthetic fleet)", ["-m", "scripts.import_p2_data"]),
     ("app.seed_dev  (pass 2 — RESTORE synthetic fleet dropped by import_p2_data)", ["-m", "app.seed_dev"]),
     (
-        "scripts.import_prospectivity_scores  (kriged RF surface -> confidence_score; AFTER import_p2_data)",
+        "scripts.import_prospectivity_scores  (trained-model map layer -> confidence_score; AFTER import_p2_data)",
         ["-m", "scripts.import_prospectivity_scores"],
     ),
     ("scripts.load_graph --reset  (wipe + reload Neo4j)", ["-m", "scripts.load_graph", "--reset"]),

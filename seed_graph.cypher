@@ -45,12 +45,12 @@ CREATE (:MineSite {id: 'bhandara', name: 'Bhandara Mine', belt_name: 'Nagpur-Bha
 // =====================================================================
 // OreZone (2 per site = 6)
 // =====================================================================
-CREATE (:OreZone {id: 'oz_bal_01', site_id: 'balaghat', confidence_score: 0.82, grade_estimate: 38.5});
-CREATE (:OreZone {id: 'oz_bal_02', site_id: 'balaghat', confidence_score: 0.61, grade_estimate: 24.0});
-CREATE (:OreZone {id: 'oz_nag_01', site_id: 'nagpur',   confidence_score: 0.74, grade_estimate: 31.2});
-CREATE (:OreZone {id: 'oz_nag_02', site_id: 'nagpur',   confidence_score: 0.55, grade_estimate: 19.8});
-CREATE (:OreZone {id: 'oz_bhd_01', site_id: 'bhandara', confidence_score: 0.69, grade_estimate: 27.6});
-CREATE (:OreZone {id: 'oz_bhd_02', site_id: 'bhandara', confidence_score: 0.48, grade_estimate: 16.4});
+CREATE (:OreZone {id: 'oz_bal_01', site_id: 'balaghat', grade_estimate: 38.5});
+CREATE (:OreZone {id: 'oz_bal_02', site_id: 'balaghat', grade_estimate: 24.0});
+CREATE (:OreZone {id: 'oz_nag_01', site_id: 'nagpur',   grade_estimate: 31.2});
+CREATE (:OreZone {id: 'oz_nag_02', site_id: 'nagpur',   grade_estimate: 19.8});
+CREATE (:OreZone {id: 'oz_bhd_01', site_id: 'bhandara', grade_estimate: 27.6});
+CREATE (:OreZone {id: 'oz_bhd_02', site_id: 'bhandara', grade_estimate: 16.4});
 
 // =====================================================================
 // Equipment: 15 base (5 per site) + 4 idle redeploy reserves = 19.

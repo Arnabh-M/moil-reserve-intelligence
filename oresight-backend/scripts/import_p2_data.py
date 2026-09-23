@@ -273,8 +273,8 @@ def _update_reserve_zone_stats(db: Session, sites_by_name: dict[str, Site]) -> t
     ratio that can only land on a few values (0.0, 0.5, 0.67, 1.0). It is
     SUPERSEDED downstream by scripts/import_prospectivity_scores.py, which
     the rebuild chain runs right after this and which overwrites
-    confidence_score with the zone-averaged kriged RF prospectivity
-    probability (a continuous 0-1 surface). This function still runs and
+    confidence_score with the zone-averaged trained-model map-layer
+    score (`ensemble_confidence_score`, the same numbers the heatmap draws). This function still runs and
     still writes the column -- import_prospectivity_scores depends on the
     zone rows existing -- but its confidence_score value is not what ends
     up in the demo DB. estimated_grade_pct / estimated_depth_m are NOT
