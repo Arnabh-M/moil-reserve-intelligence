@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, ShieldAlert, Award, Layers, MapPin, Network, Loader2, AlertCircle, Activity } from 'lucide-react';
 import Badge from '../Badge';
+import { confidenceTier } from '../../lib/confidence';
 import CausalGraph from '../CausalGraph';
 import { api } from '../../api/client';
 
@@ -19,8 +20,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
   const zoneName = zone ? (zone.zone_name || zone.name || (zone.id ? `Zone #${zone.id}` : 'Reserve Zone')) : '';
   const gradePct = zone ? (zone.estimated_grade_pct ?? zone.grade_percent ?? zone.grade_estimate) : null;
 
-  const confidenceVariant =
-    confidenceScore >= 0.7 ? 'operational' : confidenceScore >= 0.4 ? 'warning' : 'critical';
+  const tier = confidenceTier(confidenceScore);
 
   useEffect(() => {
     if (!zone) return;
@@ -137,17 +137,11 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
           <div className="rounded-xl border border-border bg-bg/50 p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-text-secondary">Confidence Score</span>
-              <Badge variant={hasConfidence ? confidenceVariant : 'unconfirmed'}>{hasConfidence ? `${confidencePct}%` : 'n/a'}</Badge>
+              <Badge variant={hasConfidence ? tier.badgeVariant : 'unconfirmed'}>{hasConfidence ? `${confidencePct}% · ${tier.label}` : 'n/a'}</Badge>
             </div>
             <div className="h-2 w-full rounded-full bg-border overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${
-                  confidenceScore >= 0.7
-                    ? 'bg-success'
-                    : confidenceScore >= 0.4
-                    ? 'bg-warning'
-                    : 'bg-danger'
-                }`}
+                className={`h-full rounded-full transition-all duration-300 ${tier.barClass}`}
                 style={{ width: hasConfidence ? `${Math.min(Math.max(confidencePct, 5), 100)}%` : '0%' }}
               />
             </div>
@@ -178,7 +172,7 @@ export default function ZoneDetailPanel({ zone, siteName, onClose, onInspectCros
                 </span>
               </div>
               <p className="text-sm font-bold text-navy">
-                {hasConfidence && confidenceScore >= 0.6 ? 'High Prospect' : 'Exploration'}
+                {hasConfidence ? tier.label : 'Exploration'}
               </p>
             </div>
           </div>

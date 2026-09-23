@@ -109,12 +109,13 @@ export const RESERVE_ZONE_FILL_PAINT = {
     'interpolate',
     ['linear'],
     ['get', 'confidence_score'],
-    0,
-    CONFIDENCE_COLOR_RAMP.low,
-    0.5,
-    CONFIDENCE_COLOR_RAMP.mid,
-    1,
-    CONFIDENCE_COLOR_RAMP.high,
+    // Same stops as PROSPECTIVITY_FILL_PAINT so a zone is coloured like the heatmap
+    // cells inside it (the trained models' scores span ~0.02-0.87, not 0-1).
+    0, '#8c2f22',
+    0.15, CONFIDENCE_COLOR_RAMP.low,
+    0.30, CONFIDENCE_COLOR_RAMP.mid,
+    0.45, '#7a9a52',
+    0.60, CONFIDENCE_COLOR_RAMP.high,
   ],
   'fill-opacity': 0.65,
 }

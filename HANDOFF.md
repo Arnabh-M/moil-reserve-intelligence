@@ -6,8 +6,14 @@
 > Bhandara 0.36 (KPI 0.29). The old high numbers came from a kriged surface that used synthetic fields and none of
 > the real satellite features, so they were disconnected from the map, not evidence of better prospectivity. Do not
 > "fix" the lower values. Labels are synthetic; the score is an ensemble agreement index, not a probability of ore.
-> Consequence for the UI: every zone now reads "Exploration" with an amber/red badge (<0.7 / <0.4 thresholds
-> unchanged); per-cell hotspots reach 0.68-0.87 (see section 4).
+> Per-cell hotspots reach 0.68-0.87 (see section 4). With the old 0.7 / 0.4 badge cut points every zone would
+> have shown red/amber, so the badge tiers were rescaled (below).
+>
+> Badge tiers (display only, `oresight-frontend/src/lib/confidence.js`, pinned by
+> `tests/test_confidence_badge_thresholds.py`): <0.25 "Lower priority" (red), 0.25-0.40 "Medium priority" (amber),
+> >=0.40 "Higher priority" (green) = the 57th/83rd percentile of the 12,934 real cells. Now 1 higher / 6 medium / 5 lower
+> across the 12 zones. The per-cell `confidence_band` in the GeoJSON (pooled Jenks + model-agreement gate) is a
+> different mechanism and was NOT changed; unifying it needs a `classify_export` re-run.
 
 ## 1. What this branch changed
 - **Corrected site boxes.** Nagpur and Bhandara were centred on the cities, 30-50 km from any real MOIL mine;
