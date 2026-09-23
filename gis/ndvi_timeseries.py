@@ -20,23 +20,32 @@ import sys
 import json
 import argparse
 from datetime import datetime, timedelta, timezone
-import urllib.request
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from geo_utils import COMBINED_BBOX
-from gis.ndvi_pull import NDVI_PALETTE, NDVI_MIN, NDVI_MAX, mask_s2_clouds, export_thumb_png, create_sample_tile
+from gis.ndvi_pull import (
+    NDVI_PALETTE, NDVI_MIN, NDVI_MAX, build_window_mosaic, window_record, indices_from_mosaic,
+    remove_stale, export_thumb_png, create_sample_tile,
+)
 from gee_pipeline.ee_auth import get_ee
 
-DEFAULT_BBOX = list(COMBINED_BBOX)  # [79.0, 21.0, 80.4, 22.0]
+DEFAULT_BBOX = list(COMBINED_BBOX)  # [west, south, east, north]
 
 
 def generate_ndvi_timeseries_tiles(tiles_dir="gis/tiles", bbox=None, num_weeks=4, interval_days=7, dry_run=False):
     """
-    Generates 4 weekly NDVI PNG tiles and returns structured metadata for MapLibre.
-    Fails loudly if any weekly interval has image_count == 0 in real mode.
+    Generates weekly NDVI PNG tiles (cloud-masked median mosaic of every scene
+    in the week, over the whole bbox) and returns structured metadata.
+
+    A week with no scenes gets one lookback widening (window start moves back
+    `interval_days`); the window actually used is recorded. A week that still
+    has no scenes, or whose mosaic is < MIN_VALID_FRACTION unmasked, does not
+    raise and is not filled from anywhere: it is recorded with status
+    "no_data" and NO PNG is written (a stale PNG from an earlier run is
+    deleted).
     """
     if bbox is None:
         bbox = DEFAULT_BBOX
@@ -62,46 +71,33 @@ def generate_ndvi_timeseries_tiles(tiles_dir="gis/tiles", bbox=None, num_weeks=4
         if ee_mod is not None:
             roi = ee_mod.Geometry.Rectangle(bbox)
 
-            collection = ee_mod.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-                .filterBounds(roi) \
-                .filterDate(start_str, end_str)
+            used_start = start_str
+            mosaic = build_window_mosaic(ee_mod, roi, used_start, end_str)
+            if mosaic["image_count"] == 0:
+                used_start = (w_start - timedelta(days=interval_days)).strftime("%Y-%m-%d")
+                print(f"[WARN] No scenes for Week {week_num} ({start_str} to {end_str}); widening to {used_start}...")
+                mosaic = build_window_mosaic(ee_mod, roi, used_start, end_str)
 
-            count = collection.size().getInfo()
-            if count == 0:
-                lookback_start = (w_start - timedelta(days=7)).strftime("%Y-%m-%d")
-                print(f"[WARN] No scenes for Week {week_num} ({start_str} to {end_str}), looking back to {lookback_start}...")
-                collection = ee_mod.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-                    .filterBounds(roi) \
-                    .filterDate(lookback_start, end_str)
-                count = collection.size().getInfo()
-                if count == 0:
-                    raise RuntimeError(f"No Sentinel-2 imagery available for Week {week_num} (window {start_str} to {end_str}, lookback from {lookback_start}; image_count == 0).")
+            record = window_record(mosaic, used_start, end_str, requested_start=start_str)
+            print(f"[GEE] Week {week_num} {used_start}..{end_str}: images={record['image_count']} "
+                  f"valid_fraction={record['valid_fraction']} status={record['status']}")
 
-            best_img = collection.sort("CLOUDY_PIXEL_PERCENTAGE", True).first()
-            masked_img = mask_s2_clouds(best_img, ee_mod)
-
-            meta = best_img.toDictionary(["system:time_start", "CLOUDY_PIXEL_PERCENTAGE"]).getInfo()
-            time_ms = meta.get("system:time_start", 0)
-            acq_date = datetime.fromtimestamp(time_ms / 1000.0, tz=timezone.utc).strftime("%Y-%m-%d") if time_ms else end_str
-
-            ndvi = masked_img.normalizedDifference(["B8", "B4"]).rename("NDVI")
-
-            export_thumb_png(ndvi, roi, tile_filepath, NDVI_MIN, NDVI_MAX, NDVI_PALETTE)
-            print(f"[OK] Week {week_num} ({acq_date}) PNG downloaded -> {tile_filepath}")
+            if record["status"] == "ok":
+                ndvi, _ = indices_from_mosaic(mosaic["image"])
+                export_thumb_png(ndvi, roi, tile_filepath, NDVI_MIN, NDVI_MAX, NDVI_PALETTE)
+                file_field = tile_filename
+            else:
+                remove_stale(tile_filepath)
+                file_field = None
+                print(f"[WARN] Week {week_num} recorded as no_data (no PNG written).")
 
             timeseries_list.append({
+                **record,
                 "week_index": week_num,
-                "file": tile_filename,
-                "date": acq_date,
-                "window_start": start_str,
-                "window_end": end_str,
-                "date_range": [start_str, end_str],
+                "file": file_field,
+                "requested_window_start": start_str,
                 "bbox": bbox,
                 "layer_type": "NDVI",
-                "source": "COPERNICUS/S2_SR_HARMONIZED",
-                "image_count": count,
-                "cloud_cover_pct": meta.get("CLOUDY_PIXEL_PERCENTAGE"),
-                "simulated": False
             })
 
         else:
@@ -118,8 +114,9 @@ def generate_ndvi_timeseries_tiles(tiles_dir="gis/tiles", bbox=None, num_weeks=4
                 "bbox": bbox,
                 "layer_type": "NDVI",
                 "source": "SIMULATED_MOCK",
+                "status": "simulated",
                 "image_count": 0,
-                "cloud_cover_pct": 5.0 + i * 2.5,
+                "valid_fraction": None,
                 "simulated": True
             })
 

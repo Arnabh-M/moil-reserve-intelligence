@@ -18,6 +18,7 @@ import os
 import sys
 import json
 import argparse
+from datetime import datetime, timezone
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
@@ -38,6 +39,13 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", bbox=None, dry_ru
         bbox = DEFAULT_BBOX
 
     tiles_dir = os.path.abspath(tiles_dir)
+    if dry_run and tiles_dir == os.path.abspath(os.path.join(REPO_ROOT, "gis", "tiles")):
+        # A dry run writes mock PNGs plus a SIMULATED_MOCK manifest; letting it
+        # overwrite the real tiles would leave fake layers behind the frontend.
+        raise ValueError(
+            "--dry-run must not write to gis/tiles (the tiles the frontend serves). "
+            "Pass a scratch --tiles-dir instead."
+        )
     os.makedirs(tiles_dir, exist_ok=True)
 
     print("=" * 70)
@@ -63,68 +71,49 @@ def generate_all_tiles(tiles_dir="gis/tiles", data_dir="data", bbox=None, dry_ru
             [w, s]   # Bottom-Left [lng, lat]
         ]
 
-    # 4. Construct Consolidated Manifest for Frontend MapLibre Developer
+    # 4. Construct Consolidated Manifest for Frontend MapLibre Developer.
+    # Per-layer fields (status, actual window, image_count, valid_fraction,
+    # acquisition dates, simulated) come straight from the tile generators.
+    ndvi_latest = single_layers_meta["ndvi_latest"]
+    iron_oxide = single_layers_meta["iron_oxide_latest"]
     manifest = {
         "title": "MOIL Reserve Intelligence - MapLibre Raster Tiles Manifest",
         "description": "Pre-rendered georeferenced raster PNG tiles and time-series layers for browser rendering in MapLibre GL.",
         "crs": "EPSG:4326 (WGS84)",
         "tiles_directory": "gis/tiles",
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "combined_bbox": list(bbox),
         "layers": {
             "ndvi_latest": {
+                **ndvi_latest,
                 "id": "ndvi-latest",
                 "name": "Sentinel-2 NDVI (Latest)",
-                "file": "ndvi_latest.png",
-                "date": single_layers_meta["ndvi_latest"]["date"],
-                "date_range": single_layers_meta["ndvi_latest"].get("date_range"),
-                "bbox": single_layers_meta["ndvi_latest"]["bbox"],
-                "maplibre_coordinates": to_maplibre_coords(single_layers_meta["ndvi_latest"]["bbox"]),
+                "maplibre_coordinates": to_maplibre_coords(ndvi_latest["bbox"]),
                 "type": "raster",
-                "source": single_layers_meta["ndvi_latest"].get("source", "COPERNICUS/S2_SR_HARMONIZED"),
-                "cloud_filter_pct": single_layers_meta["ndvi_latest"].get("cloud_filter_pct"),
-                "image_count": single_layers_meta["ndvi_latest"].get("image_count", 0),
-                "simulated": single_layers_meta["ndvi_latest"].get("simulated", False),
                 "palette_legend": ["#d73027", "#f46d43", "#fdae61", "#fee08b", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850"],
                 "description": "Vegetation index for environmental baseline and overburden monitoring."
             },
             "iron_oxide_latest": {
+                **iron_oxide,
                 "id": "iron-oxide-latest",
                 "name": "Sentinel-2 Iron-Oxide Alteration Index",
-                "file": "iron_oxide_latest.png",
-                "date": single_layers_meta["iron_oxide_latest"]["date"],
-                "date_range": single_layers_meta["iron_oxide_latest"].get("date_range"),
-                "bbox": single_layers_meta["iron_oxide_latest"]["bbox"],
-                "maplibre_coordinates": to_maplibre_coords(single_layers_meta["iron_oxide_latest"]["bbox"]),
+                "maplibre_coordinates": to_maplibre_coords(iron_oxide["bbox"]),
                 "type": "raster",
-                "source": single_layers_meta["iron_oxide_latest"].get("source", "COPERNICUS/S2_SR_HARMONIZED"),
-                "cloud_filter_pct": single_layers_meta["iron_oxide_latest"].get("cloud_filter_pct"),
-                "image_count": single_layers_meta["iron_oxide_latest"].get("image_count", 0),
-                "simulated": single_layers_meta["iron_oxide_latest"].get("simulated", False),
                 "palette_legend": ["#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c"],
                 "description": "Red/Blue spectral alteration ratio highlighting manganese and iron gossan signatures."
             }
         },
-        "timeseries_ndvi": []
+        "timeseries_ndvi": [
+            {
+                **item,
+                "id": f"ndvi-week-{item['week_index']}",
+                "name": f"NDVI Week {item['week_index']}",
+                "maplibre_coordinates": to_maplibre_coords(item["bbox"]),
+                "type": "raster",
+            }
+            for item in timeseries_meta
+        ],
     }
-
-    # Populate 4-week timeseries in manifest
-    for item in timeseries_meta:
-        manifest["timeseries_ndvi"].append({
-            "week_index": item["week_index"],
-            "id": f"ndvi-week-{item['week_index']}",
-            "name": f"NDVI Week {item['week_index']} ({item['date']})",
-            "file": item["file"],
-            "date": item["date"],
-            "window_start": item["window_start"],
-            "window_end": item["window_end"],
-            "date_range": item.get("date_range"),
-            "bbox": item["bbox"],
-            "maplibre_coordinates": to_maplibre_coords(item["bbox"]),
-            "type": "raster",
-            "source": item.get("source", "COPERNICUS/S2_SR_HARMONIZED"),
-            "image_count": item.get("image_count", 0),
-            "cloud_cover_pct": item.get("cloud_cover_pct"),
-            "simulated": item.get("simulated", False)
-        })
 
     # Save manifest.json
     manifest_path = os.path.join(tiles_dir, "manifest.json")

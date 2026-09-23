@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-22T07:41:36.137474+00:00",
-  "simulated": true,
+  "generated_at": "2026-09-23T11:42:39.483501+00:00",
+  "simulated": false,
   "latest_date": "2026-09-22",
   "sources": {
     "rainfall": "UCSB-CHG/CHIRPS/DAILY + NASA/GPM_L3/IMERG_V07",
@@ -13,4326 +13,4326 @@
       {
         "date": "2026-03-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.0972,
-        "lst_day_c": 38.4,
-        "ndvi": 0.387,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.05,
+        "lst_day_c": null,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-28",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.0894,
-        "lst_day_c": 39.56,
-        "ndvi": 0.387,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.35,
+        "soil_moisture_m3m3": 0.0494,
+        "lst_day_c": 33.24,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.0823,
-        "lst_day_c": 39.03,
-        "ndvi": 0.387,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0471,
+        "lst_day_c": 32.25,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.44,
-        "ndvi": 0.387,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0685,
+        "lst_day_c": 32.82,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-31",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.08,
-        "ndvi": 0.387,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.0896,
+        "lst_day_c": null,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 36.72,
-        "ndvi": 0.4001,
+        "rainfall_mm": 25.19,
+        "soil_moisture_m3m3": 0.0831,
+        "lst_day_c": 30.38,
+        "ndvi": 0.4169,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-02",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.13,
-        "ndvi": 0.4001,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0872,
+        "lst_day_c": null,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.4,
-        "ndvi": 0.4001,
-        "ndvi_age_days": 2
+        "rainfall_mm": 6.56,
+        "soil_moisture_m3m3": 0.0894,
+        "lst_day_c": 31.63,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-04",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.08,
-        "ndvi": 0.4001,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.088,
+        "lst_day_c": null,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-05",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.4,
-        "ndvi": 0.4001,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0719,
+        "lst_day_c": null,
+        "ndvi": 0.4169,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.56,
-        "ndvi": 0.4059,
+        "soil_moisture_m3m3": 0.0635,
+        "lst_day_c": 31.02,
+        "ndvi": 0.3977,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": null,
-        "ndvi": 0.4059,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0555,
+        "lst_day_c": 33.43,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.58,
-        "ndvi": 0.4059,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.0581,
+        "lst_day_c": 29.75,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-09",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.43,
-        "ndvi": 0.4059,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.0587,
+        "lst_day_c": 31.74,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.88,
-        "ndvi": 0.4059,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0514,
+        "lst_day_c": 33.58,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-11",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.93,
-        "ndvi": 0.4059,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0395,
+        "lst_day_c": 31.36,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.64,
-        "ndvi": 0.3632,
+        "soil_moisture_m3m3": 0.0403,
+        "lst_day_c": 35.47,
+        "ndvi": 0.3977,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-13",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.02,
-        "ndvi": 0.3632,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0431,
+        "lst_day_c": 34.13,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.91,
-        "ndvi": 0.3632,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.0472,
+        "lst_day_c": 35.38,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.73,
-        "ndvi": 0.3632,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.0426,
+        "lst_day_c": 35.71,
+        "ndvi": 0.3977,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-16",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.69,
-        "ndvi": 0.3632,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0455,
+        "lst_day_c": null,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.38,
-        "ndvi": 0.3632,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0442,
+        "lst_day_c": 36.76,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-18",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.58,
-        "ndvi": 0.33,
+        "soil_moisture_m3m3": 0.0427,
+        "lst_day_c": null,
+        "ndvi": 0.3828,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-19",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.33,
-        "ndvi": 0.33,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.044,
+        "lst_day_c": 36.04,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.17,
-        "ndvi": 0.33,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.0449,
+        "lst_day_c": 34.08,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.05,
-        "ndvi": 0.33,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.0459,
+        "lst_day_c": null,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.12,
-        "ndvi": 0.33,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0422,
+        "lst_day_c": 36.8,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-23",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.77,
-        "ndvi": 0.33,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0446,
+        "lst_day_c": 33.48,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.92,
-        "ndvi": 0.33,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.0447,
+        "lst_day_c": 36.61,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.84,
-        "ndvi": 0.33,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.0423,
+        "lst_day_c": 39.04,
+        "ndvi": 0.3828,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-26",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.53,
-        "ndvi": 0.3731,
+        "soil_moisture_m3m3": 0.0393,
+        "lst_day_c": 32.88,
+        "ndvi": 0.3918,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.28,
-        "ndvi": 0.3731,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0396,
+        "lst_day_c": 35.18,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.11,
-        "ndvi": 0.3731,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.0448,
+        "lst_day_c": 35.07,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-29",
-        "rainfall_mm": 1.9,
-        "soil_moisture_m3m3": 0.085,
-        "lst_day_c": 40.87,
-        "ndvi": 0.3731,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0457,
+        "lst_day_c": null,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.61,
-        "ndvi": 0.3731,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0444,
+        "lst_day_c": 32.42,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-01",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.25,
-        "ndvi": 0.3731,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0598,
+        "lst_day_c": null,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.86,
-        "ndvi": 0.3731,
-        "ndvi_age_days": 6
+        "rainfall_mm": 0.49,
+        "soil_moisture_m3m3": 0.0701,
+        "lst_day_c": 35.92,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-03",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.99,
-        "ndvi": 0.409,
+        "soil_moisture_m3m3": 0.0824,
+        "lst_day_c": 31.8,
+        "ndvi": 0.3918,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.26,
-        "ndvi": 0.409,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.01,
+        "soil_moisture_m3m3": 0.0623,
+        "lst_day_c": 31.82,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.73,
-        "ndvi": 0.409,
-        "ndvi_age_days": 2
+        "rainfall_mm": 0.91,
+        "soil_moisture_m3m3": 0.071,
+        "lst_day_c": 32.49,
+        "ndvi": 0.3918,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.99,
-        "ndvi": 0.409,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1041,
+        "lst_day_c": null,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-07",
-        "rainfall_mm": 0.5,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.57,
-        "ndvi": 0.409,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0952,
+        "lst_day_c": 33.63,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.27,
-        "ndvi": 0.409,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0654,
+        "lst_day_c": 33.76,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-09",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.82,
-        "ndvi": 0.4316,
+        "soil_moisture_m3m3": 0.074,
+        "lst_day_c": null,
+        "ndvi": 0.4384,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.51,
-        "ndvi": 0.4316,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0653,
+        "lst_day_c": 32.65,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-11",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.0547,
         "lst_day_c": null,
-        "ndvi": 0.4316,
-        "ndvi_age_days": 2
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-12",
-        "rainfall_mm": 2.22,
-        "soil_moisture_m3m3": 0.0869,
-        "lst_day_c": 38.75,
-        "ndvi": 0.4316,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0485,
+        "lst_day_c": 35.62,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-13",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.78,
-        "ndvi": 0.4316,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.18,
+        "soil_moisture_m3m3": 0.0607,
+        "lst_day_c": 31.42,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.49,
-        "ndvi": 0.4086,
+        "soil_moisture_m3m3": 0.0917,
+        "lst_day_c": 30.49,
+        "ndvi": 0.4384,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-15",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.0,
-        "ndvi": 0.4086,
-        "ndvi_age_days": 1
+        "rainfall_mm": 1.43,
+        "soil_moisture_m3m3": 0.0958,
+        "lst_day_c": 29.22,
+        "ndvi": 0.4384,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-16",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.18,
-        "ndvi": 0.4086,
-        "ndvi_age_days": 2
+        "rainfall_mm": 4.1,
+        "soil_moisture_m3m3": 0.0978,
+        "lst_day_c": null,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.96,
-        "ndvi": 0.4086,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.0834,
+        "lst_day_c": 28.43,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-18",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.62,
-        "ndvi": 0.4163,
+        "soil_moisture_m3m3": 0.0616,
+        "lst_day_c": 31.39,
+        "ndvi": 0.478,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-19",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.68,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.27,
+        "soil_moisture_m3m3": 0.0511,
+        "lst_day_c": 30.13,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.79,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.043,
+        "lst_day_c": 34.28,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.46,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.0388,
+        "lst_day_c": null,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.25,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0366,
+        "lst_day_c": 34.21,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-23",
-        "rainfall_mm": 1.6,
-        "soil_moisture_m3m3": 0.0832,
-        "lst_day_c": 39.68,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 5
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0344,
+        "lst_day_c": 35.96,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.49,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.0385,
+        "lst_day_c": null,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.55,
-        "ndvi": 0.4163,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.0392,
+        "lst_day_c": 36.7,
+        "ndvi": 0.478,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-26",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.53,
-        "ndvi": 0.4121,
+        "soil_moisture_m3m3": 0.039,
+        "lst_day_c": null,
+        "ndvi": 0.4943,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.89,
-        "ndvi": 0.4121,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0342,
+        "lst_day_c": 36.25,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 36.17,
-        "ndvi": 0.4121,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.036,
+        "lst_day_c": 34.99,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.81,
-        "ndvi": 0.4121,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.054,
+        "lst_day_c": 31.4,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-30",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.05,
-        "ndvi": 0.4121,
-        "ndvi_age_days": 4
+        "rainfall_mm": 20.04,
+        "soil_moisture_m3m3": 0.1005,
+        "lst_day_c": 32.96,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-31",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.04,
-        "ndvi": 0.4121,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1183,
+        "lst_day_c": null,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 36.84,
-        "ndvi": 0.4121,
-        "ndvi_age_days": 6
+        "rainfall_mm": 0.72,
+        "soil_moisture_m3m3": 0.0864,
+        "lst_day_c": 33.18,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-02",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.0695,
         "lst_day_c": null,
-        "ndvi": 0.4249,
+        "ndvi": 0.4943,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.59,
-        "ndvi": 0.4249,
-        "ndvi_age_days": 1
+        "rainfall_mm": 2.18,
+        "soil_moisture_m3m3": 0.0505,
+        "lst_day_c": 31.52,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-04",
-        "rainfall_mm": 1.54,
-        "soil_moisture_m3m3": 0.0828,
-        "lst_day_c": 39.04,
-        "ndvi": 0.4249,
-        "ndvi_age_days": 2
+        "rainfall_mm": 2.38,
+        "soil_moisture_m3m3": 0.0436,
+        "lst_day_c": 32.12,
+        "ndvi": 0.4943,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.42,
-        "ndvi": 0.4249,
-        "ndvi_age_days": 3
+        "rainfall_mm": 9.66,
+        "soil_moisture_m3m3": 0.0493,
+        "lst_day_c": null,
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 35.87,
-        "ndvi": 0.4273,
+        "soil_moisture_m3m3": 0.0532,
+        "lst_day_c": 33.03,
+        "ndvi": 0.5073,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.3,
-        "ndvi": 0.4273,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0503,
+        "lst_day_c": 31.69,
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 35.81,
-        "ndvi": 0.4273,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.0507,
+        "lst_day_c": null,
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-09",
-        "rainfall_mm": 12.72,
-        "soil_moisture_m3m3": 0.1499,
-        "lst_day_c": null,
-        "ndvi": 0.4273,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1019,
+        "lst_day_c": 28.33,
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1379,
-        "lst_day_c": 29.83,
-        "ndvi": 0.4273,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1012,
+        "lst_day_c": null,
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-11",
-        "rainfall_mm": 43.02,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4273,
-        "ndvi_age_days": 5
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0908,
+        "lst_day_c": 32.25,
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-12",
-        "rainfall_mm": 1.29,
-        "soil_moisture_m3m3": 0.3573,
-        "lst_day_c": null,
-        "ndvi": 0.468,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0657,
+        "lst_day_c": 30.09,
+        "ndvi": 0.5073,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-13",
-        "rainfall_mm": 2.73,
-        "soil_moisture_m3m3": 0.3451,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0539,
         "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 1
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-14",
-        "rainfall_mm": 70.73,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.0479,
         "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 2
+        "ndvi": 0.5073,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 28.28,
-        "ndvi": 0.468,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.054,
+        "lst_day_c": null,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-16",
-        "rainfall_mm": 12.36,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.051,
+        "lst_day_c": 33.52,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-17",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 5
+        "rainfall_mm": 2.17,
+        "soil_moisture_m3m3": 0.078,
+        "lst_day_c": 32.84,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-18",
-        "rainfall_mm": 8.48,
-        "soil_moisture_m3m3": 0.3725,
-        "lst_day_c": 31.3,
-        "ndvi": 0.468,
-        "ndvi_age_days": 6
+        "rainfall_mm": 0.69,
+        "soil_moisture_m3m3": 0.0813,
+        "lst_day_c": null,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-19",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3427,
-        "lst_day_c": 29.16,
-        "ndvi": 0.468,
-        "ndvi_age_days": 7
+        "rainfall_mm": 13.36,
+        "soil_moisture_m3m3": 0.0566,
+        "lst_day_c": null,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-20",
-        "rainfall_mm": 25.91,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 25.1,
-        "ndvi": 0.468,
-        "ndvi_age_days": 8
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.048,
+        "lst_day_c": null,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 26.78,
-        "ndvi": 0.468,
-        "ndvi_age_days": 9
+        "soil_moisture_m3m3": 0.0494,
+        "lst_day_c": 33.53,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-22",
-        "rainfall_mm": 12.62,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 10
+        "rainfall_mm": 6.79,
+        "soil_moisture_m3m3": 0.0894,
+        "lst_day_c": 30.51,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-23",
-        "rainfall_mm": 10.07,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 7.8,
+        "soil_moisture_m3m3": 0.1512,
         "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 11
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 12
+        "soil_moisture_m3m3": 0.1427,
+        "lst_day_c": 29.32,
+        "ndvi": 0.5139,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-25",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "rainfall_mm": 26.19,
+        "soil_moisture_m3m3": 0.1351,
         "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 13
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-26",
-        "rainfall_mm": 10.39,
-        "soil_moisture_m3m3": 0.3582,
-        "lst_day_c": 26.54,
-        "ndvi": 0.468,
-        "ndvi_age_days": 14
+        "rainfall_mm": 12.82,
+        "soil_moisture_m3m3": 0.1877,
+        "lst_day_c": 29.36,
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-27",
-        "rainfall_mm": 16.42,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 23.64,
-        "ndvi": 0.468,
-        "ndvi_age_days": 15
+        "rainfall_mm": 16.06,
+        "soil_moisture_m3m3": 0.1882,
+        "lst_day_c": 27.8,
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-28",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 9.5,
+        "soil_moisture_m3m3": 0.1688,
         "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 16
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-29",
-        "rainfall_mm": 42.12,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.39,
-        "ndvi": 0.468,
-        "ndvi_age_days": 17
+        "rainfall_mm": 26.55,
+        "soil_moisture_m3m3": 0.1824,
+        "lst_day_c": null,
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-30",
-        "rainfall_mm": 1.98,
-        "soil_moisture_m3m3": 0.3615,
-        "lst_day_c": 26.48,
-        "ndvi": 0.468,
-        "ndvi_age_days": 18
+        "rainfall_mm": 11.84,
+        "soil_moisture_m3m3": 0.2019,
+        "lst_day_c": null,
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-01",
-        "rainfall_mm": 5.53,
-        "soil_moisture_m3m3": 0.3657,
-        "lst_day_c": 27.64,
-        "ndvi": 0.468,
-        "ndvi_age_days": 19
+        "rainfall_mm": 13.25,
+        "soil_moisture_m3m3": 0.2394,
+        "lst_day_c": null,
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3365,
+        "rainfall_mm": 21.16,
+        "soil_moisture_m3m3": 0.2497,
         "lst_day_c": null,
-        "ndvi": 0.468,
-        "ndvi_age_days": 20
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-03",
-        "rainfall_mm": 0.3,
-        "soil_moisture_m3m3": 0.3114,
-        "lst_day_c": 28.73,
-        "ndvi": 0.517,
+        "rainfall_mm": 17.5,
+        "soil_moisture_m3m3": 0.3029,
+        "lst_day_c": null,
+        "ndvi": 0.4882,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-07-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2865,
+        "rainfall_mm": 17.97,
+        "soil_moisture_m3m3": 0.2877,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 1
+        "ndvi": 0.4882,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-05",
-        "rainfall_mm": 5.5,
-        "soil_moisture_m3m3": 0.2965,
-        "lst_day_c": 28.02,
-        "ndvi": 0.517,
-        "ndvi_age_days": 2
+        "rainfall_mm": 22.1,
+        "soil_moisture_m3m3": 0.3126,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-06",
-        "rainfall_mm": 21.95,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.65,
-        "ndvi": 0.517,
-        "ndvi_age_days": 3
+        "rainfall_mm": 64.14,
+        "soil_moisture_m3m3": 0.3206,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "soil_moisture_m3m3": 0.3147,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 4
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-08",
-        "rainfall_mm": 4.96,
-        "soil_moisture_m3m3": 0.3514,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2888,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 5
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-09",
-        "rainfall_mm": 39.29,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 26.38,
-        "ndvi": 0.517,
-        "ndvi_age_days": 6
+        "rainfall_mm": 7.95,
+        "soil_moisture_m3m3": 0.3016,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-10",
-        "rainfall_mm": 31.46,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2948,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 7
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-11",
-        "rainfall_mm": 2.48,
-        "soil_moisture_m3m3": 0.3645,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2683,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 8
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-12",
-        "rainfall_mm": 25.29,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2538,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 9
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-13",
-        "rainfall_mm": 14.49,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.243,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 10
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-14",
-        "rainfall_mm": 7.88,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 26.63,
-        "ndvi": 0.517,
-        "ndvi_age_days": 11
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2216,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-15",
-        "rainfall_mm": 12.56,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 24.57,
-        "ndvi": 0.517,
-        "ndvi_age_days": 12
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2397,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-16",
-        "rainfall_mm": 10.24,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 20.79,
+        "soil_moisture_m3m3": 0.2837,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 13
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-17",
-        "rainfall_mm": 14.25,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 26.41,
+        "soil_moisture_m3m3": 0.3293,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 14
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-18",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 29.02,
-        "ndvi": 0.517,
-        "ndvi_age_days": 15
+        "rainfall_mm": 12.41,
+        "soil_moisture_m3m3": 0.3331,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-19",
-        "rainfall_mm": 0.03,
-        "soil_moisture_m3m3": 0.3218,
+        "rainfall_mm": 11.52,
+        "soil_moisture_m3m3": 0.3305,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 16
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-20",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2961,
+        "rainfall_mm": 30.3,
+        "soil_moisture_m3m3": 0.344,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 17
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-21",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2724,
+        "rainfall_mm": 65.11,
+        "soil_moisture_m3m3": 0.3592,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 18
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-22",
-        "rainfall_mm": 0.97,
-        "soil_moisture_m3m3": 0.2564,
+        "rainfall_mm": 0.23,
+        "soil_moisture_m3m3": 0.3527,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 19
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-23",
-        "rainfall_mm": 12.8,
-        "soil_moisture_m3m3": 0.3127,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3453,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 20
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-24",
-        "rainfall_mm": 61.7,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3263,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 21
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-25",
-        "rainfall_mm": 2.63,
-        "soil_moisture_m3m3": 0.3654,
+        "rainfall_mm": 1.75,
+        "soil_moisture_m3m3": 0.3206,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 22
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-26",
-        "rainfall_mm": 21.52,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.27,
-        "ndvi": 0.517,
-        "ndvi_age_days": 23
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3231,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-27",
-        "rainfall_mm": 54.37,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 57.78,
+        "soil_moisture_m3m3": 0.3457,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 24
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-28",
-        "rainfall_mm": 35.16,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 27.63,
-        "ndvi": 0.517,
-        "ndvi_age_days": 25
+        "rainfall_mm": 47.06,
+        "soil_moisture_m3m3": 0.3668,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-29",
-        "rainfall_mm": 8.36,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 17.6,
+        "soil_moisture_m3m3": 0.3652,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 26
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-30",
-        "rainfall_mm": 1.5,
-        "soil_moisture_m3m3": 0.3586,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3527,
         "lst_day_c": null,
-        "ndvi": 0.517,
-        "ndvi_age_days": 27
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-31",
-        "rainfall_mm": 20.5,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.76,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 0
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3447,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-01",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 25.13,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.3407,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-02",
-        "rainfall_mm": 7.75,
-        "soil_moisture_m3m3": 0.3681,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3359,
         "lst_day_c": null,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 2
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-03",
-        "rainfall_mm": 14.46,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 10.23,
+        "soil_moisture_m3m3": 0.3415,
         "lst_day_c": null,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 3
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-04",
-        "rainfall_mm": 17.62,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 17.65,
+        "soil_moisture_m3m3": 0.3532,
         "lst_day_c": null,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 4
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-05",
-        "rainfall_mm": 1.72,
-        "soil_moisture_m3m3": 0.3599,
-        "lst_day_c": 28.55,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 5
+        "rainfall_mm": 7.2,
+        "soil_moisture_m3m3": 0.3593,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-06",
-        "rainfall_mm": 3.08,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 6.77,
+        "soil_moisture_m3m3": 0.3561,
         "lst_day_c": null,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 6
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-07",
-        "rainfall_mm": 7.7,
-        "soil_moisture_m3m3": 0.3678,
+        "rainfall_mm": 4.85,
+        "soil_moisture_m3m3": 0.3589,
         "lst_day_c": null,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 7
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-08",
-        "rainfall_mm": 9.97,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 28.57,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 8
+        "rainfall_mm": 33.75,
+        "soil_moisture_m3m3": 0.3785,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-09",
-        "rainfall_mm": 4.78,
-        "soil_moisture_m3m3": 0.3783,
+        "rainfall_mm": 23.65,
+        "soil_moisture_m3m3": 0.3703,
         "lst_day_c": null,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 9
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.348,
-        "lst_day_c": 28.55,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 10
+        "soil_moisture_m3m3": 0.3681,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-11",
-        "rainfall_mm": 4.59,
-        "soil_moisture_m3m3": 0.3477,
-        "lst_day_c": 26.14,
-        "ndvi": 0.5356,
-        "ndvi_age_days": 11
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3637,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-12",
-        "rainfall_mm": 1.86,
-        "soil_moisture_m3m3": 0.3311,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3628,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 0
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-13",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3046,
+        "rainfall_mm": 19.58,
+        "soil_moisture_m3m3": 0.3615,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 1
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-14",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2802,
-        "lst_day_c": 27.1,
-        "ndvi": 0.565,
-        "ndvi_age_days": 2
+        "rainfall_mm": 23.56,
+        "soil_moisture_m3m3": 0.3731,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-15",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2578,
+        "rainfall_mm": 16.41,
+        "soil_moisture_m3m3": 0.3801,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 3
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-16",
-        "rainfall_mm": 1.89,
-        "soil_moisture_m3m3": 0.2485,
+        "rainfall_mm": 20.5,
+        "soil_moisture_m3m3": 0.3795,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 4
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-17",
-        "rainfall_mm": 8.81,
-        "soil_moisture_m3m3": 0.2815,
+        "rainfall_mm": 20.6,
+        "soil_moisture_m3m3": 0.3823,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 5
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-18",
-        "rainfall_mm": 20.09,
-        "soil_moisture_m3m3": 0.3795,
-        "lst_day_c": 28.41,
-        "ndvi": 0.565,
-        "ndvi_age_days": 6
+        "rainfall_mm": 10.23,
+        "soil_moisture_m3m3": 0.3849,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-19",
-        "rainfall_mm": 8.23,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 29.11,
+        "soil_moisture_m3m3": 0.3918,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 7
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-20",
-        "rainfall_mm": 5.18,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 27.35,
-        "ndvi": 0.565,
-        "ndvi_age_days": 8
+        "rainfall_mm": 16.89,
+        "soil_moisture_m3m3": 0.388,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-21",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 14.23,
+        "soil_moisture_m3m3": 0.3934,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 9
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-22",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "rainfall_mm": 40.37,
+        "soil_moisture_m3m3": 0.3952,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 10
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-23",
-        "rainfall_mm": 21.22,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 26.69,
-        "ndvi": 0.565,
-        "ndvi_age_days": 11
+        "rainfall_mm": 14.0,
+        "soil_moisture_m3m3": 0.3926,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-24",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 35.17,
+        "soil_moisture_m3m3": 0.3944,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 12
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-25",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 25.1,
-        "ndvi": 0.565,
-        "ndvi_age_days": 13
+        "rainfall_mm": 8.74,
+        "soil_moisture_m3m3": 0.3936,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-26",
-        "rainfall_mm": 1.62,
-        "soil_moisture_m3m3": 0.3056,
+        "rainfall_mm": 11.13,
+        "soil_moisture_m3m3": 0.3897,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 14
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-27",
-        "rainfall_mm": 10.84,
-        "soil_moisture_m3m3": 0.3462,
-        "lst_day_c": 28.27,
-        "ndvi": 0.565,
-        "ndvi_age_days": 15
+        "rainfall_mm": 0.2,
+        "soil_moisture_m3m3": 0.3849,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-28",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3185,
+        "rainfall_mm": 2.75,
+        "soil_moisture_m3m3": 0.3779,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 16
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-29",
-        "rainfall_mm": 2.11,
-        "soil_moisture_m3m3": 0.3057,
+        "rainfall_mm": 16.51,
+        "soil_moisture_m3m3": 0.382,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 17
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-30",
-        "rainfall_mm": 20.19,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 27.69,
-        "ndvi": 0.565,
-        "ndvi_age_days": 18
+        "rainfall_mm": 14.48,
+        "soil_moisture_m3m3": 0.3853,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-08-31",
-        "rainfall_mm": 0.25,
-        "soil_moisture_m3m3": 0.3511,
+        "rainfall_mm": 1.18,
+        "soil_moisture_m3m3": 0.378,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 19
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-09-01",
-        "rainfall_mm": 40.84,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 6.18,
+        "soil_moisture_m3m3": 0.3827,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 20
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-09-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 63.91,
+        "soil_moisture_m3m3": 0.4009,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 21
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-09-03",
-        "rainfall_mm": 4.78,
-        "soil_moisture_m3m3": 0.3503,
+        "rainfall_mm": 22.34,
+        "soil_moisture_m3m3": 0.3946,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 22
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-04",
-        "rainfall_mm": 61.91,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.86,
-        "ndvi": 0.565,
-        "ndvi_age_days": 23
+        "rainfall_mm": 1.17,
+        "soil_moisture_m3m3": 0.3912,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 28.85,
-        "ndvi": 0.565,
-        "ndvi_age_days": 24
+        "rainfall_mm": 1.8,
+        "soil_moisture_m3m3": 0.3861,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-06",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "rainfall_mm": 2.89,
+        "soil_moisture_m3m3": 0.3822,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 25
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-07",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2959,
-        "lst_day_c": 26.29,
-        "ndvi": 0.565,
-        "ndvi_age_days": 26
+        "rainfall_mm": 2.19,
+        "soil_moisture_m3m3": 0.3768,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-08",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2722,
-        "lst_day_c": 29.3,
-        "ndvi": 0.565,
-        "ndvi_age_days": 27
+        "rainfall_mm": 2.32,
+        "soil_moisture_m3m3": 0.3741,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-09",
-        "rainfall_mm": 10.14,
-        "soil_moisture_m3m3": 0.3113,
-        "lst_day_c": 26.53,
-        "ndvi": 0.565,
-        "ndvi_age_days": 28
+        "rainfall_mm": 3.59,
+        "soil_moisture_m3m3": 0.3702,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-10",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2864,
+        "rainfall_mm": 6.84,
+        "soil_moisture_m3m3": 0.3693,
         "lst_day_c": null,
-        "ndvi": 0.565,
-        "ndvi_age_days": 29
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-11",
-        "rainfall_mm": 28.38,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 28.39,
-        "ndvi": 0.6047,
+        "rainfall_mm": 14.04,
+        "soil_moisture_m3m3": 0.3813,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-09-12",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 26.56,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 1
+        "rainfall_mm": 11.98,
+        "soil_moisture_m3m3": 0.3818,
+        "lst_day_c": null,
+        "ndvi": 0.6026,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-13",
-        "rainfall_mm": 29.17,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 28.34,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 2
+        "rainfall_mm": 4.82,
+        "soil_moisture_m3m3": 0.3773,
+        "lst_day_c": null,
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-14",
-        "rainfall_mm": 22.6,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.12,
+        "soil_moisture_m3m3": 0.3648,
         "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 3
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-15",
-        "rainfall_mm": 9.43,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.6,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.41,
+        "soil_moisture_m3m3": 0.3579,
+        "lst_day_c": null,
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-16",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 5.95,
+        "soil_moisture_m3m3": 0.3568,
         "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 5
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-17",
-        "rainfall_mm": 33.08,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 3.39,
+        "soil_moisture_m3m3": 0.3575,
         "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 6
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-18",
-        "rainfall_mm": 13.27,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 7
+        "rainfall_mm": 3.04,
+        "soil_moisture_m3m3": 0.3601,
+        "lst_day_c": 24.14,
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-19",
-        "rainfall_mm": 3.66,
-        "soil_moisture_m3m3": 0.3716,
-        "lst_day_c": 30.75,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 8
+        "rainfall_mm": 10.18,
+        "soil_moisture_m3m3": 0.3647,
+        "lst_day_c": 27.4,
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-20",
-        "rainfall_mm": 3.84,
+        "rainfall_mm": 6.53,
         "soil_moisture_m3m3": null,
-        "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 9
+        "lst_day_c": 25.05,
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-21",
-        "rainfall_mm": null,
+        "rainfall_mm": 10.34,
         "soil_moisture_m3m3": null,
         "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 10
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-22",
-        "rainfall_mm": null,
+        "rainfall_mm": 0.0,
         "soil_moisture_m3m3": null,
         "lst_day_c": null,
-        "ndvi": 0.6047,
-        "ndvi_age_days": 11
+        "ndvi": 0.6711,
+        "ndvi_age_days": 0
       }
     ],
     "bhandara": [
       {
         "date": "2026-03-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.15,
-        "ndvi": 0.3521,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1586,
+        "lst_day_c": null,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.47,
-        "ndvi": 0.3521,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1543,
+        "lst_day_c": 35.8,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.37,
-        "ndvi": 0.3521,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1596,
+        "lst_day_c": 35.12,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.45,
-        "ndvi": 0.3521,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.1859,
+        "lst_day_c": 34.27,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-31",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.46,
-        "ndvi": 0.3521,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.2096,
+        "lst_day_c": null,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.19,
-        "ndvi": 0.2783,
+        "rainfall_mm": 21.1,
+        "soil_moisture_m3m3": 0.1988,
+        "lst_day_c": null,
+        "ndvi": 0.3329,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-02",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.39,
-        "ndvi": 0.2783,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.2188,
+        "lst_day_c": null,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.65,
-        "ndvi": 0.2783,
-        "ndvi_age_days": 2
+        "rainfall_mm": 2.9,
+        "soil_moisture_m3m3": 0.2225,
+        "lst_day_c": 30.88,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-04",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.21,
-        "ndvi": 0.2783,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.2288,
+        "lst_day_c": null,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-05",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.72,
-        "ndvi": 0.2783,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.2076,
+        "lst_day_c": 27.03,
+        "ndvi": 0.3329,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.32,
-        "ndvi": 0.3261,
+        "soil_moisture_m3m3": 0.1951,
+        "lst_day_c": null,
+        "ndvi": 0.382,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.38,
-        "ndvi": 0.3261,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1784,
+        "lst_day_c": 32.05,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.7,
-        "ndvi": 0.3261,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.186,
+        "lst_day_c": 31.5,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-09",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.03,
-        "ndvi": 0.3261,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1745,
+        "lst_day_c": 31.36,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.26,
-        "ndvi": 0.3031,
+        "soil_moisture_m3m3": 0.1632,
+        "lst_day_c": 33.75,
+        "ndvi": 0.382,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-11",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.97,
-        "ndvi": 0.3031,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1579,
+        "lst_day_c": null,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.92,
-        "ndvi": 0.3031,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1556,
+        "lst_day_c": 34.34,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-13",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.05,
-        "ndvi": 0.3031,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1532,
+        "lst_day_c": 34.18,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.92,
-        "ndvi": 0.3031,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1592,
+        "lst_day_c": 33.82,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.27,
-        "ndvi": 0.3031,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1473,
+        "lst_day_c": 36.56,
+        "ndvi": 0.382,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-16",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.149,
         "lst_day_c": null,
-        "ndvi": 0.3031,
-        "ndvi_age_days": 6
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.55,
-        "ndvi": 0.3003,
+        "soil_moisture_m3m3": 0.1433,
+        "lst_day_c": 35.76,
+        "ndvi": 0.3994,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-18",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.67,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1425,
+        "lst_day_c": null,
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-19",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.92,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1444,
+        "lst_day_c": 32.59,
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.1445,
         "lst_day_c": null,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 3
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.1438,
         "lst_day_c": null,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 4
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.03,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1388,
+        "lst_day_c": 36.86,
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-23",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.55,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.136,
+        "lst_day_c": 35.35,
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.39,
-        "ndvi": 0.3003,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.153,
+        "lst_day_c": 34.33,
+        "ndvi": 0.3994,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.08,
-        "ndvi": 0.3481,
+        "soil_moisture_m3m3": 0.1467,
+        "lst_day_c": 37.95,
+        "ndvi": 0.3994,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-26",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.09,
-        "ndvi": 0.3481,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1412,
+        "lst_day_c": null,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.67,
-        "ndvi": 0.3481,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1407,
+        "lst_day_c": 34.72,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.23,
-        "ndvi": 0.3481,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1415,
+        "lst_day_c": 34.92,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.68,
-        "ndvi": 0.3481,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1384,
+        "lst_day_c": null,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.96,
-        "ndvi": 0.3481,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1336,
+        "lst_day_c": 37.41,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.05,
-        "ndvi": 0.3349,
+        "rainfall_mm": 0.05,
+        "soil_moisture_m3m3": 0.1735,
+        "lst_day_c": null,
+        "ndvi": 0.4276,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.02,
-        "ndvi": 0.3349,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.86,
+        "soil_moisture_m3m3": 0.1881,
+        "lst_day_c": 33.23,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-03",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.21,
-        "ndvi": 0.3349,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.163,
+        "lst_day_c": 34.87,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-04",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 44.27,
-        "ndvi": 0.3349,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1488,
+        "lst_day_c": 30.34,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.42,
-        "ndvi": 0.3349,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.34,
+        "soil_moisture_m3m3": 0.148,
+        "lst_day_c": 35.05,
+        "ndvi": 0.4276,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.08,
-        "ndvi": 0.3349,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.196,
+        "lst_day_c": null,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.42,
-        "ndvi": 0.3378,
+        "soil_moisture_m3m3": 0.196,
+        "lst_day_c": 32.13,
+        "ndvi": 0.4635,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.22,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1878,
+        "lst_day_c": 33.56,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-09",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.6,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1803,
+        "lst_day_c": null,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.41,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1754,
+        "lst_day_c": 32.32,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-11",
-        "rainfall_mm": 3.25,
-        "soil_moisture_m3m3": 0.0931,
-        "lst_day_c": 40.95,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1553,
+        "lst_day_c": null,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.0857,
-        "lst_day_c": null,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1535,
+        "lst_day_c": 34.84,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-13",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.38,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.1711,
+        "lst_day_c": 31.91,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.56,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.1735,
+        "lst_day_c": 30.24,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": null,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 8
+        "soil_moisture_m3m3": 0.1636,
+        "lst_day_c": 34.72,
+        "ndvi": 0.4635,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-16",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.84,
-        "ndvi": 0.3378,
-        "ndvi_age_days": 9
+        "rainfall_mm": 3.84,
+        "soil_moisture_m3m3": 0.1505,
+        "lst_day_c": null,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.56,
-        "ndvi": 0.3329,
+        "soil_moisture_m3m3": 0.1721,
+        "lst_day_c": 26.59,
+        "ndvi": 0.4232,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-18",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.06,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.177,
+        "lst_day_c": 33.7,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-19",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.32,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1559,
+        "lst_day_c": 30.73,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.17,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1397,
+        "lst_day_c": 29.59,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.83,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1231,
+        "lst_day_c": null,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.36,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1205,
+        "lst_day_c": 34.12,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-23",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.21,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.118,
+        "lst_day_c": 37.74,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.25,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.1047,
+        "lst_day_c": 29.94,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.16,
-        "ndvi": 0.3329,
-        "ndvi_age_days": 8
+        "soil_moisture_m3m3": 0.106,
+        "lst_day_c": 37.7,
+        "ndvi": 0.4232,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-26",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.29,
-        "ndvi": 0.3594,
+        "soil_moisture_m3m3": 0.1122,
+        "lst_day_c": null,
+        "ndvi": 0.4347,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.7,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1135,
+        "lst_day_c": 36.4,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.59,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1116,
+        "lst_day_c": 34.24,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.94,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1106,
+        "lst_day_c": 31.96,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-30",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.45,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 4
+        "rainfall_mm": 23.04,
+        "soil_moisture_m3m3": 0.1689,
+        "lst_day_c": 33.49,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-31",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.1,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 5
+        "rainfall_mm": 0.02,
+        "soil_moisture_m3m3": 0.2024,
+        "lst_day_c": null,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 36.16,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 6
+        "rainfall_mm": 3.17,
+        "soil_moisture_m3m3": 0.1805,
+        "lst_day_c": 35.1,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.2,
-        "ndvi": 0.3594,
-        "ndvi_age_days": 7
+        "rainfall_mm": 0.13,
+        "soil_moisture_m3m3": 0.1606,
+        "lst_day_c": 32.83,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.32,
-        "ndvi": 0.3303,
+        "rainfall_mm": 3.83,
+        "soil_moisture_m3m3": 0.133,
+        "lst_day_c": 32.1,
+        "ndvi": 0.4347,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.72,
-        "ndvi": 0.3303,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.16,
+        "soil_moisture_m3m3": 0.1299,
+        "lst_day_c": 33.3,
+        "ndvi": 0.4347,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.39,
-        "ndvi": 0.3303,
-        "ndvi_age_days": 2
+        "rainfall_mm": 0.91,
+        "soil_moisture_m3m3": 0.1242,
+        "lst_day_c": null,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.43,
-        "ndvi": 0.3303,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1118,
+        "lst_day_c": 35.15,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.1,
-        "ndvi": 0.3303,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1075,
+        "lst_day_c": 34.67,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 37.07,
-        "ndvi": 0.3863,
+        "soil_moisture_m3m3": 0.1083,
+        "lst_day_c": 32.98,
+        "ndvi": 0.4277,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-09",
-        "rainfall_mm": 30.26,
-        "soil_moisture_m3m3": 0.2552,
-        "lst_day_c": null,
-        "ndvi": 0.3863,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.181,
+        "lst_day_c": 31.91,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-10",
-        "rainfall_mm": 13.26,
-        "soil_moisture_m3m3": 0.3143,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.178,
         "lst_day_c": null,
-        "ndvi": 0.3863,
-        "ndvi_age_days": 2
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-11",
-        "rainfall_mm": 8.79,
-        "soil_moisture_m3m3": 0.3419,
-        "lst_day_c": 29.13,
-        "ndvi": 0.3863,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.149,
+        "lst_day_c": 32.19,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-12",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3146,
-        "lst_day_c": 31.47,
-        "ndvi": 0.3863,
-        "ndvi_age_days": 4
+        "rainfall_mm": 7.98,
+        "soil_moisture_m3m3": 0.1623,
+        "lst_day_c": 28.87,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-13",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2894,
-        "lst_day_c": 29.3,
-        "ndvi": 0.38,
+        "soil_moisture_m3m3": 0.2031,
+        "lst_day_c": null,
+        "ndvi": 0.4277,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-14",
-        "rainfall_mm": 7.31,
-        "soil_moisture_m3m3": 0.3101,
-        "lst_day_c": 29.31,
-        "ndvi": 0.38,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2012,
+        "lst_day_c": 32.47,
+        "ndvi": 0.4277,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-15",
-        "rainfall_mm": 9.96,
-        "soil_moisture_m3m3": 0.345,
-        "lst_day_c": 29.36,
-        "ndvi": 0.38,
-        "ndvi_age_days": 2
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.185,
+        "lst_day_c": null,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-16",
-        "rainfall_mm": 40.12,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.38,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1547,
+        "lst_day_c": 33.84,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "soil_moisture_m3m3": 0.1182,
         "lst_day_c": null,
-        "ndvi": 0.38,
-        "ndvi_age_days": 4
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-18",
-        "rainfall_mm": 21.94,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.38,
-        "ndvi": 0.38,
-        "ndvi_age_days": 5
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.152,
+        "lst_day_c": null,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-19",
-        "rainfall_mm": 13.61,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.1,
-        "ndvi": 0.38,
-        "ndvi_age_days": 6
+        "rainfall_mm": 0.75,
+        "soil_moisture_m3m3": 0.1672,
+        "lst_day_c": null,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "soil_moisture_m3m3": 0.1255,
         "lst_day_c": null,
-        "ndvi": 0.38,
-        "ndvi_age_days": 7
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 30.81,
-        "ndvi": 0.38,
-        "ndvi_age_days": 8
+        "soil_moisture_m3m3": 0.1228,
+        "lst_day_c": 34.53,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-22",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2959,
-        "lst_day_c": 30.24,
-        "ndvi": 0.38,
-        "ndvi_age_days": 9
+        "rainfall_mm": 2.96,
+        "soil_moisture_m3m3": 0.133,
+        "lst_day_c": 33.05,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-23",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2722,
-        "lst_day_c": 31.12,
-        "ndvi": 0.38,
-        "ndvi_age_days": 10
+        "rainfall_mm": 15.38,
+        "soil_moisture_m3m3": 0.2418,
+        "lst_day_c": null,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-24",
-        "rainfall_mm": 20.14,
-        "soil_moisture_m3m3": 0.3713,
-        "lst_day_c": 28.29,
-        "ndvi": 0.38,
-        "ndvi_age_days": 11
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2298,
+        "lst_day_c": 30.96,
+        "ndvi": 0.4249,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-25",
-        "rainfall_mm": 1.18,
-        "soil_moisture_m3m3": 0.3487,
+        "rainfall_mm": 15.38,
+        "soil_moisture_m3m3": 0.2146,
         "lst_day_c": null,
-        "ndvi": 0.38,
-        "ndvi_age_days": 12
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-26",
-        "rainfall_mm": 9.18,
-        "soil_moisture_m3m3": 0.3759,
-        "lst_day_c": 29.69,
-        "ndvi": 0.38,
-        "ndvi_age_days": 13
+        "rainfall_mm": 10.86,
+        "soil_moisture_m3m3": 0.2327,
+        "lst_day_c": null,
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-27",
-        "rainfall_mm": 21.18,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 28.37,
-        "ndvi": 0.4262,
+        "rainfall_mm": 16.07,
+        "soil_moisture_m3m3": 0.2603,
+        "lst_day_c": null,
+        "ndvi": 0.4124,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-28",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 8.04,
+        "soil_moisture_m3m3": 0.2439,
         "lst_day_c": null,
-        "ndvi": 0.4262,
-        "ndvi_age_days": 1
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-29",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 29.48,
-        "ndvi": 0.4262,
-        "ndvi_age_days": 2
+        "rainfall_mm": 31.02,
+        "soil_moisture_m3m3": 0.2617,
+        "lst_day_c": null,
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-30",
-        "rainfall_mm": 48.35,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 28.29,
-        "ndvi": 0.4262,
-        "ndvi_age_days": 3
+        "rainfall_mm": 17.67,
+        "soil_moisture_m3m3": 0.2623,
+        "lst_day_c": null,
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-01",
-        "rainfall_mm": 10.25,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 10.07,
+        "soil_moisture_m3m3": 0.2818,
         "lst_day_c": null,
-        "ndvi": 0.4262,
-        "ndvi_age_days": 4
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-02",
-        "rainfall_mm": 31.95,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 26.85,
-        "ndvi": 0.4262,
-        "ndvi_age_days": 5
+        "rainfall_mm": 17.53,
+        "soil_moisture_m3m3": 0.3026,
+        "lst_day_c": null,
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 26.87,
+        "soil_moisture_m3m3": 0.3467,
         "lst_day_c": null,
-        "ndvi": 0.4262,
-        "ndvi_age_days": 6
+        "ndvi": 0.4124,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "rainfall_mm": 19.51,
+        "soil_moisture_m3m3": 0.3346,
         "lst_day_c": null,
-        "ndvi": 0.4474,
+        "ndvi": 0.4124,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-07-05",
-        "rainfall_mm": 17.96,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 33.26,
-        "ndvi": 0.4474,
-        "ndvi_age_days": 1
+        "rainfall_mm": 23.85,
+        "soil_moisture_m3m3": 0.3552,
+        "lst_day_c": null,
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-06",
-        "rainfall_mm": 0.23,
-        "soil_moisture_m3m3": 0.351,
-        "lst_day_c": 30.31,
-        "ndvi": 0.4474,
-        "ndvi_age_days": 2
+        "rainfall_mm": 42.73,
+        "soil_moisture_m3m3": 0.3521,
+        "lst_day_c": null,
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3229,
+        "soil_moisture_m3m3": 0.3564,
         "lst_day_c": null,
-        "ndvi": 0.4474,
-        "ndvi_age_days": 3
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2971,
+        "soil_moisture_m3m3": 0.3388,
         "lst_day_c": null,
-        "ndvi": 0.4474,
-        "ndvi_age_days": 4
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-09",
-        "rainfall_mm": 26.26,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.32,
-        "ndvi": 0.4474,
-        "ndvi_age_days": 5
+        "rainfall_mm": 1.19,
+        "soil_moisture_m3m3": 0.3362,
+        "lst_day_c": null,
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-10",
-        "rainfall_mm": 18.92,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.329,
         "lst_day_c": null,
-        "ndvi": 0.4922,
+        "ndvi": 0.5259,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-07-11",
-        "rainfall_mm": 19.47,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3102,
         "lst_day_c": null,
-        "ndvi": 0.4922,
-        "ndvi_age_days": 1
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 26.69,
-        "ndvi": 0.4922,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.292,
+        "lst_day_c": 24.29,
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-13",
-        "rainfall_mm": 12.24,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.57,
-        "ndvi": 0.4922,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2874,
+        "lst_day_c": null,
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 31.55,
-        "ndvi": 0.4922,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.293,
+        "lst_day_c": null,
+        "ndvi": 0.5259,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 30.76,
-        "ndvi": 0.4922,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.2896,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-16",
-        "rainfall_mm": 15.36,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.06,
-        "ndvi": 0.4922,
-        "ndvi_age_days": 6
+        "rainfall_mm": 10.33,
+        "soil_moisture_m3m3": 0.3486,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-17",
-        "rainfall_mm": 37.25,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 20.75,
+        "soil_moisture_m3m3": 0.3825,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 0
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-18",
-        "rainfall_mm": 29.59,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 11.77,
+        "soil_moisture_m3m3": 0.3908,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 1
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-19",
-        "rainfall_mm": 2.39,
-        "soil_moisture_m3m3": 0.3639,
+        "rainfall_mm": 10.93,
+        "soil_moisture_m3m3": 0.3915,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 2
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-20",
-        "rainfall_mm": 33.79,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.32,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 3
+        "rainfall_mm": 25.81,
+        "soil_moisture_m3m3": 0.4032,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-21",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 56.32,
+        "soil_moisture_m3m3": 0.435,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 4
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-22",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "rainfall_mm": 5.41,
+        "soil_moisture_m3m3": 0.4369,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 5
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-23",
-        "rainfall_mm": 6.03,
-        "soil_moisture_m3m3": 0.3321,
-        "lst_day_c": 28.63,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 6
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4362,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3055,
+        "soil_moisture_m3m3": 0.4139,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 7
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-07-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2811,
-        "lst_day_c": 31.99,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 8
+        "soil_moisture_m3m3": 0.4126,
+        "lst_day_c": null,
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-26",
-        "rainfall_mm": 11.23,
-        "soil_moisture_m3m3": 0.326,
-        "lst_day_c": 32.82,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 9
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4165,
+        "lst_day_c": null,
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-27",
-        "rainfall_mm": 40.49,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 34.67,
+        "soil_moisture_m3m3": 0.4408,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 10
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-28",
-        "rainfall_mm": 21.12,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 60.56,
+        "soil_moisture_m3m3": 0.4579,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 11
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-29",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 30.01,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 12
+        "rainfall_mm": 31.85,
+        "soil_moisture_m3m3": 0.4797,
+        "lst_day_c": null,
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "soil_moisture_m3m3": 0.4681,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 13
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-31",
-        "rainfall_mm": 19.41,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.3,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 14
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4705,
+        "lst_day_c": null,
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-01",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "soil_moisture_m3m3": 0.4605,
         "lst_day_c": null,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 15
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-02",
-        "rainfall_mm": 30.83,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.71,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 16
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4621,
+        "lst_day_c": null,
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-03",
-        "rainfall_mm": 16.09,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.75,
-        "ndvi": 0.4887,
-        "ndvi_age_days": 17
+        "rainfall_mm": 9.06,
+        "soil_moisture_m3m3": 0.4607,
+        "lst_day_c": null,
+        "ndvi": 0.4908,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-04",
-        "rainfall_mm": 8.61,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.66,
-        "ndvi": 0.5107,
+        "rainfall_mm": 15.5,
+        "soil_moisture_m3m3": 0.4767,
+        "lst_day_c": null,
+        "ndvi": 0.5483,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-08-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 8.11,
+        "soil_moisture_m3m3": 0.4767,
         "lst_day_c": null,
-        "ndvi": 0.5107,
-        "ndvi_age_days": 1
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-06",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
+        "rainfall_mm": 9.58,
+        "soil_moisture_m3m3": 0.4732,
         "lst_day_c": null,
-        "ndvi": 0.5107,
-        "ndvi_age_days": 2
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-07",
-        "rainfall_mm": 15.26,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 6.74,
+        "soil_moisture_m3m3": 0.482,
         "lst_day_c": null,
-        "ndvi": 0.5107,
-        "ndvi_age_days": 3
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-08",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 24.91,
-        "ndvi": 0.5107,
-        "ndvi_age_days": 4
+        "rainfall_mm": 26.97,
+        "soil_moisture_m3m3": 0.4938,
+        "lst_day_c": null,
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-09",
-        "rainfall_mm": 27.7,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.89,
-        "ndvi": 0.5107,
-        "ndvi_age_days": 5
+        "rainfall_mm": 20.23,
+        "soil_moisture_m3m3": 0.4913,
+        "lst_day_c": null,
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 30.62,
-        "ndvi": 0.5427,
+        "soil_moisture_m3m3": 0.4881,
+        "lst_day_c": null,
+        "ndvi": 0.5483,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-08-11",
-        "rainfall_mm": 9.42,
-        "soil_moisture_m3m3": 0.3782,
-        "lst_day_c": 30.51,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 1
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4904,
+        "lst_day_c": null,
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-08-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3479,
-        "lst_day_c": 28.78,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 2
-      },
-      {
-        "date": "2026-08-13",
-        "rainfall_mm": 3.07,
-        "soil_moisture_m3m3": 0.3385,
-        "lst_day_c": 28.96,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 3
-      },
-      {
-        "date": "2026-08-14",
-        "rainfall_mm": 34.27,
-        "soil_moisture_m3m3": 0.38,
+        "soil_moisture_m3m3": 0.4857,
         "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 4
-      },
-      {
-        "date": "2026-08-15",
-        "rainfall_mm": 10.58,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.31,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 5
-      },
-      {
-        "date": "2026-08-16",
-        "rainfall_mm": 27.87,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 27.31,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 6
-      },
-      {
-        "date": "2026-08-17",
-        "rainfall_mm": 59.12,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 7
-      },
-      {
-        "date": "2026-08-18",
-        "rainfall_mm": 10.36,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.37,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 8
-      },
-      {
-        "date": "2026-08-19",
-        "rainfall_mm": 17.17,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 9
-      },
-      {
-        "date": "2026-08-20",
-        "rainfall_mm": 4.38,
-        "soil_moisture_m3m3": 0.3759,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 10
-      },
-      {
-        "date": "2026-08-21",
-        "rainfall_mm": 20.25,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 11
-      },
-      {
-        "date": "2026-08-22",
-        "rainfall_mm": 11.73,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 12
-      },
-      {
-        "date": "2026-08-23",
-        "rainfall_mm": 21.54,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 13
-      },
-      {
-        "date": "2026-08-24",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 14
-      },
-      {
-        "date": "2026-08-25",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 29.24,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 15
-      },
-      {
-        "date": "2026-08-26",
-        "rainfall_mm": 10.55,
-        "soil_moisture_m3m3": 0.3592,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 16
-      },
-      {
-        "date": "2026-08-27",
-        "rainfall_mm": 3.67,
-        "soil_moisture_m3m3": 0.3525,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 17
-      },
-      {
-        "date": "2026-08-28",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3243,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 18
-      },
-      {
-        "date": "2026-08-29",
-        "rainfall_mm": 4.25,
-        "soil_moisture_m3m3": 0.3238,
-        "lst_day_c": null,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 19
-      },
-      {
-        "date": "2026-08-30",
-        "rainfall_mm": 11.23,
-        "soil_moisture_m3m3": 0.3653,
-        "lst_day_c": 30.59,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 20
-      },
-      {
-        "date": "2026-08-31",
-        "rainfall_mm": 5.92,
-        "soil_moisture_m3m3": 0.3716,
-        "lst_day_c": 28.64,
-        "ndvi": 0.5427,
-        "ndvi_age_days": 21
-      },
-      {
-        "date": "2026-09-01",
-        "rainfall_mm": 15.08,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5394,
+        "ndvi": 0.5483,
         "ndvi_age_days": 0
       },
       {
-        "date": "2026-09-02",
-        "rainfall_mm": 12.51,
-        "soil_moisture_m3m3": 0.38,
+        "date": "2026-08-13",
+        "rainfall_mm": 6.64,
+        "soil_moisture_m3m3": 0.4791,
         "lst_day_c": null,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 1
+        "ndvi": 0.5483,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-14",
+        "rainfall_mm": 1.9,
+        "soil_moisture_m3m3": 0.4887,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-15",
+        "rainfall_mm": 27.55,
+        "soil_moisture_m3m3": 0.499,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-16",
+        "rainfall_mm": 21.89,
+        "soil_moisture_m3m3": 0.4995,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-17",
+        "rainfall_mm": 19.52,
+        "soil_moisture_m3m3": 0.4979,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-18",
+        "rainfall_mm": 4.07,
+        "soil_moisture_m3m3": 0.4981,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-19",
+        "rainfall_mm": 27.83,
+        "soil_moisture_m3m3": 0.5028,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-20",
+        "rainfall_mm": 0.81,
+        "soil_moisture_m3m3": 0.492,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-21",
+        "rainfall_mm": 11.23,
+        "soil_moisture_m3m3": 0.4978,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-22",
+        "rainfall_mm": 10.63,
+        "soil_moisture_m3m3": 0.5029,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-23",
+        "rainfall_mm": 26.27,
+        "soil_moisture_m3m3": 0.5019,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-24",
+        "rainfall_mm": 11.73,
+        "soil_moisture_m3m3": 0.5032,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-25",
+        "rainfall_mm": 16.63,
+        "soil_moisture_m3m3": 0.5014,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-26",
+        "rainfall_mm": 2.75,
+        "soil_moisture_m3m3": 0.4949,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-27",
+        "rainfall_mm": 0.09,
+        "soil_moisture_m3m3": 0.491,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-28",
+        "rainfall_mm": 4.6,
+        "soil_moisture_m3m3": 0.4904,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-29",
+        "rainfall_mm": 21.66,
+        "soil_moisture_m3m3": 0.498,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-30",
+        "rainfall_mm": 3.04,
+        "soil_moisture_m3m3": 0.4973,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-31",
+        "rainfall_mm": 0.67,
+        "soil_moisture_m3m3": 0.4924,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-09-01",
+        "rainfall_mm": 3.79,
+        "soil_moisture_m3m3": 0.4914,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-09-02",
+        "rainfall_mm": 32.16,
+        "soil_moisture_m3m3": 0.5061,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
       },
       {
         "date": "2026-09-03",
-        "rainfall_mm": 0.69,
-        "soil_moisture_m3m3": 0.3537,
+        "rainfall_mm": 13.92,
+        "soil_moisture_m3m3": 0.5053,
         "lst_day_c": null,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 2
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3254,
-        "lst_day_c": 28.69,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 3
+        "rainfall_mm": 8.0,
+        "soil_moisture_m3m3": 0.505,
+        "lst_day_c": null,
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-05",
-        "rainfall_mm": 4.22,
-        "soil_moisture_m3m3": 0.3247,
-        "lst_day_c": 29.02,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 4
+        "rainfall_mm": 6.3,
+        "soil_moisture_m3m3": 0.5039,
+        "lst_day_c": null,
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-06",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2987,
+        "rainfall_mm": 0.64,
+        "soil_moisture_m3m3": 0.4968,
         "lst_day_c": null,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 5
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-07",
-        "rainfall_mm": 9.71,
-        "soil_moisture_m3m3": 0.3331,
-        "lst_day_c": null,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 6
+        "rainfall_mm": 2.92,
+        "soil_moisture_m3m3": 0.4931,
+        "lst_day_c": 26.36,
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-08",
-        "rainfall_mm": 7.26,
-        "soil_moisture_m3m3": 0.35,
+        "rainfall_mm": 9.73,
+        "soil_moisture_m3m3": 0.4935,
         "lst_day_c": null,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 7
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-09",
-        "rainfall_mm": 4.26,
-        "soil_moisture_m3m3": 0.3476,
-        "lst_day_c": 31.33,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 8
+        "rainfall_mm": 2.58,
+        "soil_moisture_m3m3": 0.4837,
+        "lst_day_c": null,
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-10",
-        "rainfall_mm": 2.19,
-        "soil_moisture_m3m3": 0.3329,
+        "rainfall_mm": 0.58,
+        "soil_moisture_m3m3": 0.4741,
         "lst_day_c": null,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 9
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-11",
-        "rainfall_mm": 15.44,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 28.63,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 10
+        "rainfall_mm": 5.86,
+        "soil_moisture_m3m3": 0.4855,
+        "lst_day_c": null,
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-12",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 28.11,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 11
+        "rainfall_mm": 29.83,
+        "soil_moisture_m3m3": 0.4985,
+        "lst_day_c": null,
+        "ndvi": 0.6629,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-13",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 32.86,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 12
+        "rainfall_mm": 11.57,
+        "soil_moisture_m3m3": 0.4958,
+        "lst_day_c": null,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-14",
-        "rainfall_mm": 44.34,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 30.3,
-        "ndvi": 0.5394,
-        "ndvi_age_days": 13
+        "rainfall_mm": 0.26,
+        "soil_moisture_m3m3": 0.4892,
+        "lst_day_c": null,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-15",
-        "rainfall_mm": 26.57,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.19,
+        "soil_moisture_m3m3": 0.4833,
         "lst_day_c": null,
-        "ndvi": 0.5273,
+        "ndvi": 0.6813,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-09-16",
-        "rainfall_mm": 4.44,
-        "soil_moisture_m3m3": 0.3762,
-        "lst_day_c": 30.61,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 1
+        "rainfall_mm": 1.36,
+        "soil_moisture_m3m3": 0.4714,
+        "lst_day_c": null,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-17",
-        "rainfall_mm": 6.45,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.49,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 2
+        "rainfall_mm": 1.95,
+        "soil_moisture_m3m3": 0.4646,
+        "lst_day_c": null,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-18",
-        "rainfall_mm": 0.76,
-        "soil_moisture_m3m3": 0.3542,
-        "lst_day_c": null,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 3
+        "rainfall_mm": 32.19,
+        "soil_moisture_m3m3": 0.4767,
+        "lst_day_c": 26.25,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-19",
-        "rainfall_mm": 2.26,
-        "soil_moisture_m3m3": 0.3394,
-        "lst_day_c": 28.63,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.27,
+        "soil_moisture_m3m3": 0.4834,
+        "lst_day_c": null,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-20",
-        "rainfall_mm": 9.51,
+        "rainfall_mm": 2.32,
         "soil_moisture_m3m3": null,
-        "lst_day_c": null,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 5
+        "lst_day_c": 26.65,
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-21",
-        "rainfall_mm": null,
+        "rainfall_mm": 0.23,
         "soil_moisture_m3m3": null,
         "lst_day_c": null,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 6
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-22",
-        "rainfall_mm": null,
+        "rainfall_mm": 0.0,
         "soil_moisture_m3m3": null,
         "lst_day_c": null,
-        "ndvi": 0.5273,
-        "ndvi_age_days": 7
+        "ndvi": 0.6813,
+        "ndvi_age_days": 0
       }
     ],
     "nagpur": [
       {
         "date": "2026-03-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.7,
-        "ndvi": 0.2942,
+        "soil_moisture_m3m3": 0.1477,
+        "lst_day_c": null,
+        "ndvi": 0.2768,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-03-28",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.78,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 1
+        "rainfall_mm": 6.16,
+        "soil_moisture_m3m3": 0.1457,
+        "lst_day_c": 38.36,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.92,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1424,
+        "lst_day_c": 37.43,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.88,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1676,
+        "lst_day_c": 36.03,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-03-31",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.39,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1956,
+        "lst_day_c": null,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.64,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 5
+        "rainfall_mm": 23.16,
+        "soil_moisture_m3m3": 0.1882,
+        "lst_day_c": null,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-02",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.19,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.2361,
+        "lst_day_c": null,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.23,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 7
+        "rainfall_mm": 0.47,
+        "soil_moisture_m3m3": 0.2236,
+        "lst_day_c": 32.03,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-04",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.46,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 8
+        "soil_moisture_m3m3": 0.2321,
+        "lst_day_c": null,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-05",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.89,
-        "ndvi": 0.2942,
-        "ndvi_age_days": 9
+        "soil_moisture_m3m3": 0.2103,
+        "lst_day_c": 29.33,
+        "ndvi": 0.2768,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.72,
-        "ndvi": 0.2808,
+        "soil_moisture_m3m3": 0.1987,
+        "lst_day_c": null,
+        "ndvi": 0.2823,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.3,
-        "ndvi": 0.2808,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1866,
+        "lst_day_c": 34.0,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.3,
-        "ndvi": 0.2808,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1853,
+        "lst_day_c": 33.44,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-09",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.0,
-        "ndvi": 0.2808,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1716,
+        "lst_day_c": 33.64,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.76,
-        "ndvi": 0.2808,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1618,
+        "lst_day_c": 36.87,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-11",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.29,
-        "ndvi": 0.2808,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1485,
+        "lst_day_c": null,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.98,
-        "ndvi": 0.2963,
+        "soil_moisture_m3m3": 0.1423,
+        "lst_day_c": 38.42,
+        "ndvi": 0.2823,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-13",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.65,
-        "ndvi": 0.2963,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1406,
+        "lst_day_c": 37.97,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.86,
-        "ndvi": 0.2963,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1422,
+        "lst_day_c": 36.76,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.47,
-        "ndvi": 0.2963,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1294,
+        "lst_day_c": 41.92,
+        "ndvi": 0.2823,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-16",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 44.26,
-        "ndvi": 0.2937,
+        "soil_moisture_m3m3": 0.1358,
+        "lst_day_c": null,
+        "ndvi": 0.2714,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.7,
-        "ndvi": 0.2937,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1395,
+        "lst_day_c": 38.51,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-18",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.86,
-        "ndvi": 0.2937,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1441,
+        "lst_day_c": null,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-19",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.86,
-        "ndvi": 0.2937,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1352,
+        "lst_day_c": 38.98,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.1373,
         "lst_day_c": null,
-        "ndvi": 0.3113,
+        "ndvi": 0.2714,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 44.34,
-        "ndvi": 0.3113,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1388,
+        "lst_day_c": null,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": null,
-        "ndvi": 0.3113,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1248,
+        "lst_day_c": 40.33,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-23",
-        "rainfall_mm": 0.99,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.46,
-        "ndvi": 0.3113,
-        "ndvi_age_days": 3
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.124,
+        "lst_day_c": 42.02,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 44.37,
-        "ndvi": 0.2752,
+        "soil_moisture_m3m3": 0.1328,
+        "lst_day_c": 39.39,
+        "ndvi": 0.2714,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.79,
-        "ndvi": 0.2752,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1302,
+        "lst_day_c": 43.37,
+        "ndvi": 0.2714,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-26",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.25,
-        "ndvi": 0.2752,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1275,
+        "lst_day_c": null,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.06,
-        "ndvi": 0.2752,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1277,
+        "lst_day_c": 35.0,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.41,
-        "ndvi": 0.2752,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1279,
+        "lst_day_c": 41.3,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-04-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.28,
-        "ndvi": 0.298,
+        "soil_moisture_m3m3": 0.1257,
+        "lst_day_c": null,
+        "ndvi": 0.2541,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-04-30",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.8,
-        "ndvi": 0.298,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1288,
+        "lst_day_c": 41.89,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.38,
-        "ndvi": 0.298,
-        "ndvi_age_days": 2
+        "rainfall_mm": 0.09,
+        "soil_moisture_m3m3": 0.1334,
+        "lst_day_c": null,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 45.25,
-        "ndvi": 0.298,
-        "ndvi_age_days": 3
+        "rainfall_mm": 2.23,
+        "soil_moisture_m3m3": 0.1372,
+        "lst_day_c": 41.39,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-03",
-        "rainfall_mm": 0.66,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.35,
-        "ndvi": 0.298,
-        "ndvi_age_days": 4
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1303,
+        "lst_day_c": 41.91,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-04",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.57,
-        "ndvi": 0.298,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1255,
+        "lst_day_c": null,
+        "ndvi": 0.2541,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.8,
-        "ndvi": 0.2862,
+        "rainfall_mm": 0.73,
+        "soil_moisture_m3m3": 0.1278,
+        "lst_day_c": 40.93,
+        "ndvi": 0.2541,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.06,
-        "ndvi": 0.2862,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1689,
+        "lst_day_c": null,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 44.74,
-        "ndvi": 0.2862,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1668,
+        "lst_day_c": 39.87,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.52,
-        "ndvi": 0.2862,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1733,
+        "lst_day_c": 38.26,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-09",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.66,
-        "ndvi": 0.2819,
+        "soil_moisture_m3m3": 0.1701,
+        "lst_day_c": null,
+        "ndvi": 0.2505,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-10",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.22,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1614,
+        "lst_day_c": 40.2,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-11",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.82,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1415,
+        "lst_day_c": null,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-12",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.53,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1371,
+        "lst_day_c": 40.71,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-13",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.77,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.1416,
+        "lst_day_c": 37.76,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.92,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.1385,
+        "lst_day_c": 34.77,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.64,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.1325,
+        "lst_day_c": 40.78,
+        "ndvi": 0.2505,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-16",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.59,
-        "ndvi": 0.2819,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.1226,
+        "lst_day_c": null,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 45.3,
-        "ndvi": 0.292,
+        "soil_moisture_m3m3": 0.133,
+        "lst_day_c": 34.6,
+        "ndvi": 0.2104,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-18",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 43.17,
-        "ndvi": 0.292,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.1391,
+        "lst_day_c": 41.79,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-19",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 42.47,
-        "ndvi": 0.292,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1362,
+        "lst_day_c": 35.4,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.17,
-        "ndvi": 0.292,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.122,
+        "lst_day_c": 43.17,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-21",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "soil_moisture_m3m3": 0.107,
         "lst_day_c": null,
-        "ndvi": 0.292,
-        "ndvi_age_days": 4
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.52,
-        "ndvi": 0.292,
-        "ndvi_age_days": 5
+        "soil_moisture_m3m3": 0.0943,
+        "lst_day_c": 40.24,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-23",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.86,
-        "ndvi": 0.292,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.0858,
+        "lst_day_c": 41.89,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-24",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": null,
-        "ndvi": 0.292,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.0856,
+        "lst_day_c": 33.6,
+        "ndvi": 0.2104,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-25",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.41,
-        "ndvi": 0.3147,
+        "soil_moisture_m3m3": 0.0903,
+        "lst_day_c": 43.38,
+        "ndvi": 0.2104,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-05-26",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.29,
-        "ndvi": 0.3147,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.0971,
+        "lst_day_c": null,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-27",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.46,
-        "ndvi": 0.3147,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1063,
+        "lst_day_c": 38.0,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-28",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.94,
-        "ndvi": 0.3147,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1022,
+        "lst_day_c": 38.2,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-29",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.67,
-        "ndvi": 0.3147,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.101,
+        "lst_day_c": 36.97,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-30",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.45,
-        "ndvi": 0.3147,
-        "ndvi_age_days": 5
+        "rainfall_mm": 27.76,
+        "soil_moisture_m3m3": 0.1568,
+        "lst_day_c": 38.67,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-05-31",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 41.33,
-        "ndvi": 0.3366,
+        "rainfall_mm": 0.98,
+        "soil_moisture_m3m3": 0.1934,
+        "lst_day_c": null,
+        "ndvi": 0.2221,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.38,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 1
+        "rainfall_mm": 4.33,
+        "soil_moisture_m3m3": 0.1642,
+        "lst_day_c": 41.07,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-02",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.22,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 2
+        "soil_moisture_m3m3": 0.1417,
+        "lst_day_c": 40.39,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-03",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.2,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1043,
+        "lst_day_c": 37.46,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-04",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 38.3,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 4
+        "soil_moisture_m3m3": 0.0969,
+        "lst_day_c": 41.54,
+        "ndvi": 0.2221,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-05",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
+        "rainfall_mm": 0.85,
+        "soil_moisture_m3m3": 0.0957,
         "lst_day_c": null,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 5
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-06",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 40.26,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 6
+        "soil_moisture_m3m3": 0.0919,
+        "lst_day_c": 41.86,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-07",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.27,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.0867,
+        "lst_day_c": 41.62,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-08",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.08,
-        "lst_day_c": 39.11,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 8
+        "soil_moisture_m3m3": 0.0869,
+        "lst_day_c": null,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-09",
-        "rainfall_mm": 1.14,
-        "soil_moisture_m3m3": 0.0804,
-        "lst_day_c": null,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 9
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1591,
+        "lst_day_c": 36.89,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-10",
-        "rainfall_mm": 12.29,
-        "soil_moisture_m3m3": 0.1477,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1768,
         "lst_day_c": null,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 10
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-11",
-        "rainfall_mm": 4.66,
-        "soil_moisture_m3m3": 0.1639,
-        "lst_day_c": null,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 11
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1645,
+        "lst_day_c": 38.24,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-12",
-        "rainfall_mm": 10.29,
-        "soil_moisture_m3m3": 0.2125,
-        "lst_day_c": 31.94,
-        "ndvi": 0.3366,
-        "ndvi_age_days": 12
+        "rainfall_mm": 4.25,
+        "soil_moisture_m3m3": 0.154,
+        "lst_day_c": 37.38,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-13",
-        "rainfall_mm": 5.01,
-        "soil_moisture_m3m3": 0.2256,
-        "lst_day_c": 33.52,
-        "ndvi": 0.3377,
+        "rainfall_mm": 17.83,
+        "soil_moisture_m3m3": 0.2182,
+        "lst_day_c": null,
+        "ndvi": 0.2087,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-14",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2075,
-        "lst_day_c": null,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 1
+        "soil_moisture_m3m3": 0.2127,
+        "lst_day_c": 31.66,
+        "ndvi": 0.2087,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1909,
+        "soil_moisture_m3m3": 0.1852,
         "lst_day_c": null,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 2
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-16",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1757,
-        "lst_day_c": null,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 3
+        "soil_moisture_m3m3": 0.1619,
+        "lst_day_c": 35.53,
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-17",
-        "rainfall_mm": 33.22,
-        "soil_moisture_m3m3": 0.3609,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1269,
         "lst_day_c": null,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 4
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-18",
-        "rainfall_mm": 14.71,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.01,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 5
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1597,
+        "lst_day_c": null,
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-19",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 6
+        "rainfall_mm": 3.32,
+        "soil_moisture_m3m3": 0.1677,
+        "lst_day_c": 34.88,
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-20",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 32.45,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 7
+        "soil_moisture_m3m3": 0.1317,
+        "lst_day_c": 38.33,
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-21",
-        "rainfall_mm": 26.02,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 32.65,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 8
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.1288,
+        "lst_day_c": null,
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-22",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 29.79,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 9
+        "soil_moisture_m3m3": 0.1297,
+        "lst_day_c": 39.27,
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-23",
-        "rainfall_mm": 2.26,
-        "soil_moisture_m3m3": 0.3352,
+        "rainfall_mm": 23.02,
+        "soil_moisture_m3m3": 0.26,
         "lst_day_c": null,
-        "ndvi": 0.3377,
-        "ndvi_age_days": 10
+        "ndvi": 0.2569,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-24",
-        "rainfall_mm": 3.17,
-        "soil_moisture_m3m3": 0.3274,
-        "lst_day_c": 30.7,
-        "ndvi": 0.3529,
+        "rainfall_mm": 12.38,
+        "soil_moisture_m3m3": 0.2473,
+        "lst_day_c": 29.42,
+        "ndvi": 0.2569,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-06-25",
-        "rainfall_mm": 12.99,
-        "soil_moisture_m3m3": 0.3791,
+        "rainfall_mm": 7.91,
+        "soil_moisture_m3m3": 0.2271,
         "lst_day_c": null,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 1
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-26",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3488,
-        "lst_day_c": 31.08,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 2
+        "rainfall_mm": 12.01,
+        "soil_moisture_m3m3": 0.2237,
+        "lst_day_c": null,
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-27",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3209,
+        "rainfall_mm": 7.83,
+        "soil_moisture_m3m3": 0.2323,
         "lst_day_c": null,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 3
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-28",
-        "rainfall_mm": 5.28,
-        "soil_moisture_m3m3": 0.3269,
+        "rainfall_mm": 9.13,
+        "soil_moisture_m3m3": 0.2344,
         "lst_day_c": null,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 4
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-29",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3008,
-        "lst_day_c": 32.66,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 5
+        "rainfall_mm": 35.34,
+        "soil_moisture_m3m3": 0.2584,
+        "lst_day_c": null,
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-06-30",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2767,
+        "rainfall_mm": 14.01,
+        "soil_moisture_m3m3": 0.2551,
         "lst_day_c": null,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 6
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2546,
+        "rainfall_mm": 19.03,
+        "soil_moisture_m3m3": 0.2945,
         "lst_day_c": null,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 7
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-02",
-        "rainfall_mm": 29.32,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 33.65,
-        "ndvi": 0.3529,
-        "ndvi_age_days": 8
+        "rainfall_mm": 18.71,
+        "soil_moisture_m3m3": 0.3102,
+        "lst_day_c": null,
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-03",
-        "rainfall_mm": 7.91,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 21.48,
+        "soil_moisture_m3m3": 0.322,
         "lst_day_c": null,
-        "ndvi": 0.3911,
+        "ndvi": 0.3044,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-07-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "rainfall_mm": 17.9,
+        "soil_moisture_m3m3": 0.3168,
         "lst_day_c": null,
-        "ndvi": 0.3911,
-        "ndvi_age_days": 1
+        "ndvi": 0.3044,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-05",
-        "rainfall_mm": 31.93,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 21.08,
+        "soil_moisture_m3m3": 0.3201,
         "lst_day_c": null,
-        "ndvi": 0.3911,
-        "ndvi_age_days": 2
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-06",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 31.64,
-        "ndvi": 0.3911,
-        "ndvi_age_days": 3
+        "rainfall_mm": 21.72,
+        "soil_moisture_m3m3": 0.3005,
+        "lst_day_c": null,
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-07",
-        "rainfall_mm": 4.41,
-        "soil_moisture_m3m3": 0.3481,
-        "lst_day_c": 32.77,
-        "ndvi": 0.4085,
+        "rainfall_mm": 10.31,
+        "soil_moisture_m3m3": 0.3171,
+        "lst_day_c": null,
+        "ndvi": 0.3046,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-07-08",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3202,
-        "lst_day_c": 31.09,
-        "ndvi": 0.4085,
-        "ndvi_age_days": 1
+        "rainfall_mm": 8.2,
+        "soil_moisture_m3m3": 0.3059,
+        "lst_day_c": null,
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-09",
-        "rainfall_mm": 6.33,
-        "soil_moisture_m3m3": 0.3326,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2945,
         "lst_day_c": null,
-        "ndvi": 0.4085,
-        "ndvi_age_days": 2
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-10",
-        "rainfall_mm": 5.59,
-        "soil_moisture_m3m3": 0.3395,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2793,
         "lst_day_c": null,
-        "ndvi": 0.4085,
-        "ndvi_age_days": 3
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-11",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3124,
-        "lst_day_c": 27.64,
-        "ndvi": 0.4365,
+        "soil_moisture_m3m3": 0.251,
+        "lst_day_c": null,
+        "ndvi": 0.3046,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-07-12",
-        "rainfall_mm": 19.09,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.237,
         "lst_day_c": null,
-        "ndvi": 0.4365,
-        "ndvi_age_days": 1
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-13",
-        "rainfall_mm": 15.6,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2105,
         "lst_day_c": null,
-        "ndvi": 0.4365,
-        "ndvi_age_days": 2
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-14",
-        "rainfall_mm": 8.22,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.2083,
         "lst_day_c": null,
-        "ndvi": 0.4365,
-        "ndvi_age_days": 3
+        "ndvi": 0.3046,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-07-15",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.4365,
-        "ndvi_age_days": 4
-      },
-      {
-        "date": "2026-07-16",
-        "rainfall_mm": 5.03,
-        "soil_moisture_m3m3": 0.3518,
-        "lst_day_c": null,
-        "ndvi": 0.4365,
-        "ndvi_age_days": 5
-      },
-      {
-        "date": "2026-07-17",
-        "rainfall_mm": 20.0,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 0
-      },
-      {
-        "date": "2026-07-18",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 1
-      },
-      {
-        "date": "2026-07-19",
-        "rainfall_mm": 2.08,
-        "soil_moisture_m3m3": 0.3341,
-        "lst_day_c": null,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 2
-      },
-      {
-        "date": "2026-07-20",
-        "rainfall_mm": 64.7,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 3
-      },
-      {
-        "date": "2026-07-21",
-        "rainfall_mm": 70.46,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.1,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 4
-      },
-      {
-        "date": "2026-07-22",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 27.44,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 5
-      },
-      {
-        "date": "2026-07-23",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 32.16,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 6
-      },
-      {
-        "date": "2026-07-24",
-        "rainfall_mm": 1.77,
-        "soil_moisture_m3m3": 0.3065,
-        "lst_day_c": 32.31,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 7
-      },
-      {
-        "date": "2026-07-25",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.282,
-        "lst_day_c": 26.87,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 8
-      },
-      {
-        "date": "2026-07-26",
-        "rainfall_mm": 19.38,
-        "soil_moisture_m3m3": 0.3757,
-        "lst_day_c": null,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 9
-      },
-      {
-        "date": "2026-07-27",
-        "rainfall_mm": 14.15,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 29.02,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 10
-      },
-      {
-        "date": "2026-07-28",
-        "rainfall_mm": 9.45,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 11
-      },
-      {
-        "date": "2026-07-29",
-        "rainfall_mm": 11.81,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 32.75,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 12
-      },
-      {
-        "date": "2026-07-30",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 32.47,
-        "ndvi": 0.4298,
-        "ndvi_age_days": 13
-      },
-      {
-        "date": "2026-07-31",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": null,
-        "ndvi": 0.459,
-        "ndvi_age_days": 0
-      },
-      {
-        "date": "2026-08-01",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2959,
-        "lst_day_c": 34.28,
-        "ndvi": 0.459,
-        "ndvi_age_days": 1
-      },
-      {
-        "date": "2026-08-02",
-        "rainfall_mm": 24.08,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.77,
-        "ndvi": 0.459,
-        "ndvi_age_days": 2
-      },
-      {
-        "date": "2026-08-03",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 30.41,
-        "ndvi": 0.459,
-        "ndvi_age_days": 3
-      },
-      {
-        "date": "2026-08-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 0
-      },
-      {
-        "date": "2026-08-05",
-        "rainfall_mm": 6.67,
-        "soil_moisture_m3m3": 0.3359,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 1
-      },
-      {
-        "date": "2026-08-06",
-        "rainfall_mm": 3.18,
-        "soil_moisture_m3m3": 0.3281,
-        "lst_day_c": 28.95,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 2
-      },
-      {
-        "date": "2026-08-07",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3019,
-        "lst_day_c": 33.97,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 3
-      },
-      {
-        "date": "2026-08-08",
-        "rainfall_mm": 10.75,
-        "soil_moisture_m3m3": 0.3422,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 4
-      },
-      {
-        "date": "2026-08-09",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3148,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 5
-      },
-      {
-        "date": "2026-08-10",
-        "rainfall_mm": 1.66,
-        "soil_moisture_m3m3": 0.2996,
-        "lst_day_c": 31.02,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 6
-      },
-      {
-        "date": "2026-08-11",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2757,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 7
-      },
-      {
-        "date": "2026-08-12",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2536,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 8
-      },
-      {
-        "date": "2026-08-13",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2333,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 9
-      },
-      {
-        "date": "2026-08-14",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2146,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 10
-      },
-      {
-        "date": "2026-08-15",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1975,
-        "lst_day_c": 28.91,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 11
-      },
-      {
-        "date": "2026-08-16",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1817,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 12
-      },
-      {
-        "date": "2026-08-17",
-        "rainfall_mm": 2.15,
-        "soil_moisture_m3m3": 0.18,
-        "lst_day_c": 32.43,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 13
-      },
-      {
-        "date": "2026-08-18",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1656,
-        "lst_day_c": 37.76,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 14
-      },
-      {
-        "date": "2026-08-19",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.1524,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 15
-      },
-      {
-        "date": "2026-08-20",
-        "rainfall_mm": 50.39,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 16
-      },
-      {
-        "date": "2026-08-21",
-        "rainfall_mm": 7.46,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 34.48,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 17
-      },
-      {
-        "date": "2026-08-22",
-        "rainfall_mm": 4.37,
-        "soil_moisture_m3m3": 0.3758,
-        "lst_day_c": 32.6,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 18
-      },
-      {
-        "date": "2026-08-23",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3458,
-        "lst_day_c": 31.28,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 19
-      },
-      {
-        "date": "2026-08-24",
-        "rainfall_mm": 3.29,
-        "soil_moisture_m3m3": 0.3378,
-        "lst_day_c": 26.96,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 20
-      },
-      {
-        "date": "2026-08-25",
-        "rainfall_mm": 22.77,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 21
-      },
-      {
-        "date": "2026-08-26",
-        "rainfall_mm": 34.9,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 22
-      },
-      {
-        "date": "2026-08-27",
-        "rainfall_mm": 3.53,
-        "soil_moisture_m3m3": 0.3708,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 23
-      },
-      {
-        "date": "2026-08-28",
-        "rainfall_mm": 12.25,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 27.94,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 24
-      },
-      {
-        "date": "2026-08-29",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 25
-      },
-      {
-        "date": "2026-08-30",
-        "rainfall_mm": 5.16,
-        "soil_moisture_m3m3": 0.3526,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 26
-      },
-      {
-        "date": "2026-08-31",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3244,
-        "lst_day_c": null,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 27
-      },
-      {
-        "date": "2026-09-01",
-        "rainfall_mm": 18.22,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.1,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 28
-      },
-      {
-        "date": "2026-09-02",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 28.73,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 29
-      },
-      {
-        "date": "2026-09-03",
-        "rainfall_mm": 19.76,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 32.74,
-        "ndvi": 0.4753,
-        "ndvi_age_days": 30
-      },
-      {
-        "date": "2026-09-04",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
+        "soil_moisture_m3m3": 0.2164,
         "lst_day_c": null,
         "ndvi": null,
         "ndvi_age_days": null
       },
       {
-        "date": "2026-09-05",
-        "rainfall_mm": 8.25,
-        "soil_moisture_m3m3": 0.3711,
+        "date": "2026-07-16",
+        "rainfall_mm": 12.71,
+        "soil_moisture_m3m3": 0.2695,
         "lst_day_c": null,
-        "ndvi": 0.5,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-17",
+        "rainfall_mm": 24.97,
+        "soil_moisture_m3m3": 0.3377,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-18",
+        "rainfall_mm": 0.75,
+        "soil_moisture_m3m3": 0.3549,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-19",
+        "rainfall_mm": 16.52,
+        "soil_moisture_m3m3": 0.3387,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-20",
+        "rainfall_mm": 26.57,
+        "soil_moisture_m3m3": 0.3684,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-21",
+        "rainfall_mm": 54.11,
+        "soil_moisture_m3m3": 0.4114,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-22",
+        "rainfall_mm": 28.17,
+        "soil_moisture_m3m3": 0.4036,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-23",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3926,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-24",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3658,
+        "lst_day_c": 26.79,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-25",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.3558,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-26",
+        "rainfall_mm": 1.47,
+        "soil_moisture_m3m3": 0.357,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-27",
+        "rainfall_mm": 41.89,
+        "soil_moisture_m3m3": 0.3797,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-28",
+        "rainfall_mm": 68.09,
+        "soil_moisture_m3m3": 0.4059,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-29",
+        "rainfall_mm": 37.01,
+        "soil_moisture_m3m3": 0.4378,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-30",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4241,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-07-31",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4202,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-01",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4103,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-02",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4048,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-03",
+        "rainfall_mm": 6.11,
+        "soil_moisture_m3m3": 0.3982,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-04",
+        "rainfall_mm": 23.34,
+        "soil_moisture_m3m3": 0.4165,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-05",
+        "rainfall_mm": 6.43,
+        "soil_moisture_m3m3": 0.4104,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-06",
+        "rainfall_mm": 10.13,
+        "soil_moisture_m3m3": 0.4047,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-07",
+        "rainfall_mm": 8.24,
+        "soil_moisture_m3m3": 0.4184,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-08",
+        "rainfall_mm": 14.22,
+        "soil_moisture_m3m3": 0.4326,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-09",
+        "rainfall_mm": 10.01,
+        "soil_moisture_m3m3": 0.4269,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-10",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4283,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-11",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4233,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-12",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4146,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-13",
+        "rainfall_mm": 8.23,
+        "soil_moisture_m3m3": 0.403,
+        "lst_day_c": null,
+        "ndvi": 0.4438,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-08-14",
+        "rainfall_mm": 0.0,
+        "soil_moisture_m3m3": 0.4291,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-15",
+        "rainfall_mm": 19.64,
+        "soil_moisture_m3m3": 0.437,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-16",
+        "rainfall_mm": 20.43,
+        "soil_moisture_m3m3": 0.4305,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-17",
+        "rainfall_mm": 12.8,
+        "soil_moisture_m3m3": 0.4265,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-18",
+        "rainfall_mm": 2.2,
+        "soil_moisture_m3m3": 0.4244,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-19",
+        "rainfall_mm": 31.34,
+        "soil_moisture_m3m3": 0.4334,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-20",
+        "rainfall_mm": 1.79,
+        "soil_moisture_m3m3": 0.4118,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-21",
+        "rainfall_mm": 23.85,
+        "soil_moisture_m3m3": 0.4235,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-22",
+        "rainfall_mm": 4.13,
+        "soil_moisture_m3m3": 0.4354,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-23",
+        "rainfall_mm": 20.26,
+        "soil_moisture_m3m3": 0.438,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-24",
+        "rainfall_mm": 13.23,
+        "soil_moisture_m3m3": 0.4404,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-25",
+        "rainfall_mm": 7.83,
+        "soil_moisture_m3m3": 0.4284,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-26",
+        "rainfall_mm": 1.98,
+        "soil_moisture_m3m3": 0.421,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-27",
+        "rainfall_mm": 3.07,
+        "soil_moisture_m3m3": 0.4244,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-28",
+        "rainfall_mm": 2.61,
+        "soil_moisture_m3m3": 0.4298,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-29",
+        "rainfall_mm": 22.16,
+        "soil_moisture_m3m3": 0.445,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-30",
+        "rainfall_mm": 0.8,
+        "soil_moisture_m3m3": 0.4394,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-08-31",
+        "rainfall_mm": 0.51,
+        "soil_moisture_m3m3": 0.4328,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-09-01",
+        "rainfall_mm": 1.02,
+        "soil_moisture_m3m3": 0.4263,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-09-02",
+        "rainfall_mm": 14.25,
+        "soil_moisture_m3m3": 0.454,
+        "lst_day_c": null,
+        "ndvi": null,
+        "ndvi_age_days": null
+      },
+      {
+        "date": "2026-09-03",
+        "rainfall_mm": 12.11,
+        "soil_moisture_m3m3": 0.4544,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-09-04",
+        "rainfall_mm": 3.79,
+        "soil_moisture_m3m3": 0.4471,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
+      },
+      {
+        "date": "2026-09-05",
+        "rainfall_mm": 13.37,
+        "soil_moisture_m3m3": 0.4503,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
         "ndvi_age_days": 0
       },
       {
         "date": "2026-09-06",
-        "rainfall_mm": 6.92,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 0.78,
+        "soil_moisture_m3m3": 0.4401,
         "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 1
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-07",
-        "rainfall_mm": 17.09,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.34,
-        "ndvi": 0.5,
-        "ndvi_age_days": 2
+        "rainfall_mm": 0.22,
+        "soil_moisture_m3m3": 0.4271,
+        "lst_day_c": 27.26,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-08",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 32.35,
-        "ndvi": 0.5,
-        "ndvi_age_days": 3
+        "rainfall_mm": 3.2,
+        "soil_moisture_m3m3": 0.4297,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-09",
-        "rainfall_mm": 15.85,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.9,
-        "ndvi": 0.5,
-        "ndvi_age_days": 4
+        "rainfall_mm": 1.55,
+        "soil_moisture_m3m3": 0.4245,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-10",
-        "rainfall_mm": 4.75,
-        "soil_moisture_m3m3": 0.3781,
-        "lst_day_c": 33.04,
-        "ndvi": 0.5,
-        "ndvi_age_days": 5
+        "rainfall_mm": 0.11,
+        "soil_moisture_m3m3": 0.414,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-11",
-        "rainfall_mm": 13.23,
-        "soil_moisture_m3m3": 0.38,
+        "rainfall_mm": 4.44,
+        "soil_moisture_m3m3": 0.4299,
         "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 6
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-12",
-        "rainfall_mm": 6.39,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": 31.23,
-        "ndvi": 0.5,
-        "ndvi_age_days": 7
+        "rainfall_mm": 18.21,
+        "soil_moisture_m3m3": 0.4522,
+        "lst_day_c": null,
+        "ndvi": 0.5746,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-13",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3496,
-        "lst_day_c": 29.12,
-        "ndvi": 0.5,
-        "ndvi_age_days": 8
+        "rainfall_mm": 2.93,
+        "soil_moisture_m3m3": 0.4512,
+        "lst_day_c": null,
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-14",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.3216,
-        "lst_day_c": 28.59,
-        "ndvi": 0.5,
-        "ndvi_age_days": 9
+        "rainfall_mm": 3.99,
+        "soil_moisture_m3m3": 0.4471,
+        "lst_day_c": null,
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-15",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2959,
-        "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 10
+        "rainfall_mm": 0.57,
+        "soil_moisture_m3m3": 0.4372,
+        "lst_day_c": 24.5,
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-16",
-        "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2722,
+        "rainfall_mm": 0.51,
+        "soil_moisture_m3m3": 0.4234,
         "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 11
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-17",
         "rainfall_mm": 0.0,
-        "soil_moisture_m3m3": 0.2505,
+        "soil_moisture_m3m3": 0.4127,
         "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 12
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-18",
-        "rainfall_mm": 22.84,
-        "soil_moisture_m3m3": 0.3675,
-        "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 13
+        "rainfall_mm": 30.52,
+        "soil_moisture_m3m3": 0.4397,
+        "lst_day_c": 27.35,
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-19",
-        "rainfall_mm": 8.79,
-        "soil_moisture_m3m3": 0.38,
-        "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 14
+        "rainfall_mm": 0.81,
+        "soil_moisture_m3m3": 0.4486,
+        "lst_day_c": 26.36,
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-20",
-        "rainfall_mm": 0.0,
+        "rainfall_mm": 1.64,
         "soil_moisture_m3m3": null,
-        "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 15
+        "lst_day_c": 27.72,
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-21",
-        "rainfall_mm": null,
+        "rainfall_mm": 1.42,
         "soil_moisture_m3m3": null,
         "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 16
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       },
       {
         "date": "2026-09-22",
-        "rainfall_mm": null,
+        "rainfall_mm": 0.0,
         "soil_moisture_m3m3": null,
         "lst_day_c": null,
-        "ndvi": 0.5,
-        "ndvi_age_days": 17
+        "ndvi": 0.6822,
+        "ndvi_age_days": 0
       }
     ]
   }

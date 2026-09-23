@@ -333,54 +333,43 @@ export const SITES_GEOJSON = {
 }
 
 
-// P6 Raster Layer Configurations (from gis/tiles/manifest.json)
-export const SPECTRAL_LAYER_CONFIG = {
-  sourceId: 'spectral-alteration-source',
-  layerId: 'spectral-alteration-layer',
-  url: '/tiles/iron_oxide_latest.png',
-  date: '2026-09-22',
-  coordinates: RASTER_OVERLAY_COORDINATES,
+// P6 Raster Layer Configurations. Dates, windows, image counts and availability
+// come from /tiles/manifest.json (written by gis/generate_tiles.py) -- nothing
+// about a layer's acquisition is hardcoded here. Corners are the shared
+// RASTER_OVERLAY_COORDINATES; generate_tiles.py verifies its manifest against it.
+export const TILE_MANIFEST_URL = '/tiles/manifest.json'
+const TILES_BASE_URL = '/tiles/'
+
+// A layer is drawable only when the pipeline rendered a PNG for it. "no_data"
+// layers (too much cloud / no scenes) have file: null and must not be added
+// as an image source.
+function tileLayerFields(entry) {
+  return {
+    status: entry ? entry.status : 'loading',
+    available: Boolean(entry && entry.status === 'ok' && entry.file),
+    date: entry?.date ?? null,
+    window_start: entry?.window_start ?? null,
+    window_end: entry?.window_end ?? null,
+    image_count: entry?.image_count ?? null,
+    valid_fraction: entry?.valid_fraction ?? null,
+    url: entry?.file ? `${TILES_BASE_URL}${entry.file}` : null,
+    coordinates: RASTER_OVERLAY_COORDINATES,
+  }
 }
 
-export const NDVI_TIMESERIES_CONFIG = [
-  {
-    week_index: 1,
-    id: 'ndvi-week-1',
-    name: 'NDVI Week 1',
-    date: '2026-09-01',
-    window_start: '2026-08-25',
-    window_end: '2026-09-01',
-    url: '/tiles/ndvi_week_1.png',
-    coordinates: RASTER_OVERLAY_COORDINATES,
-  },
-  {
-    week_index: 2,
-    id: 'ndvi-week-2',
-    name: 'NDVI Week 2',
-    date: '2026-09-08',
-    window_start: '2026-09-01',
-    window_end: '2026-09-08',
-    url: '/tiles/ndvi_week_2.png',
-    coordinates: RASTER_OVERLAY_COORDINATES,
-  },
-  {
-    week_index: 3,
-    id: 'ndvi-week-3',
-    name: 'NDVI Week 3',
-    date: '2026-09-15',
-    window_start: '2026-09-08',
-    window_end: '2026-09-15',
-    url: '/tiles/ndvi_week_3.png',
-    coordinates: RASTER_OVERLAY_COORDINATES,
-  },
-  {
-    week_index: 4,
-    id: 'ndvi-week-4',
-    name: 'NDVI Week 4',
-    date: '2026-09-22',
-    window_start: '2026-09-15',
-    window_end: '2026-09-22',
-    url: '/tiles/ndvi_week_4.png',
-    coordinates: RASTER_OVERLAY_COORDINATES,
-  },
-]
+export function buildSpectralConfig(manifest) {
+  return {
+    sourceId: 'spectral-alteration-source',
+    layerId: 'spectral-alteration-layer',
+    ...tileLayerFields(manifest?.layers?.iron_oxide_latest),
+  }
+}
+
+export function buildNdviTimeseriesConfig(manifest) {
+  return (manifest?.timeseries_ndvi ?? []).map((w) => ({
+    week_index: w.week_index,
+    id: w.id,
+    name: w.name,
+    ...tileLayerFields(w),
+  }))
+}

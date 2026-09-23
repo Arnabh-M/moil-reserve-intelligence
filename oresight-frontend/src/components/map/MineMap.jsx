@@ -4,6 +4,7 @@ import Map, { Layer, Marker, Popup, Source } from 'react-map-gl/maplibre'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { api } from '../../api/client'
+import { useTileManifest } from '../../lib/useTileManifest'
 import {
   MAP_CENTER,
   MAP_STYLE,
@@ -16,8 +17,8 @@ import {
   RESERVE_ZONES_SOURCE_ID,
   RESERVE_ZONE_FILL_PAINT,
   SAMPLE_SITES,
-  SPECTRAL_LAYER_CONFIG,
-  NDVI_TIMESERIES_CONFIG,
+  buildSpectralConfig,
+  buildNdviTimeseriesConfig,
   STRUCTURAL_LINES_SOURCE_ID,
   STRUCTURAL_LINES_LAYER_ID,
   STRUCTURAL_LINE_PAINT,
@@ -127,6 +128,9 @@ export default function MineMap({
   basemapMode: basemapModeProp = null,
   onBasemapModeChange = null,
 }) {
+  const { manifest: tileManifest } = useTileManifest()
+  const spectralConfig = useMemo(() => buildSpectralConfig(tileManifest), [tileManifest])
+  const ndviWeeks = useMemo(() => buildNdviTimeseriesConfig(tileManifest), [tileManifest])
   const mapRef = useRef(null)
   const [internalBasemapMode, setInternalBasemapMode] = useState('light')
   const basemapMode = basemapModeProp ?? internalBasemapMode
@@ -476,14 +480,15 @@ export default function MineMap({
         )}
 
         {/* Supporting Raster 1: Spectral Alteration (Restrained background when prospectivity is active) */}
+        {spectralConfig.available && (
         <Source
-          id={SPECTRAL_LAYER_CONFIG.sourceId}
+          id={spectralConfig.sourceId}
           type="image"
-          url={SPECTRAL_LAYER_CONFIG.url}
-          coordinates={SPECTRAL_LAYER_CONFIG.coordinates}
+          url={spectralConfig.url}
+          coordinates={spectralConfig.coordinates}
         >
           <Layer
-            id={SPECTRAL_LAYER_CONFIG.layerId}
+            id={spectralConfig.layerId}
             type="raster"
             paint={{
               'raster-opacity': supportingRasterOpacity,
@@ -495,9 +500,10 @@ export default function MineMap({
             }}
           />
         </Source>
+        )}
 
         {/* Supporting Raster 2: Weekly NDVI Timeseries (Restrained background when prospectivity is active) */}
-        {NDVI_TIMESERIES_CONFIG.map((week) => (
+        {ndviWeeks.filter((week) => week.available).map((week) => (
           <Source
             key={week.id}
             id={`source-${week.id}`}
@@ -863,6 +869,7 @@ export default function MineMap({
           visible={ndviVisible}
           selectedWeek={selectedWeek}
           onWeekChange={onWeekChange}
+          weeks={ndviWeeks}
         />
         {/* ml-auto pushes the legend to the right edge whether or not the
             slider above is currently rendered, so it never jumps to the
@@ -872,6 +879,7 @@ export default function MineMap({
             prospectivityVisible={prospectivityVisible}
             lineamentVisible={lineamentVisible}
             spectralVisible={spectralVisible}
+            spectralConfig={spectralConfig}
             ndviVisible={ndviVisible}
             selectedSiteId={effectiveSiteId}
           />

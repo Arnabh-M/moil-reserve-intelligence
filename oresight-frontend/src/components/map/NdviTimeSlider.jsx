@@ -2,49 +2,46 @@ import React from 'react'
 import Slider from 'rc-slider'
 import 'rc-slider/assets/index.css'
 import { Calendar, Layers, ChevronLeft, ChevronRight } from 'lucide-react'
-import { NDVI_TIMESERIES_CONFIG } from '../../lib/map'
 
 export default function NdviTimeSlider({
   selectedWeek = 4,
   onWeekChange,
   visible = true,
+  weeks = [],
 }) {
   if (!visible) return null
 
-  const activeWeek =
-    NDVI_TIMESERIES_CONFIG.find((w) => w.week_index === selectedWeek) ||
-    NDVI_TIMESERIES_CONFIG[NDVI_TIMESERIES_CONFIG.length - 1]
+  // Weeks come from tiles/manifest.json. A "no_data" week (too cloudy / no
+  // scenes) has no image: it is greyed out and cannot be selected.
+  const activeWeek = weeks.find((w) => w.week_index === selectedWeek) || null
+  const unavailable = weeks.filter((w) => !w.available)
+  const isAvailable = (n) => weeks.some((w) => w.week_index === n && w.available)
 
-  const marks = {
-    1: {
-      style: { fontSize: '10px', fontWeight: 600, color: '#5a6577' },
-      label: 'W1',
-    },
-    2: {
-      style: { fontSize: '10px', fontWeight: 600, color: '#5a6577' },
-      label: 'W2',
-    },
-    3: {
-      style: { fontSize: '10px', fontWeight: 600, color: '#5a6577' },
-      label: 'W3',
-    },
-    4: {
-      style: { fontSize: '10px', fontWeight: 600, color: '#5a6577' },
-      label: 'W4',
-    },
-  }
+  const marks = Object.fromEntries(
+    [1, 2, 3, 4].map((n) => [
+      n,
+      {
+        style: {
+          fontSize: '10px',
+          fontWeight: 600,
+          color: isAvailable(n) || weeks.length === 0 ? '#5a6577' : '#b8c0cc',
+          textDecoration: isAvailable(n) || weeks.length === 0 ? 'none' : 'line-through',
+        },
+        label: `W${n}`,
+      },
+    ]),
+  )
 
-  function handlePrev() {
-    if (selectedWeek > 1) {
-      onWeekChange(selectedWeek - 1)
+  function step(dir) {
+    for (let n = selectedWeek + dir; n >= 1 && n <= 4; n += dir) {
+      if (isAvailable(n)) {
+        onWeekChange(n)
+        return
+      }
     }
   }
-
-  function handleNext() {
-    if (selectedWeek < 4) {
-      onWeekChange(selectedWeek + 1)
-    }
-  }
+  const hasPrev = [1, 2, 3, 4].some((n) => n < selectedWeek && isAvailable(n))
+  const hasNext = [1, 2, 3, 4].some((n) => n > selectedWeek && isAvailable(n))
 
   return (
     <div className="pointer-events-auto w-80 max-w-full rounded-[3px] border border-border bg-bg-surface p-4 shadow-xs">
@@ -67,10 +64,19 @@ export default function NdviTimeSlider({
           <Calendar size={14} className="text-text-muted shrink-0" />
           <div>
             <div className="text-xs font-bold text-navy">
-              {activeWeek.date}
+              {!activeWeek
+                ? 'Loading…'
+                : activeWeek.available
+                  ? activeWeek.date
+                  : 'No clear imagery'}
             </div>
             <div className="text-[10px] text-text-muted">
-              Window: {activeWeek.window_start} to {activeWeek.window_end}
+              {activeWeek
+                ? `Window: ${activeWeek.window_start} to ${activeWeek.window_end}`
+                : ''}
+              {activeWeek?.available && activeWeek.valid_fraction != null
+                ? ` · ${Math.round(activeWeek.valid_fraction * 100)}% clear`
+                : ''}
             </div>
           </div>
         </div>
@@ -78,8 +84,8 @@ export default function NdviTimeSlider({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={handlePrev}
-            disabled={selectedWeek <= 1}
+            onClick={() => step(-1)}
+            disabled={!hasPrev}
             aria-label="Previous week"
             className="rounded p-1 text-navy hover:bg-bg-surface disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
@@ -87,8 +93,8 @@ export default function NdviTimeSlider({
           </button>
           <button
             type="button"
-            onClick={handleNext}
-            disabled={selectedWeek >= 4}
+            onClick={() => step(1)}
+            disabled={!hasNext}
             aria-label="Next week"
             className="rounded p-1 text-navy hover:bg-bg-surface disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
@@ -104,7 +110,7 @@ export default function NdviTimeSlider({
           max={4}
           step={1}
           value={selectedWeek}
-          onChange={(val) => onWeekChange(Number(val))}
+          onChange={(val) => isAvailable(Number(val)) && onWeekChange(Number(val))}
           marks={marks}
           styles={{
             track: { backgroundColor: '#e0793a', height: 4 },
@@ -118,6 +124,15 @@ export default function NdviTimeSlider({
           }}
         />
       </div>
+
+      {unavailable.length > 0 && (
+        <div className="mt-1 text-[10px] text-text-muted">
+          {unavailable
+            .map((w) => `W${w.week_index} (${w.window_start} to ${w.window_end})`)
+            .join(', ')}
+          : no clear imagery (cloud cover) — not available.
+        </div>
+      )}
     </div>
   )
 }

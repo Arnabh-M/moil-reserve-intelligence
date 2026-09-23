@@ -32,6 +32,12 @@ def parse_int(val: str) -> int | None:
         return None
 
 
+def last_rainfall_date(sites_data: dict[str, list[dict]]) -> str | None:
+    """Latest ISO date with a non-null rainfall value across all sites, or None."""
+    dates = [r["date"] for recs in sites_data.values() for r in recs if r.get("rainfall_mm") is not None]
+    return max(dates) if dates else None
+
+
 def export_frontend_satellite_json(
     csv_path: str | None = None,
     meta_path: str | None = None,
@@ -80,6 +86,14 @@ def export_frontend_satellite_json(
                 "ndvi_age_days": parse_int(row.get("ndvi_age_days", "")),
             }
             sites_data.setdefault(site_id, []).append(record)
+
+    # End at the most recent date that has rainfall for any site. The CSV runs
+    # to today, which is always empty (satellite products lag by a day or more);
+    # a trailing all-null row would make the panel's "Updated" date meaningless.
+    cutoff = last_rainfall_date(sites_data)
+    if cutoff is not None:
+        for site_id in sites_data:
+            sites_data[site_id] = [r for r in sites_data[site_id] if r["date"] <= cutoff]
 
     # Slice each site to the last `days_limit` days
     latest_date_overall = None

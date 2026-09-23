@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
-import { CONFIDENCE_COLOR_RAMP, STRUCTURAL_LINE_COLORS, SPECTRAL_LAYER_CONFIG } from '../../lib/map';
+import { CONFIDENCE_COLOR_RAMP, STRUCTURAL_LINE_COLORS } from '../../lib/map';
 
 export default function ConfidenceLegend({
   visible,
   prospectivityVisible = false,
   lineamentVisible = false,
   spectralVisible = false,
+  spectralConfig = null,
   ndviVisible = false,
   selectedSiteId = null,
 }) {
@@ -115,7 +116,7 @@ export default function ConfidenceLegend({
             <div className="flex items-center justify-between pt-0.5">
               <div>
                 <span className="font-semibold text-navy text-[11px] block">Spectral Alteration</span>
-                <span className="text-[10px] text-slate-500">ASTER / Landsat · {SPECTRAL_LAYER_CONFIG.date}</span>
+                <span className="text-[10px] text-slate-500">Sentinel-2 · {spectralConfig?.available ? spectralConfig.date : spectralConfig?.status === 'no_data' ? 'no clear imagery' : 'loading'}</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="h-3 w-8 rounded bg-gradient-to-r from-amber-600 via-orange-500 to-red-600 border border-border" />

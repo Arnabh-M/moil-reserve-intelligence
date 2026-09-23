@@ -44,7 +44,7 @@ from gee_pipeline.ee_auth import get_ee
 
 # Geographic bounding box covering Balaghat (MP), Nagpur & Bhandara (MH)
 # Format: [west (min_lon), south (min_lat), east (max_lon), north (max_lat)] in WGS84 (EPSG:4326)
-DEFAULT_BBOX = list(COMBINED_BBOX)  # [79.0, 21.0, 80.4, 22.0]
+DEFAULT_BBOX = list(COMBINED_BBOX)  # [west, south, east, north]
 
 # Standard visualization palettes for frontend rendering:
 # NDVI: Green (dense veg) -> Yellow (moderate/sparse) -> Red/Brown (bare soil/mines)
@@ -74,54 +74,89 @@ def mask_s2_clouds(image, ee_module):
     )
 
 
-def fetch_latest_sentinel2_indices(ee_module, bbox=None, days_back=30):
+S2_COLLECTION = "COPERNICUS/S2_SR_HARMONIZED"
+
+# A window whose mosaic has less than this share of unmasked pixels over the
+# bbox is recorded as "no_data" instead of being rendered.
+MIN_VALID_FRACTION = 0.10
+VALID_FRACTION_SCALE_M = 300
+
+
+def s2_status(image_count, valid_fraction):
+    """'ok' if the mosaic is worth rendering, else 'no_data'."""
+    if not image_count or valid_fraction is None or valid_fraction < MIN_VALID_FRACTION:
+        return "no_data"
+    return "ok"
+
+
+def _ms_to_date(ms):
+    return datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc).strftime("%Y-%m-%d") if ms else None
+
+
+def build_window_mosaic(ee_module, roi, start_date, end_date):
     """
-    Queries Sentinel-2 L2A Harmonized SR imagery for the last `days_back` days,
-    picks the least cloudy scene, applies SCL cloud masking, and calculates
-    NDVI and Iron-Oxide Alteration ratio.
+    Cloud-masked (SCL) median mosaic of EVERY Sentinel-2 scene over `roi` in
+    [start_date, end_date). One scene is narrower than the MOIL bbox, so a
+    single least-cloudy scene leaves most of the overlay empty.
+
+    Returns dict: image (ee.Image or None), image_count, valid_fraction (share
+    of roi with unmasked pixels), acquisition_first / acquisition_last (dates).
     """
-    if bbox is None:
-        bbox = DEFAULT_BBOX
-
-    roi = ee_module.Geometry.Rectangle(bbox)
-
-    today = datetime.now(timezone.utc)
-    start_date = (today - timedelta(days=days_back)).strftime("%Y-%m-%d")
-    end_date = today.strftime("%Y-%m-%d")
-
-    collection = ee_module.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-        .filterBounds(roi) \
-        .filterDate(start_date, end_date) \
-        .filter(ee_module.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", 30))
-
+    collection = ee_module.ImageCollection(S2_COLLECTION).filterBounds(roi).filterDate(start_date, end_date)
     count = collection.size().getInfo()
-    eff_cloud_filter = 30.0
-
     if count == 0:
-        print(f"[WARN] No scenes with < 30% clouds found between {start_date} and {end_date}. Widening filter...")
-        collection = ee_module.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-            .filterBounds(roi) \
-            .filterDate(start_date, end_date)
-        count = collection.size().getInfo()
-        eff_cloud_filter = 100.0
-        if count == 0:
-            raise RuntimeError(f"No Sentinel-2 imagery available for the region between {start_date} and {end_date} (image_count == 0).")
+        return {"image": None, "image_count": 0, "valid_fraction": 0.0,
+                "acquisition_first": None, "acquisition_last": None}
 
-    best_img = collection.sort("CLOUDY_PIXEL_PERCENTAGE", True).first()
-    masked_img = mask_s2_clouds(best_img, ee_module)
+    times = ee_module.Dictionary({
+        "first": collection.aggregate_min("system:time_start"),
+        "last": collection.aggregate_max("system:time_start"),
+    }).getInfo()
 
-    meta = best_img.toDictionary(["system:time_start", "CLOUDY_PIXEL_PERCENTAGE", "PRODUCT_ID"]).getInfo()
-    time_ms = meta.get("system:time_start", 0)
-    acq_date = datetime.fromtimestamp(time_ms / 1000.0, tz=timezone.utc).strftime("%Y-%m-%d")
-    cloud_pct = meta.get("CLOUDY_PIXEL_PERCENTAGE", None)
+    masked = collection.map(
+        lambda im: ee_module.Image(mask_s2_clouds(im, ee_module)).select(["B2", "B4", "B8"])
+    )
+    mosaic = masked.median()
 
-    print(f"[GEE] Selected S2 Image: Product ID {meta.get('PRODUCT_ID', 'N/A')}")
-    print(f"      Acquisition Date: {acq_date} | Cloud Cover: {cloud_pct:.2f}% | Total matching images: {count}" if cloud_pct is not None else f"Acquisition Date: {acq_date}")
+    valid = mosaic.select("B4").mask().unmask(0)
+    vf = valid.reduceRegion(
+        reducer=ee_module.Reducer.mean(), geometry=roi, scale=VALID_FRACTION_SCALE_M,
+        maxPixels=int(1e9), bestEffort=True,
+    ).get("B4").getInfo()
 
-    ndvi = masked_img.normalizedDifference(["B8", "B4"]).rename("NDVI")
-    iron_oxide = masked_img.select("B4").divide(masked_img.select("B2")).rename("iron_oxide")
+    return {
+        "image": mosaic,
+        "image_count": int(count),
+        "valid_fraction": round(float(vf or 0.0), 4),
+        "acquisition_first": _ms_to_date(times.get("first")),
+        "acquisition_last": _ms_to_date(times.get("last")),
+    }
 
-    return ndvi, iron_oxide, acq_date, roi, count, eff_cloud_filter, [start_date, end_date]
+
+def window_record(mosaic, window_start, window_end, requested_start=None):
+    """Manifest fields describing the window ACTUALLY used for a layer."""
+    status = s2_status(mosaic["image_count"], mosaic["valid_fraction"])
+    return {
+        "status": status,
+        "window_start": window_start,
+        "window_end": window_end,
+        "date_range": [window_start, window_end],
+        "lookback_applied": bool(requested_start and requested_start != window_start),
+        "image_count": mosaic["image_count"],
+        "valid_fraction": mosaic["valid_fraction"],
+        "acquisition_first": mosaic["acquisition_first"],
+        "acquisition_last": mosaic["acquisition_last"],
+        "date": mosaic["acquisition_last"] if status == "ok" else None,  # no_data has no usable acquisition
+        "source": S2_COLLECTION,
+        "method": "cloud-masked (SCL) median mosaic of all scenes in window",
+        "simulated": False,
+    }
+
+
+def indices_from_mosaic(mosaic_image):
+    ndvi = mosaic_image.normalizedDifference(["B8", "B4"]).rename("NDVI")
+    iron_oxide = mosaic_image.select("B4").divide(mosaic_image.select("B2")).rename("iron_oxide")
+    return ndvi, iron_oxide
 
 
 def export_thumb_png(ee_image, roi, output_path, min_val, max_val, palette, dimensions="1024x1024"):
@@ -194,10 +229,19 @@ def create_sample_tile(output_path, palette, title="Sample Tile", size=512, seed
     print(f"[MOCK] Created simulation PNG tile -> {output_path}")
 
 
-def pull_single_layers(tiles_dir="gis/tiles", bbox=None, dry_run=False):
+def remove_stale(path):
+    """Delete a PNG left by a previous run so a no_data layer never serves an old image."""
+    if os.path.exists(path):
+        os.remove(path)
+
+
+def pull_single_layers(tiles_dir="gis/tiles", bbox=None, dry_run=False, days_back=30):
     """
-    Generates single-date NDVI and Iron-Oxide PNG tiles for MapLibre raster ImageSource.
-    Returns metadata dict with file paths, acquisition dates, and WGS84 bounding boxes.
+    Generates NDVI and Iron-Oxide PNG tiles from ONE cloud-masked median mosaic
+    over the last `days_back` days, for MapLibre raster ImageSource.
+    A layer whose mosaic has too little clear data gets status "no_data" and no
+    PNG (any stale PNG from a previous run is deleted).
+    Returns metadata dict per layer.
     """
     if bbox is None:
         bbox = DEFAULT_BBOX
@@ -208,70 +252,47 @@ def pull_single_layers(tiles_dir="gis/tiles", bbox=None, dry_run=False):
     ndvi_png = os.path.join(tiles_dir, "ndvi_latest.png")
     iron_oxide_png = os.path.join(tiles_dir, "iron_oxide_latest.png")
 
+    layer_defs = {
+        "ndvi_latest": {
+            "name": "Normalized Difference Vegetation Index (NDVI)", "file": "ndvi_latest.png",
+            "value_range": [NDVI_MIN, NDVI_MAX],
+        },
+        "iron_oxide_latest": {
+            "name": "Iron-Oxide Alteration Index (Red/Blue)", "file": "iron_oxide_latest.png",
+            "value_range": [IRON_OXIDE_MIN, IRON_OXIDE_MAX],
+        },
+    }
+
+    today = datetime.now(timezone.utc)
+    start_date = (today - timedelta(days=days_back)).strftime("%Y-%m-%d")
+    end_date = today.strftime("%Y-%m-%d")
+
     if ee_mod is not None:
-        print("[GEE] Fetching latest Sentinel-2 scene and computing indices...")
-        ndvi_img, iron_img, acq_date, roi, count, eff_cloud_pct, date_range = fetch_latest_sentinel2_indices(ee_mod, bbox=bbox)
+        print(f"[GEE] Building cloud-masked median mosaic {start_date}..{end_date} over {bbox}...")
+        roi = ee_mod.Geometry.Rectangle(bbox)
+        mosaic = build_window_mosaic(ee_mod, roi, start_date, end_date)
+        record = window_record(mosaic, start_date, end_date)
+        print(f"[GEE] images={record['image_count']} valid_fraction={record['valid_fraction']} status={record['status']}")
 
-        export_thumb_png(ndvi_img, roi, ndvi_png, NDVI_MIN, NDVI_MAX, NDVI_PALETTE)
-        export_thumb_png(iron_img, roi, iron_oxide_png, IRON_OXIDE_MIN, IRON_OXIDE_MAX, IRON_OXIDE_PALETTE)
-
-        results = {
-            "ndvi_latest": {
-                "name": "Normalized Difference Vegetation Index (NDVI)",
-                "file": "ndvi_latest.png",
-                "date": acq_date,
-                "date_range": date_range,
-                "bbox": bbox,
-                "value_range": [NDVI_MIN, NDVI_MAX],
-                "source": "COPERNICUS/S2_SR_HARMONIZED",
-                "cloud_filter_pct": eff_cloud_pct,
-                "image_count": count,
-                "simulated": False
-            },
-            "iron_oxide_latest": {
-                "name": "Iron-Oxide Alteration Index (Red/Blue)",
-                "file": "iron_oxide_latest.png",
-                "date": acq_date,
-                "date_range": date_range,
-                "bbox": bbox,
-                "value_range": [IRON_OXIDE_MIN, IRON_OXIDE_MAX],
-                "source": "COPERNICUS/S2_SR_HARMONIZED",
-                "cloud_filter_pct": eff_cloud_pct,
-                "image_count": count,
-                "simulated": False
-            }
-        }
+        results = {key: {**meta, **record, "bbox": bbox} for key, meta in layer_defs.items()}
+        if record["status"] == "ok":
+            ndvi_img, iron_img = indices_from_mosaic(mosaic["image"])
+            export_thumb_png(ndvi_img, roi, ndvi_png, NDVI_MIN, NDVI_MAX, NDVI_PALETTE)
+            export_thumb_png(iron_img, roi, iron_oxide_png, IRON_OXIDE_MIN, IRON_OXIDE_MAX, IRON_OXIDE_PALETTE)
+        else:
+            for key in results:
+                remove_stale(os.path.join(tiles_dir, layer_defs[key]["file"]))
+                results[key]["file"] = None
     else:
-        acq_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d")
         create_sample_tile(ndvi_png, NDVI_PALETTE, title="NDVI Latest")
         create_sample_tile(iron_oxide_png, IRON_OXIDE_PALETTE, title="Iron-Oxide Alteration Latest")
-
         results = {
-            "ndvi_latest": {
-                "name": "Normalized Difference Vegetation Index (NDVI)",
-                "file": "ndvi_latest.png",
-                "date": acq_date,
-                "date_range": [thirty_days_ago, acq_date],
-                "bbox": bbox,
-                "value_range": [NDVI_MIN, NDVI_MAX],
-                "source": "SIMULATED_MOCK",
-                "cloud_filter_pct": 20.0,
-                "image_count": 0,
-                "simulated": True
-            },
-            "iron_oxide_latest": {
-                "name": "Iron-Oxide Alteration Index (Red/Blue)",
-                "file": "iron_oxide_latest.png",
-                "date": acq_date,
-                "date_range": [thirty_days_ago, acq_date],
-                "bbox": bbox,
-                "value_range": [IRON_OXIDE_MIN, IRON_OXIDE_MAX],
-                "source": "SIMULATED_MOCK",
-                "cloud_filter_pct": 20.0,
-                "image_count": 0,
-                "simulated": True
+            key: {
+                **meta, "date": end_date, "date_range": [start_date, end_date], "window_start": start_date,
+                "window_end": end_date, "bbox": bbox, "source": "SIMULATED_MOCK", "status": "simulated",
+                "image_count": 0, "valid_fraction": None, "simulated": True,
             }
+            for key, meta in layer_defs.items()
         }
 
     return results
