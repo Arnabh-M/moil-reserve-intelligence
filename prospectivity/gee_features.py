@@ -155,11 +155,26 @@ def with_gee_retry(fn: Callable, *, what: str, attempts: int = 4, base_delay: fl
     one layer and continue with the rest.
     """
     transient_markers = (
+        # GEE-level: quota and server errors
         "quota", "rate limit", "too many", "429", "503", "500",
         "timed out", "timeout", "deadline", "backend error", "unavailable",
+        # Transport-level: the Earth Engine client has its own retry layer, but
+        # when that layer gives up the underlying network error surfaces here
+        # and must still be treated as transient. Without these markers a DNS
+        # blip was classified as a permanent code error and the window was
+        # dropped after a single attempt -- observed 2026-09-23, which cost
+        # nagpur's 2025-04-01..2025-04-10 NDVI composite during a ~16 minute
+        # local resolver outage that had fully recovered by the next window.
+        "nameresolutionerror", "getaddrinfo", "failed to resolve",
+        "max retries exceeded", "connection reset", "connection aborted",
+        "connection refused", "connectionerror", "broken pipe",
+        "ssl", "eof occurred", "temporarily unavailable", "network is unreachable",
     )
     last_exc = None
+    used_attempts = 0
+    gave_up_early = False
     for attempt in range(1, attempts + 1):
+        used_attempts = attempt
         try:
             return fn()
         except Exception as exc:  # noqa: BLE001 — GEE raises bare EEException
@@ -167,6 +182,7 @@ def with_gee_retry(fn: Callable, *, what: str, attempts: int = 4, base_delay: fl
             msg = str(exc).lower()
             is_transient = any(marker in msg for marker in transient_markers)
             if not is_transient or attempt == attempts:
+                gave_up_early = not is_transient
                 break
             delay = base_delay * (2 ** (attempt - 1))
             logger.warning(
@@ -175,7 +191,20 @@ def with_gee_retry(fn: Callable, *, what: str, attempts: int = 4, base_delay: fl
             )
             time.sleep(delay)
 
-    raise GEELayerError(f"GEE layer '{what}' failed after {attempts} attempt(s): {last_exc}")
+    # Report the attempts actually SPENT, not the configured ceiling. A
+    # non-transient error (a code or data bug, e.g. a missing dictionary key)
+    # breaks on the first pass and is never retried -- but this message used to
+    # print `attempts`, making a single deterministic failure read as though
+    # the backoff had been exhausted against a flaky network.
+    reason = (
+        "not retried — error is not transient"
+        if gave_up_early
+        else f"retries exhausted, max {attempts}"
+    )
+    raise GEELayerError(
+        f"GEE layer '{what}' failed after {used_attempts} attempt(s) "
+        f"({reason}): {last_exc}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +224,20 @@ def mask_s2_clouds(image, ee):
     for value in SCL_MASK_VALUES:
         mask = mask.And(scl.neq(value))
     # L2A SR is scaled by 10000.
-    return image.updateMask(mask).divide(10000).copyProperties(image, ["system:time_start"])
+    #
+    # copyProperties() ALWAYS returns a generic ee.Element regardless of the
+    # receiver's type (a long-standing Earth Engine API quirk), so without the
+    # ee.Image() cast this function hands back an object with no Image methods:
+    # `compute_ndvi(mask_s2_clouds(img, ee))` fails with
+    #   AttributeError: 'Element' object has no attribute 'normalizedDifference'
+    # Inside `collection.map(...)` Earth Engine re-casts each element back to
+    # Image, which is why the existing call sites here happened to work — but
+    # any direct caller breaks, which is exactly what happened in
+    # gee_pipeline/export_site_daily_climate.py and gis/ndvi_pull.py. Cast here
+    # so the function's contract matches its name.
+    return ee.Image(
+        image.updateMask(mask).divide(10000).copyProperties(image, ["system:time_start"])
+    )
 
 
 def _s2_collection(ee, geometry, start, end, max_cloud_pct=BASELINE_CLOUD_PCT, retry_cloud_pct=None):

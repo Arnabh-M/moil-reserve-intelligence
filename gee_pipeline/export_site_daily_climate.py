@@ -269,44 +269,112 @@ def merge_daily_features(
 # Geometry Resolution
 # ---------------------------------------------------------------------------
 
-def resolve_site_geometries(sites: List[str]) -> Tuple[Dict[str, Any], Dict[str, str]]:
+def resolve_site_geometries(
+    sites: List[str], geometry_source: str = "db"
+) -> Tuple[Dict[str, Any], Dict[str, Dict[str, Any]]]:
     """
-    Attempts to load site boundary polygons from database if reachable;
-    otherwise falls back to geo_utils.SITE_BBOXES rectangles.
+    Load each site's AOI polygon.
+
+    `geometry_source`:
+      "db"   — PostGIS `sites.geom`. A DB failure RAISES; it does not quietly
+               substitute another box.
+      "file" — data/moil_sites.json, the same definition the DB was seeded
+               from. Explicit opt-in only.
+
+    There is deliberately no automatic fallback. The previous version logged a
+    debug line and switched to a different (~33 km) box family whenever the DB
+    was unreachable, which is how data/satellite_daily_features.csv came to
+    hold 1890 rows sampled over boxes that no longer matched the DB, the map
+    or the mines — with `"geometry_source": "bbox"` in the metadata as the
+    only trace.
+
     Returns: (shapely_geoms, geometry_sources)
     """
-    from shapely.geometry import box
+    if geometry_source not in ("db", "file"):
+        raise ValueError(f"geometry_source must be 'db' or 'file', got {geometry_source!r}")
 
-    db_url = os.environ.get("DATABASE_URL")
+    known = set(SITE_BBOXES)
+    for s in sites:
+        if s.lower() not in known:
+            raise ValueError(f"Unknown site '{s}'. Must be one of {sorted(known)}.")
+
     shapely_geoms: Dict[str, Any] = {}
     geom_sources: Dict[str, str] = {}
 
-    if db_url:
-        try:
-            from prospectivity.training_data import load_site_boundaries
-            db_sites = load_site_boundaries(db_url)
-            for s in sites:
-                s_key = s.lower()
-                if s_key in db_sites:
-                    shapely_geoms[s_key] = db_sites[s_key]["geom"]
-                    geom_sources[s_key] = "db_polygon"
-                    logger.info("Loaded site '%s' geometry from PostGIS boundary polygon.", s_key)
-        except Exception as exc:
-            logger.info("Database boundary load skipped (%s). Using geo_utils.SITE_BBOXES.", exc)
+    if geometry_source == "file":
+        from prospectivity.training_data import site_geometries_from_file
+
+        file_sites = site_geometries_from_file()
+        digest = site_definition_digest()
+        for s in sites:
+            s_key = s.lower()
+            geom = file_sites[s_key]["geom"]
+            shapely_geoms[s_key] = geom
+            geom_sources[s_key] = _geometry_provenance(
+                f"moil_sites.json@{digest}", geom, db_id=file_sites[s_key]["db_id"]
+            )
+            logger.info("Site '%s' geometry from data/moil_sites.json.", s_key)
+        return shapely_geoms, geom_sources
+
+    from prospectivity.training_data import load_site_boundaries
+
+    db_url = os.environ.get("DATABASE_URL")
+    try:
+        db_sites = load_site_boundaries(db_url)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Could not load site boundaries from the database: {exc}. "
+            "Start Postgres and run `python -m scripts.rebuild_demo_db`, or pass "
+            "--geometry-source=file to build against data/moil_sites.json "
+            "(the same AOIs, explicitly chosen)."
+        ) from exc
 
     for s in sites:
         s_key = s.lower()
-        if s_key not in shapely_geoms:
-            if s_key not in SITE_BBOXES:
-                raise ValueError(f"Unknown site '{s}'. Must be one of {list(SITE_BBOXES.keys())}.")
-            bbox = SITE_BBOXES[s_key]
-            lat_lo, lat_hi = bbox["lat_range"]
-            lon_lo, lon_hi = bbox["lon_range"]
-            shapely_geoms[s_key] = box(lon_lo, lat_lo, lon_hi, lat_hi)
-            geom_sources[s_key] = "bbox"
-            logger.info("Site '%s' geometry set from geo_utils.SITE_BBOXES rectangle.", s_key)
+        if s_key not in db_sites:
+            raise RuntimeError(
+                f"Site '{s_key}' has no row in the `sites` table. Run "
+                "`python -m scripts.rebuild_demo_db`, or pass "
+                "--geometry-source=file."
+            )
+        geom = db_sites[s_key]["geom"]
+        shapely_geoms[s_key] = geom
+        geom_sources[s_key] = _geometry_provenance(
+            "db_polygon", geom, db_id=db_sites[s_key]["db_id"]
+        )
+        logger.info("Loaded site '%s' geometry from PostGIS boundary polygon.", s_key)
 
     return shapely_geoms, geom_sources
+
+
+def _geometry_provenance(source: str, geom, db_id=None) -> dict:
+    """Self-describing provenance for one site's AOI, recorded in meta.json.
+
+    A bare source label ("db_polygon", "bbox") is not enough to trace a CSV
+    back to the area it was actually sampled over -- the previous run's
+    metadata said "bbox" for all three sites while the boxes silently differed
+    from the DB, the map and the mines. Recording the real bounds means a CSV
+    can always be checked against the AOI definition that produced it.
+    """
+    from prospectivity.training_data import _area_km2
+
+    minx, miny, maxx, maxy = geom.bounds
+    return {
+        "source": source,
+        "db_site_id": db_id,
+        "bounds_wsen": [round(minx, 6), round(miny, 6), round(maxx, 6), round(maxy, 6)],
+        "area_km2": round(_area_km2(geom), 2),
+        "moil_sites_sha256_12": site_definition_digest(),
+    }
+
+
+def site_definition_digest() -> str:
+    """Short content hash of data/moil_sites.json, recorded in the export
+    metadata so a CSV can be traced back to the exact AOI definition."""
+    from geo_utils import SITES_JSON_PATH
+
+    with open(SITES_JSON_PATH, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()[:12]
 
 
 # ---------------------------------------------------------------------------
@@ -517,6 +585,34 @@ def compute_site_total_pixels(ee, ee_geom, scale: int = 30) -> Optional[int]:
         return None
 
 
+def build_safe_ndvi_composite(ee, col, to_ndvi):
+    """Median NDVI composite that always carries an "ndvi" band.
+
+    A window with zero acquisitions makes `col.map(to_ndvi).median()` a
+    BAND-LESS image, and the caller's `reduceRegion(...).get("ndvi")` then
+    raises "Dictionary does not contain key: 'ndvi'". That is a deterministic
+    error, which `with_gee_retry` correctly declines to retry — but it was
+    surfacing as a permanent layer failure for what is a normal condition:
+    Sentinel-2's ~5-day revisit means any window shorter than the revisit (in
+    practice the trailing remainder window of a date range) can legitimately
+    hold no images.
+
+    Substituting a fully-masked single-image collection keeps the "ndvi" band
+    present, so reduceRegion reports mean=null / valid=0 and the caller takes
+    its existing no-data path. Windows that do have images are routed through
+    the identical `col.map(to_ndvi).median()` expression as before.
+    """
+    placeholder = (
+        ee.Image.constant(0).rename("ndvi").updateMask(ee.Image.constant(0)).toFloat()
+    )
+    safe_col = ee.ImageCollection(
+        ee.Algorithms.If(
+            col.size().gt(0), col.map(to_ndvi), ee.ImageCollection([placeholder])
+        )
+    )
+    return ee.Image(safe_col.median())
+
+
 def fetch_ndvi_composites(
     ee,
     site_key: str,
@@ -571,7 +667,7 @@ def fetch_ndvi_composites(
                 masked = ee.Image(mask_s2_clouds(img, ee))
                 return masked.normalizedDifference(["B8", "B4"]).rename("ndvi")
 
-            composite = ee.Image(col.map(to_ndvi).median())
+            composite = build_safe_ndvi_composite(ee, col, to_ndvi)
             valid_mask = composite.select("ndvi").mask()
 
             mean_dict = composite.reduceRegion(
@@ -1030,6 +1126,7 @@ def run_ndvi_only_update(
     sites: Optional[List[str]] = None,
     out_csv: Optional[str] = None,
     out_meta: Optional[str] = None,
+    geometry_source: str = "db",
 ) -> None:
     """
     Re-fetches ONLY NDVI (live GEE, median-composite method) for the given date
@@ -1060,7 +1157,7 @@ def run_ndvi_only_update(
     if ee is None:
         raise RuntimeError("--only-ndvi requires live Earth Engine; dry-run is not supported for this mode.")
 
-    shapely_geoms, geom_sources = resolve_site_geometries(target_sites)
+    shapely_geoms, geom_sources = resolve_site_geometries(target_sites, geometry_source)
 
     curr = start_date
     all_dates: List[date] = []
@@ -1165,6 +1262,7 @@ def run_export(
     dry_run: bool = False,
     out_csv: Optional[str] = None,
     out_meta: Optional[str] = None,
+    geometry_source: str = "db",
 ) -> None:
     """Orchestrates daily climate data export."""
     start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
@@ -1181,7 +1279,7 @@ def run_export(
     meta_path = out_meta or os.path.join(PROJECT_ROOT, "data", "satellite_daily_features.meta.json")
 
     logger.info("Initializing daily climate export: %s to %s for sites: %s", start_date, end_date, target_sites)
-    shapely_geoms, geom_sources = resolve_site_geometries(target_sites)
+    shapely_geoms, geom_sources = resolve_site_geometries(target_sites, geometry_source)
 
     ee = get_ee(dry_run=dry_run)
 
@@ -1287,6 +1385,12 @@ def main():
     parser.add_argument("--end", default=None, help="End date (YYYY-MM-DD, default today UTC).")
     parser.add_argument("--sites", default="balaghat,nagpur,bhandara", help="Comma-separated site list.")
     parser.add_argument("--dry-run", action="store_true", help="Generate deterministic simulated data without GEE.")
+    parser.add_argument(
+        "--geometry-source", choices=["db", "file"], default="db",
+        help="Where site AOI polygons come from: 'db' (PostGIS sites.geom, the default -- "
+             "a DB failure is an error, not a silent substitution) or 'file' "
+             "(data/moil_sites.json, the same AOIs, chosen explicitly).",
+    )
     parser.add_argument("--out-csv", default=None, help="Custom output CSV path.")
     parser.add_argument("--out-meta", default=None, help="Custom output metadata JSON path.")
     parser.add_argument(
@@ -1308,6 +1412,7 @@ def main():
             sites=site_list,
             out_csv=args.out_csv,
             out_meta=args.out_meta,
+            geometry_source=args.geometry_source,
         )
         return
 
@@ -1318,6 +1423,7 @@ def main():
         dry_run=args.dry_run,
         out_csv=args.out_csv,
         out_meta=args.out_meta,
+        geometry_source=args.geometry_source,
     )
 
 

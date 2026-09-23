@@ -1,0 +1,207 @@
+{
+  "type": "FeatureCollection",
+  "name": "moil_mines",
+  "generated_by": "scripts/build_site_aois.py -- do not edit by hand",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          80.2274,
+          21.8502
+        ]
+      },
+      "properties": {
+        "name": "Bharveli",
+        "site_key": "balaghat",
+        "site_name": "Balaghat",
+        "confidence": "high",
+        "in_aoi": true,
+        "source": "OpenStreetMap quarry feature tagged operator=MOIL",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          80.4666,
+          21.9708
+        ]
+      },
+      "properties": {
+        "name": "Ukwa",
+        "site_key": "balaghat",
+        "site_name": "Balaghat",
+        "confidence": "medium",
+        "in_aoi": true,
+        "source": "Village centroid; unnamed quarries mapped at 21.948-21.980 N / 80.432-80.475 E",
+        "note": "Coordinates are the village, not the pit. The 5 km buffer covers the mapped quarry cluster.",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.2764,
+          21.4205
+        ]
+      },
+      "properties": {
+        "name": "Kandri",
+        "site_key": "nagpur",
+        "site_name": "Nagpur",
+        "confidence": "medium-high",
+        "in_aoi": true,
+        "source": "Verification report 2026-09-23; cross-checked against Google Maps (match within 1.5 km)",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.2795,
+          21.3981
+        ]
+      },
+      "properties": {
+        "name": "Munsar",
+        "site_key": "nagpur",
+        "site_name": "Nagpur",
+        "confidence": "high",
+        "in_aoi": true,
+        "source": "Verification report 2026-09-23 (also spelled Mansar); cross-checked against Google Maps (match within 1.5 km)",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.266,
+          21.408
+        ]
+      },
+      "properties": {
+        "name": "Beldongri",
+        "site_key": "nagpur",
+        "site_name": "Nagpur",
+        "confidence": "low-medium",
+        "in_aoi": true,
+        "source": "Verification report 2026-09-23; approximate",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          78.983333,
+          21.4
+        ]
+      },
+      "properties": {
+        "name": "Gumgaon",
+        "site_key": "nagpur",
+        "site_name": "Nagpur",
+        "confidence": "low",
+        "in_aoi": false,
+        "source": "Google Maps cross-check, 2026-09-23. Replaces the report's 21.385 / 78.919, which was off by ~6.9 km.",
+        "note": "EXCLUDED from the bbox until the pit location is confirmed. Including it would grow this AOI from ~142 km2 to ~580 km2 for one low-confidence point. It still renders on the MOIL mines point layer as a provisional marker.",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.7523,
+          21.5385
+        ]
+      },
+      "properties": {
+        "name": "Chikla",
+        "site_key": "bhandara",
+        "site_name": "Bhandara",
+        "confidence": "high",
+        "in_aoi": true,
+        "source": "OpenStreetMap quarry feature \"MOIL Chikala Mines\"; cross-checked against Google Maps (match within 1.5 km)",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.7479,
+          21.5317
+        ]
+      },
+      "properties": {
+        "name": "Sitapatore",
+        "site_key": "bhandara",
+        "site_name": "Bhandara",
+        "confidence": "medium",
+        "in_aoi": true,
+        "source": "Verification report 2026-09-23 (also spelled Sitasaongi)",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.694,
+          21.5502
+        ]
+      },
+      "properties": {
+        "name": "Dongri Buzurg",
+        "site_key": "bhandara",
+        "site_name": "Bhandara",
+        "confidence": "low-medium",
+        "in_aoi": true,
+        "source": "Verification report 2026-09-23; cross-checked against Google Maps (match within 1.5 km)",
+        "note": "",
+        "source_urls": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          79.725,
+          21.6836
+        ]
+      },
+      "properties": {
+        "name": "Tirodi",
+        "site_key": null,
+        "site_name": null,
+        "confidence": "high",
+        "in_aoi": false,
+        "source": "OpenStreetMap quarry feature \"Tirodi Mine\"",
+        "note": "EXCLUDED for now, by decision of 2026-09-23. Administratively in Balaghat district (MP) but ~55 km west of Bharveli and geologically in the Sausar belt; folding it into the balaghat AOI would make that box 3617 km2 and overlap the bhandara box in longitude, which silently breaks assign_site_id. Promote it to a 4th site rather than merging it. Renders on the MOIL mines point layer as a provisional marker.",
+        "source_urls": []
+      }
+    }
+  ]
+}

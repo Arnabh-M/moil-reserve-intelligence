@@ -7,3 +7,11 @@ shapely>=2.0.0
 scipy>=1.14.0
 python-dotenv>=1.0.0
 pytest>=8.0.0
+
+# Required by --geometry-source=db (the default): the exporter reads each
+# site's AOI polygon from PostGIS via prospectivity.training_data. There is
+# deliberately no fallback to a hardcoded box, so without these the exporter
+# fails loudly rather than sampling a different area than the rest of the repo.
+# Use --geometry-source=file to run against data/moil_sites.json instead.
+sqlalchemy==2.0.54
+psycopg[binary]==3.3.6

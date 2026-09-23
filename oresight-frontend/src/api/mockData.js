@@ -1,9 +1,44 @@
 // Frozen-contract fixtures. The UI adapts these API-shaped records without changing their wire types.
-const sites = [
-  { id: 1, name: 'Balaghat', belt_name: 'Balaghat Manganese Belt', district: 'Balaghat', state: 'Madhya Pradesh', centroid_lat: 21.81, centroid_lon: 80.18, active_risk_count: 3, avg_reserve_confidence: 0.82 },
-  { id: 2, name: 'Nagpur', belt_name: 'Nagpur Manganese Belt', district: 'Nagpur', state: 'Maharashtra', centroid_lat: 21.15, centroid_lon: 79.09, active_risk_count: 2, avg_reserve_confidence: 0.74 },
-  { id: 3, name: 'Bhandara', belt_name: 'Bhandara Manganese Belt', district: 'Bhandara', state: 'Maharashtra', centroid_lat: 21.17, centroid_lon: 79.65, active_risk_count: 1, avg_reserve_confidence: 0.88 },
-];
+//
+// Geometry is NOT hardcoded here. Centroids and zone polygons are derived from
+// MOIL_SITES (the generated copy of data/moil_sites.json), so offline mock mode
+// puts the sites and their reserve blocks in the same places the live API does.
+// The previous literals were a separate copy of the old site boxes and left
+// VITE_USE_MOCK=true rendering zones ~40 km from the actual mines.
+import { MOIL_SITES } from '../lib/map';
+
+const SITE_EXTRAS = {
+  balaghat: { belt_name: 'Balaghat Manganese Belt', active_risk_count: 3, avg_reserve_confidence: 0.82 },
+  nagpur: { belt_name: 'Nagpur Manganese Belt', active_risk_count: 2, avg_reserve_confidence: 0.74 },
+  bhandara: { belt_name: 'Bhandara Manganese Belt', active_risk_count: 1, avg_reserve_confidence: 0.88 },
+};
+
+const siteAoiByDbId = Object.fromEntries(MOIL_SITES.sites.map((site) => [site.db_id, site]));
+
+const sites = MOIL_SITES.sites.map((site) => ({
+  id: site.db_id,
+  name: site.name,
+  district: site.district,
+  state: site.state,
+  centroid_lat: Number(((site.bbox.min_lat + site.bbox.max_lat) / 2).toFixed(4)),
+  centroid_lon: Number(((site.bbox.min_lon + site.bbox.max_lon) / 2).toFixed(4)),
+  ...SITE_EXTRAS[site.key],
+}));
+
+// A rectangle placed inside a site's AOI by fractions of its half-extent, so a
+// mock zone is always inside the site box whatever size that box is.
+function mockZonePolygon(dbId, { fx = 0, fy = 0, halfX = 0.3, halfY = 0.3 } = {}) {
+  const { bbox } = siteAoiByDbId[dbId];
+  const cx = (bbox.min_lon + bbox.max_lon) / 2;
+  const cy = (bbox.min_lat + bbox.max_lat) / 2;
+  const hx = (bbox.max_lon - bbox.min_lon) / 2;
+  const hy = (bbox.max_lat - bbox.min_lat) / 2;
+  const x0 = Number((cx + (fx - halfX) * hx).toFixed(4));
+  const x1 = Number((cx + (fx + halfX) * hx).toFixed(4));
+  const y0 = Number((cy + (fy - halfY) * hy).toFixed(4));
+  const y1 = Number((cy + (fy + halfY) * hy).toFixed(4));
+  return { type: 'Polygon', coordinates: [[[x0, y1], [x1, y1], [x1, y0], [x0, y0], [x0, y1]]] };
+}
 
 const equipment = [
   { id: 101, site_id: 1, site_name: 'Balaghat', name: 'Excavator BAL-1', equipment_type: 'Excavator', status: 'down', last_status_change: '2026-09-05T06:40:00Z', status_reason: 'Hydraulic pressure drift', flapping: false },
@@ -72,10 +107,10 @@ const riskEvents = [
 ];
 
 const reserveZones = [
-  { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[80.12, 21.84], [80.22, 21.84], [80.22, 21.78], [80.12, 21.78], [80.12, 21.84]]] }, properties: { id: 501, site_id: 1, zone_name: 'Balaghat North Block', confidence_score: 0.91, estimated_grade_pct: 30.0, estimated_depth_m: 114 } },
-  { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[80.22, 21.81], [80.29, 21.81], [80.29, 21.76], [80.22, 21.76], [80.22, 21.81]]] }, properties: { id: 502, site_id: 1, zone_name: 'Eastern ramp', confidence_score: 0.66, estimated_grade_pct: 1.41, estimated_depth_m: 88 } },
-  { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[79.02, 21.19], [79.16, 21.19], [79.16, 21.11], [79.02, 21.11], [79.02, 21.19]]] }, properties: { id: 601, site_id: 2, zone_name: 'West pushback', confidence_score: 0.74, estimated_grade_pct: 3.1, estimated_depth_m: 132 } },
-  { type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[79.61, 21.20], [79.70, 21.20], [79.70, 21.14], [79.61, 21.14], [79.61, 21.20]]] }, properties: { id: 701, site_id: 3, zone_name: 'Southern extension', confidence_score: 0.88, estimated_grade_pct: 29.4, estimated_depth_m: 72 } },
+  { type: 'Feature', geometry: mockZonePolygon(1, { fy: 0.5, halfX: 0.3, halfY: 0.24 }), properties: { id: 501, site_id: 1, zone_name: 'Balaghat North Block', confidence_score: 0.91, estimated_grade_pct: 30.0, estimated_depth_m: 114 } },
+  { type: 'Feature', geometry: mockZonePolygon(1, { fx: 0.5, fy: -0.2, halfX: 0.24, halfY: 0.24 }), properties: { id: 502, site_id: 1, zone_name: 'Eastern ramp', confidence_score: 0.66, estimated_grade_pct: 1.41, estimated_depth_m: 88 } },
+  { type: 'Feature', geometry: mockZonePolygon(2, { fx: -0.5, halfX: 0.24, halfY: 0.3 }), properties: { id: 601, site_id: 2, zone_name: 'West pushback', confidence_score: 0.74, estimated_grade_pct: 3.1, estimated_depth_m: 132 } },
+  { type: 'Feature', geometry: mockZonePolygon(3, { fy: -0.5, halfX: 0.3, halfY: 0.24 }), properties: { id: 701, site_id: 3, zone_name: 'Southern extension', confidence_score: 0.88, estimated_grade_pct: 29.4, estimated_depth_m: 72 } },
 ];
 
 const recommendations = [

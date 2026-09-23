@@ -23,6 +23,11 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import './manganex-landing.css';
+import { MAP_CENTER } from '../../lib/map';
+
+// Centre of the combined AOI extent, so the landing banner cannot drift from
+// where the sites actually are (it used to print the old Balaghat centroid).
+const CORRIDOR_CENTRE = `${MAP_CENTER.latitude.toFixed(4)}° N, ${MAP_CENTER.longitude.toFixed(4)}° E`;
 
 // 6 Spatial layers definition for Section 01 // OUR FOUNDATION
 const TERRAIN_LAYERS = [
@@ -667,7 +672,7 @@ export default function ManganexLandingPage() {
                   TARGET REGION IDENTIFIED
                 </div>
                 <div style={{ fontFamily: 'var(--mg-font-mono)', fontSize: '9px', color: 'var(--mg-text-secondary)', letterSpacing: '0.08em' }}>
-                  CENTRAL INDIA MANGANESE CORRIDOR · 21.8000° N, 80.1900° E
+                  CENTRAL INDIA MANGANESE CORRIDOR · {CORRIDOR_CENTRE}
                 </div>
               </div>
             </div>

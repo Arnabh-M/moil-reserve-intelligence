@@ -6,8 +6,15 @@ export_reserve_zones.py so that projection, distance, and random-field
 logic is defined exactly once and stays consistent between the
 training-feature pipeline and the grid-prediction pipeline.
 
-Site bounding boxes match data/generate_datasets.py (Day 1) exactly.
+Site bounding boxes are NOT defined here. They are read from
+data/moil_sites.json -- the single definition of the three AOIs, shared
+with generate_datasets.py, app/seed_dev.py (the DB `sites.boundary`), the
+GEE and prospectivity pipelines, and the frontend. Edit that file and run
+`python -m scripts.build_site_aois`; never hardcode a box again.
 """
+
+import json
+import os
 
 import joblib
 import numpy as np
@@ -16,17 +23,75 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage import gaussian_filter
 
 # ---------------------------------------------------------------------
-# Site bounding boxes (west/south/east/north order kept implicit as
-# lon_range / lat_range, matching Day 1's SITES dict)
+# Site AOIs, loaded from the canonical definition
 # ---------------------------------------------------------------------
+SITES_JSON_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "data", "moil_sites.json"
+)
+
+
+def load_site_definitions(path=None):
+    """Parsed data/moil_sites.json. Raises if it is missing -- there is no
+    fallback box, by design: a silently different AOI is exactly the bug this
+    file was restructured to remove."""
+    with open(path or SITES_JSON_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+SITE_DEFINITIONS = load_site_definitions()
+
+# {site_key: {"lat_range": (lo, hi), "lon_range": (lo, hi)}} -- the shape every
+# existing caller already expects.
 SITE_BBOXES = {
-    "balaghat": {"lat_range": (21.7, 22.0), "lon_range": (80.1, 80.4)},
-    "nagpur":   {"lat_range": (21.0, 21.3), "lon_range": (79.0, 79.3)},
-    "bhandara": {"lat_range": (21.1, 21.4), "lon_range": (79.5, 79.8)},
+    site["key"]: {
+        "lat_range": (site["bbox"]["min_lat"], site["bbox"]["max_lat"]),
+        "lon_range": (site["bbox"]["min_lon"], site["bbox"]["max_lon"]),
+    }
+    for site in SITE_DEFINITIONS["sites"]
 }
 
+# Full per-site records (name, district, db_id, mines, target_output, ...)
+SITE_AOIS = {site["key"]: site for site in SITE_DEFINITIONS["sites"]}
+
+# Every mine in the file, including ones deliberately left out of an AOI
+# (each carries `included` and `site_key`).
+MINES = [
+    {**mine, "site_key": site["key"]}
+    for site in SITE_DEFINITIONS["sites"]
+    for mine in site["mines"]
+] + [
+    {**mine, "site_key": None}
+    for mine in SITE_DEFINITIONS.get("unassigned_mines", [])
+]
+
 # Combined bounding box: west, south, east, north
-COMBINED_BBOX = (79.0, 21.0, 80.4, 22.0)
+COMBINED_BBOX = tuple(SITE_DEFINITIONS["combined_bbox"])
+
+
+def _assert_no_overlapping_bboxes():
+    """assign_site_id() below is first-match-wins, so two overlapping AOIs
+    would silently assign every shared point to whichever site is declared
+    first. Catch that at import rather than in a map three pipelines later."""
+    items = list(SITE_BBOXES.items())
+    for i, (key_a, a) in enumerate(items):
+        for key_b, b in items[i + 1:]:
+            lon_overlap = (
+                a["lon_range"][0] < b["lon_range"][1]
+                and b["lon_range"][0] < a["lon_range"][1]
+            )
+            lat_overlap = (
+                a["lat_range"][0] < b["lat_range"][1]
+                and b["lat_range"][0] < a["lat_range"][1]
+            )
+            if lon_overlap and lat_overlap:
+                raise ValueError(
+                    f"Site AOIs '{key_a}' and '{key_b}' overlap in "
+                    f"data/moil_sites.json; assign_site_id() cannot "
+                    f"disambiguate points in the shared area."
+                )
+
+
+_assert_no_overlapping_bboxes()
 
 # All three sites fall in UTM zone 44N (78E-84E, northern hemisphere)
 _UTM_EPSG = "EPSG:32644"

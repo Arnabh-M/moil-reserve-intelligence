@@ -106,22 +106,12 @@ def load_site_boundaries(database_url: str | None = None) -> dict:
             continue
 
     if engine is None:
-        # Check if we can fallback to geo_utils.SITE_BBOXES
-        try:
-            from geo_utils import SITE_BBOXES
-            from shapely.geometry import box
-            logger.warning("Database unreachable (%s) — falling back to SITE_BBOXES", last_err)
-            return {
-                k: {
-                    "db_id": i + 1,
-                    "name": k.capitalize(),
-                    "geom": box(*bbox),
-                    "area_km2": 300.0,
-                }
-                for i, (k, bbox) in enumerate(SITE_BBOXES.items())
-            }
-        except Exception:
-            raise SiteBoundaryError(f"Cannot connect to database: {last_err}") from last_err
+        raise SiteBoundaryError(
+            f"Cannot connect to database: {last_err}. "
+            "Start Postgres and run `python -m scripts.rebuild_demo_db`, or call "
+            "site_geometries_from_file() explicitly if you intend to build "
+            "against data/moil_sites.json without a DB."
+        ) from last_err
 
     sites = {}
     with engine.connect() as conn:
@@ -151,6 +141,45 @@ def load_site_boundaries(database_url: str | None = None) -> dict:
 
     logger.info("Loaded %d site boundary polygons from PostGIS", len(sites))
     return sites
+
+
+def site_geometries_from_file() -> dict:
+    """Site boundaries straight from data/moil_sites.json, in the same shape as
+    load_site_boundaries().
+
+    This is the ONLY sanctioned non-DB source, and it is never reached by
+    accident: callers have to ask for it. It returns the same rectangles the
+    DB was seeded with, so choosing it changes the provenance label, never the
+    geometry. (The previous implicit fallback here silently substituted a
+    different, ~33 km box family whenever Postgres happened to be down.)
+    """
+    from shapely.geometry import box
+
+    from geo_utils import SITE_AOIS
+
+    sites = {}
+    for key, site in SITE_AOIS.items():
+        b = site["bbox"]
+        geom = box(b["min_lon"], b["min_lat"], b["max_lon"], b["max_lat"])
+        sites[key] = {
+            "db_id": site["db_id"],
+            "name": site["name"],
+            "geom": geom,
+            "area_km2": _area_km2(geom),
+        }
+
+    logger.info("Loaded %d site boundary polygons from data/moil_sites.json", len(sites))
+    return sites
+
+
+def _area_km2(geom) -> float:
+    """Planar area in km2 via UTM 44N, matching PostGIS's ST_Area(::geography)
+    closely enough for the reporting this value is used for."""
+    from shapely.ops import transform
+
+    from geo_utils import lonlat_to_utm
+
+    return transform(lambda x, y: lonlat_to_utm(x, y), geom).area / 1e6
 
 
 def _sample_points_in_polygon(geom, n: int, rng: np.random.Generator) -> list[tuple[float, float]]:

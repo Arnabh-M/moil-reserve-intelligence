@@ -250,7 +250,7 @@ def _assign_deposits_to_zones(spec: dict, site_deposits: list[dict]) -> dict[str
     deterministic, and gives every deposit a zone.
     """
     centroids = [
-        (t["suffix"], spec["lon"] + t["dx"], spec["lat"] + t["dy"]) for t in seed_dev.ZONE_TEMPLATES
+        (t["suffix"], *seed_dev.zone_centroid(spec, t)) for t in seed_dev.ZONE_TEMPLATES
     ]
     groups: dict[str, list[dict]] = {suffix: [] for suffix, _, _ in centroids}
     for deposit in site_deposits:

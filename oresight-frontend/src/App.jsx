@@ -250,6 +250,9 @@ function MapPage() {
   const [spectralVisible, setSpectralVisible] = useState(false);
   const [ndviVisible, setNdviVisible] = useState(false);
   const [lineamentVisible, setLineamentVisible] = useState(false);
+  // On by default: the MOIL mines are what the site AOIs are drawn around, so
+  // the map should show them without the user having to find a toggle.
+  const [minesVisible, setMinesVisible] = useState(true);
   const [rasterOpacity, setRasterOpacity] = useState(DEFAULT_RASTER_OPACITY);
 
   const [prospectivitySiteId, setProspectivitySiteId] = useState(null);
@@ -360,8 +363,12 @@ function MapPage() {
 
   function handleInspectZoneCrossSection() {
     if (!selectedZone) return;
-    const lat = selectedZone.latitude ?? (selectedZone.site_id === 1 ? 21.8 : selectedZone.site_id === 2 ? 21.1 : 21.2);
-    const lng = selectedZone.longitude ?? (selectedZone.site_id === 1 ? 80.2 : selectedZone.site_id === 2 ? 79.1 : 79.6);
+    // Fall back to the zone's own site AOI centre rather than a hardcoded
+    // coordinate per site_id -- those literals were a third, independent copy
+    // of the site locations and silently went stale when the AOIs moved.
+    const fallbackSite = SAMPLE_SITES.find((s) => s.id === selectedZone.site_id);
+    const lat = selectedZone.latitude ?? fallbackSite?.latitude ?? MAP_CENTER.latitude;
+    const lng = selectedZone.longitude ?? fallbackSite?.longitude ?? MAP_CENTER.longitude;
     setCrossSectionPoint({ lat, lng, zoneName: selectedZone.zone_name, site_id: selectedZone.site_id, siteName: selectedSiteName });
     setCrossSectionDrawerOpen(true);
   }
@@ -377,6 +384,8 @@ function MapPage() {
         onLineamentChange={setLineamentVisible}
         ndviVisible={ndviVisible}
         onNdviChange={setNdviVisible}
+        minesVisible={minesVisible}
+        onMinesChange={setMinesVisible}
         rasterOpacity={rasterOpacity}
         onRasterOpacityChange={setRasterOpacity}
         selectedSiteId={selectedSiteIdForFlyTo}
@@ -392,7 +401,7 @@ function MapPage() {
             style={{ background: 'transparent', border: 'none', fontSize: 12, fontWeight: 600 }}
           >
             <option value="">Jump to Mine Site…</option>
-            {SAMPLE_SITES.map((site) => <option key={site.id} value={site.id}>{site.name} Mine ({site.latitude.toFixed(1)}°N, {site.longitude.toFixed(1)}°E)</option>)}
+            {SAMPLE_SITES.map((site) => <option key={site.id} value={site.id}>{site.name} ({site.latitude.toFixed(2)}°N, {site.longitude.toFixed(2)}°E)</option>)}
           </select>
         </div>
 
@@ -401,6 +410,7 @@ function MapPage() {
           spectralVisible={spectralVisible}
           ndviVisible={ndviVisible}
           lineamentVisible={lineamentVisible}
+          minesVisible={minesVisible}
           selectedWeek={selectedWeek}
           onWeekChange={setSelectedWeek}
           onZoneSelect={setSelectedZone}

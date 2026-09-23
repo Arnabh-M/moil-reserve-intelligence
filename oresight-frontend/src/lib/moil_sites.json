@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "description": "Canonical MOIL site AOIs and mine list. THE single definition of where the three sites are. Every consumer (geo_utils, generate_datasets, seed_dev, the GEE and prospectivity pipelines, the frontend) reads this file -- directly or via a generated copy kept byte-identical by scripts/build_site_aois.py.",
+  "buffer_km": 5.0,
+  "buffer_note": "Each site bbox is the bounding box of its included mines, expanded by buffer_km on all four sides. Degrees-per-km: 110.574 for latitude, 111.320 * cos(mid-latitude) for longitude, so the buffer is buffer_km on both axes, not buffer_km-of-degrees.",
+  "generated_by": "scripts/build_site_aois.py",
+  "coordinate_provenance": "Mine coordinates come from the site-AOI verification report dated 2026-09-23, which sourced them from OpenStreetMap quarry/village features and supporting documents; the `source` field on each mine records what that report said about it. Five of the ten (Munsar, Chikla, Dongri Buzurg, Kandri, Gumgaon) were independently cross-checked against Google Maps on 2026-09-23: four matched within 1.5 km, Gumgaon was off by ~6.9 km and its coordinates were replaced with the cross-checked value.",
+  "sites": [
+    {
+      "key": "balaghat",
+      "db_id": 1,
+      "name": "Balaghat",
+      "belt_name": "Balaghat Manganese Belt",
+      "district": "Balaghat",
+      "state": "Madhya Pradesh",
+      "target_output": 1200,
+      "base_output": 1250.0,
+      "centre_reverse_geocode": "Paraswada Tahsil, Balaghat, Madhya Pradesh (boundary/administrative, rural) -- Nominatim, 2026-09-23",
+      "mines": [
+        {
+          "name": "Bharveli",
+          "lat": 21.8502,
+          "lon": 80.2274,
+          "confidence": "high",
+          "included": true,
+          "source": "OpenStreetMap quarry feature tagged operator=MOIL",
+          "source_urls": []
+        },
+        {
+          "name": "Ukwa",
+          "lat": 21.9708,
+          "lon": 80.4666,
+          "confidence": "medium",
+          "included": true,
+          "source": "Village centroid; unnamed quarries mapped at 21.948-21.980 N / 80.432-80.475 E",
+          "note": "Coordinates are the village, not the pit. The 5 km buffer covers the mapped quarry cluster.",
+          "source_urls": []
+        }
+      ],
+      "bbox": {
+        "min_lat": 21.804981,
+        "max_lat": 22.016019,
+        "min_lon": 80.178988,
+        "max_lon": 80.515012
+      }
+    },
+    {
+      "key": "nagpur",
+      "db_id": 2,
+      "name": "Nagpur",
+      "belt_name": "Nagpur-Bhandara Manganese Belt",
+      "district": "Nagpur",
+      "state": "Maharashtra",
+      "target_output": 900,
+      "base_output": 950.0,
+      "centre_reverse_geocode": "Kandri, Ramtek Taluka, Nagpur, Maharashtra (place/village) -- Nominatim, 2026-09-23",
+      "mines": [
+        {
+          "name": "Kandri",
+          "lat": 21.4205,
+          "lon": 79.2764,
+          "confidence": "medium-high",
+          "included": true,
+          "source": "Verification report 2026-09-23; cross-checked against Google Maps (match within 1.5 km)",
+          "source_urls": []
+        },
+        {
+          "name": "Munsar",
+          "lat": 21.3981,
+          "lon": 79.2795,
+          "confidence": "high",
+          "included": true,
+          "source": "Verification report 2026-09-23 (also spelled Mansar); cross-checked against Google Maps (match within 1.5 km)",
+          "source_urls": []
+        },
+        {
+          "name": "Beldongri",
+          "lat": 21.408,
+          "lon": 79.266,
+          "confidence": "low-medium",
+          "included": true,
+          "source": "Verification report 2026-09-23; approximate",
+          "source_urls": []
+        },
+        {
+          "name": "Gumgaon",
+          "lat": 21.4,
+          "lon": 78.983333,
+          "confidence": "low",
+          "included": false,
+          "source": "Google Maps cross-check, 2026-09-23. Replaces the report's 21.385 / 78.919, which was off by ~6.9 km.",
+          "note": "EXCLUDED from the bbox until the pit location is confirmed. Including it would grow this AOI from ~142 km2 to ~580 km2 for one low-confidence point. It still renders on the MOIL mines point layer as a provisional marker.",
+          "source_urls": []
+        }
+      ],
+      "bbox": {
+        "min_lat": 21.352881,
+        "max_lat": 21.465719,
+        "min_lon": 79.217755,
+        "max_lon": 79.327745
+      }
+    },
+    {
+      "key": "bhandara",
+      "db_id": 3,
+      "name": "Bhandara",
+      "belt_name": "Nagpur-Bhandara Manganese Belt",
+      "district": "Bhandara",
+      "state": "Maharashtra",
+      "target_output": 700,
+      "base_output": 800.0,
+      "centre_reverse_geocode": "Yedarbuchi, Tumsar Taluka, Bhandara, Maharashtra (place/village) -- Nominatim, 2026-09-23",
+      "mines": [
+        {
+          "name": "Chikla",
+          "lat": 21.5385,
+          "lon": 79.7523,
+          "confidence": "high",
+          "included": true,
+          "source": "OpenStreetMap quarry feature \"MOIL Chikala Mines\"; cross-checked against Google Maps (match within 1.5 km)",
+          "source_urls": []
+        },
+        {
+          "name": "Sitapatore",
+          "lat": 21.5317,
+          "lon": 79.7479,
+          "confidence": "medium",
+          "included": true,
+          "source": "Verification report 2026-09-23 (also spelled Sitasaongi)",
+          "source_urls": []
+        },
+        {
+          "name": "Dongri Buzurg",
+          "lat": 21.5502,
+          "lon": 79.694,
+          "confidence": "low-medium",
+          "included": true,
+          "source": "Verification report 2026-09-23; cross-checked against Google Maps (match within 1.5 km)",
+          "source_urls": []
+        }
+      ],
+      "bbox": {
+        "min_lat": 21.486481,
+        "max_lat": 21.595419,
+        "min_lon": 79.645712,
+        "max_lon": 79.800588
+      }
+    }
+  ],
+  "unassigned_mines": [
+    {
+      "name": "Tirodi",
+      "lat": 21.6836,
+      "lon": 79.725,
+      "confidence": "high",
+      "included": false,
+      "source": "OpenStreetMap quarry feature \"Tirodi Mine\"",
+      "note": "EXCLUDED for now, by decision of 2026-09-23. Administratively in Balaghat district (MP) but ~55 km west of Bharveli and geologically in the Sausar belt; folding it into the balaghat AOI would make that box 3617 km2 and overlap the bhandara box in longitude, which silently breaks assign_site_id. Promote it to a 4th site rather than merging it. Renders on the MOIL mines point layer as a provisional marker.",
+      "source_urls": []
+    }
+  ],
+  "combined_bbox": [79.217755, 21.352881, 80.515012, 22.016019]
+}

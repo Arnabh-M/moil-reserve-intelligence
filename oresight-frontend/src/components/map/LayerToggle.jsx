@@ -12,6 +12,8 @@ export default function LayerToggle({
   onLineamentChange,
   ndviVisible = false,
   onNdviChange,
+  minesVisible = false,
+  onMinesChange,
   rasterOpacity,
   onRasterOpacityChange,
   selectedSiteId = null,
@@ -21,7 +23,7 @@ export default function LayerToggle({
   const [enabled, setEnabled] = useState(() =>
     Object.fromEntries(
       MAP_LAYERS.filter(
-        (layer) => !['prospectivity', 'spectral', 'lineament', 'ndvi'].includes(layer.id)
+        (layer) => !['prospectivity', 'spectral', 'lineament', 'ndvi', 'mines'].includes(layer.id)
       ).map((layer) => [layer.id, false])
     )
   )
@@ -35,6 +37,7 @@ export default function LayerToggle({
     if (id === 'spectral') return Boolean(spectralVisible)
     if (id === 'lineament') return Boolean(lineamentVisible)
     if (id === 'ndvi') return Boolean(ndviVisible)
+    if (id === 'mines') return Boolean(minesVisible)
     return Boolean(enabled[id])
   }
 
@@ -53,6 +56,10 @@ export default function LayerToggle({
     }
     if (id === 'ndvi' && onNdviChange) {
       onNdviChange(!ndviVisible)
+      return
+    }
+    if (id === 'mines' && onMinesChange) {
+      onMinesChange(!minesVisible)
       return
     }
     toggleLayer(id)

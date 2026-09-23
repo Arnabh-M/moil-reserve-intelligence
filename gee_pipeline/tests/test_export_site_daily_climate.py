@@ -360,3 +360,133 @@ def test_dry_run_generator_integrity():
             if r["site_id"] == s and r["rainfall_mm"] is not None and "2025-01-01" <= r["date"] <= "2025-04-30"
         ]
         assert sum(monsoon) / len(monsoon) > sum(dry) / len(dry), f"Site {s} monsoon must be wetter than dry season"
+
+
+# ---------------------------------------------------------------------------
+# build_safe_ndvi_composite — empty-window guard
+#
+# Sentinel-2's ~5-day revisit means a short window (in practice the trailing
+# remainder of a date range) can hold zero images. `col.map(fn).median()` is
+# then band-less, and the caller's reduceRegion(...).get("ndvi") raised
+# "Dictionary does not contain key: 'ndvi'" — reported as a permanent layer
+# failure for an entirely normal condition. Verified live against
+# 2026-03-31 (0 images) and 2026-08-31 (0 images).
+#
+# Exercised with a fake `ee` so this stays offline like the rest of this file.
+# ---------------------------------------------------------------------------
+
+
+class _FakeNode:
+    """Records the expression tree instead of talking to Earth Engine."""
+
+    def __init__(self, label, children=()):
+        self.label = label
+        self.children = list(children)
+
+    def _derive(self, name, *args):
+        return _FakeNode(f"{self.label}.{name}", [self, *args])
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return lambda *args, **kwargs: self._derive(name, *args)
+
+
+class _FakeEE:
+    def __init__(self, size):
+        self._size = size
+        self.if_branches = None
+
+    def ImageCollection(self, arg):
+        if isinstance(arg, _FakeNode):
+            return arg
+        return _FakeNode("ImageCollection", list(arg) if isinstance(arg, list) else [arg])
+
+    def Image(self, arg):
+        node = _FakeNode("Image", [arg])
+        node.constant = lambda v: _FakeNode(f"Image.constant({v})")
+        return node
+
+    def Algorithms_If(self, cond, a, b):  # pragma: no cover - not used directly
+        raise NotImplementedError
+
+    @property
+    def Algorithms(self):
+        outer = self
+
+        class _Algorithms:
+            @staticmethod
+            def If(cond, true_branch, false_branch):
+                outer.if_branches = (true_branch, false_branch)
+                # Mirror Earth Engine: pick by the recorded collection size.
+                return true_branch if outer._size > 0 else false_branch
+
+        return _Algorithms
+
+
+def _fake_ee_with(size):
+    ee = _FakeEE(size)
+    # ee.Image is used both as a cast and as a namespace (ee.Image.constant).
+    image_ns = _FakeNode("Image")
+    image_ns.constant = lambda v: _FakeNode(f"Image.constant({v})")
+
+    def image(arg=None):
+        if arg is None:
+            return image_ns
+        return _FakeNode("Image", [arg])
+
+    image.constant = image_ns.constant
+    ee.Image = image
+    return ee
+
+
+class _FakeCollection(_FakeNode):
+    def __init__(self, size):
+        super().__init__("col")
+        self._size = size
+
+    def size(self):
+        node = _FakeNode("size")
+        node.gt = lambda n: self._size > n
+        return node
+
+    def map(self, fn):
+        return _FakeNode("mapped", [self])
+
+
+def test_safe_ndvi_composite_uses_real_collection_when_images_exist():
+    from gee_pipeline.export_site_daily_climate import build_safe_ndvi_composite
+
+    ee = _fake_ee_with(size=3)
+    col = _FakeCollection(size=3)
+    build_safe_ndvi_composite(ee, col, lambda img: img)
+
+    chosen, placeholder_branch = ee.if_branches
+    assert chosen.label == "mapped", (
+        "a window WITH images must composite the real mapped collection"
+    )
+    assert placeholder_branch is not chosen
+
+
+def test_safe_ndvi_composite_falls_back_to_masked_placeholder_when_empty():
+    from gee_pipeline.export_site_daily_climate import build_safe_ndvi_composite
+
+    ee = _fake_ee_with(size=0)
+    col = _FakeCollection(size=0)
+    build_safe_ndvi_composite(ee, col, lambda img: img)
+
+    real_branch, placeholder_branch = ee.if_branches
+    assert real_branch.label == "mapped"
+    # The placeholder must be a fully-masked constant carrying an "ndvi" band,
+    # so reduceRegion still returns the key (with a null value).
+    rendered = placeholder_branch.children[0]
+    labels = []
+    node = rendered
+    while isinstance(node, _FakeNode) and node.children:
+        labels.append(node.label)
+        node = node.children[0]
+    labels.append(getattr(node, "label", ""))
+    joined = " ".join(labels)
+    assert "rename" in joined and "updateMask" in joined, (
+        f"placeholder must be a masked, named ndvi band; got {joined}"
+    )

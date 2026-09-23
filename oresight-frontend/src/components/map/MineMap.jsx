@@ -38,6 +38,14 @@ import {
   PROSPECTIVITY_BOUNDARY_PAINT,
   PROSPECTIVITY_EDGE_PAINT,
   PROSPECTIVITY_BANDS_SOURCE_ID,
+  MOIL_MINES_URL,
+  MOIL_MINES_SOURCE_ID,
+  MOIL_MINES_LAYER_ID,
+  MOIL_MINES_LABEL_LAYER_ID,
+  MOIL_MINES_CIRCLE_PAINT,
+  MOIL_MINES_LABEL_LAYOUT,
+  MOIL_MINES_LABEL_PAINT,
+  MOIL_MINES_MIN_ZOOM,
 } from '../../lib/map'
 import ConfidenceLegend from './ConfidenceLegend'
 import NdviTimeSlider from './NdviTimeSlider'
@@ -101,6 +109,7 @@ export default function MineMap({
   spectralVisible = false,
   ndviVisible = false,
   lineamentVisible = false,
+  minesVisible = true,
   selectedWeek = 4,
   onWeekChange,
   onZoneSelect,
@@ -132,6 +141,8 @@ export default function MineMap({
   const [popupCoord, setPopupCoord] = useState(null)
   const [reserveZones, setReserveZones] = useState(null)
   const [structuralLines, setStructuralLines] = useState(null)
+  const [moilMines, setMoilMines] = useState(null)
+  const [minePopup, setMinePopup] = useState(null)
   const [zonesStatus, setZonesStatus] = useState('loading')
 
   const selectedSite = SAMPLE_SITES.find((site) => site.id === effectiveSiteId)
@@ -193,6 +204,29 @@ export default function MineMap({
     }
   }, [])
 
+  // Load the MOIL mines point layer -- the actual pits each site AOI was drawn
+  // around. Generated from data/moil_sites.json by scripts/build_site_aois.py.
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadMoilMines() {
+      try {
+        const res = await fetch(MOIL_MINES_URL)
+        if (res.ok) {
+          const data = await res.json()
+          if (!cancelled) setMoilMines(data)
+        }
+      } catch (err) {
+        console.warn('[MineMap] Failed to load moil_mines.geojson:', err)
+      }
+    }
+
+    loadMoilMines()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // Smooth Fly-To / Fit-Bounds effect when flyToTarget changes (Day 4 & P2 Single-Mine Focus)
   useEffect(() => {
     if (flyToTarget && mapRef.current) {
@@ -241,6 +275,17 @@ export default function MineMap({
         lng,
         zoneName: zoneFeature?.properties?.zone_name,
         site_id: zoneFeature?.properties?.site_id,
+      })
+      return
+    }
+
+    // 1b. Click on a MOIL mine point: show what the coordinate is and how well
+    // it is established, without disturbing the site/zone selection.
+    const mineFeature = event.features?.find((f) => f.layer.id === MOIL_MINES_LAYER_ID)
+    if (mineFeature) {
+      setMinePopup({
+        coordinates: mineFeature.geometry.coordinates,
+        properties: mineFeature.properties,
       })
       return
     }
@@ -303,7 +348,8 @@ export default function MineMap({
           f.layer.id === RESERVE_ZONES_FILL_LAYER_ID ||
           f.layer.id === CLUSTERS_LAYER_ID ||
           f.layer.id === UNCLUSTERED_POINT_LAYER_ID ||
-          f.layer.id === PROSPECTIVITY_FILL_LAYER_ID
+          f.layer.id === PROSPECTIVITY_FILL_LAYER_ID ||
+          f.layer.id === MOIL_MINES_LAYER_ID
       )
     canvas.style.cursor = overInteractive ? 'pointer' : ''
   }
@@ -337,6 +383,9 @@ export default function MineMap({
 
   const interactiveLayerIds = useMemo(() => {
     const ids = [CLUSTERS_LAYER_ID, UNCLUSTERED_POINT_LAYER_ID]
+    if (minesVisible && moilMines) {
+      ids.push(MOIL_MINES_LAYER_ID)
+    }
     if (prospectivityVisible && reserveZones && !prospectivityData) {
       ids.push(RESERVE_ZONES_FILL_LAYER_ID)
     }
@@ -344,7 +393,7 @@ export default function MineMap({
       ids.push(PROSPECTIVITY_FILL_LAYER_ID)
     }
     return ids
-  }, [prospectivityVisible, reserveZones, prospectivityData])
+  }, [prospectivityVisible, reserveZones, prospectivityData, minesVisible, moilMines])
 
   const [mapError, setMapError] = useState(null)
   const [mapKey, setMapKey] = useState(0)
@@ -524,6 +573,29 @@ export default function MineMap({
           </Source>
         )}
 
+        {/* MOIL mines: the real pits, colored by how well their coordinates are
+            established. Points outside their site's AOI (in_aoi=false) are drawn
+            faded with a dark thin ring -- shown for reference, not included in
+            the box. */}
+        {moilMines && (
+          <Source id={MOIL_MINES_SOURCE_ID} type="geojson" data={moilMines}>
+            <Layer
+              id={MOIL_MINES_LAYER_ID}
+              type="circle"
+              minzoom={MOIL_MINES_MIN_ZOOM}
+              paint={MOIL_MINES_CIRCLE_PAINT}
+              layout={{ visibility: minesVisible ? 'visible' : 'none' }}
+            />
+            <Layer
+              id={MOIL_MINES_LABEL_LAYER_ID}
+              type="symbol"
+              minzoom={MOIL_MINES_MIN_ZOOM + 1}
+              paint={MOIL_MINES_LABEL_PAINT}
+              layout={{ ...MOIL_MINES_LABEL_LAYOUT, visibility: minesVisible ? 'visible' : 'none' }}
+            />
+          </Source>
+        )}
+
         {/* Dissolved band polygons: subtle hairlines and outer edge feather */}
         {prospectivityBands && (
           <Source id={PROSPECTIVITY_BANDS_SOURCE_ID} type="geojson" data={prospectivityBands}>
@@ -634,6 +706,47 @@ export default function MineMap({
               <Activity size={15} />
             </div>
           </Marker>
+        )}
+
+        {/* MOIL mine popup: name, coordinates, positional confidence, and where
+            the coordinate came from -- so a LOW-confidence dot is self-documenting. */}
+        {minePopup && (
+          <Popup
+            longitude={minePopup.coordinates[0]}
+            latitude={minePopup.coordinates[1]}
+            anchor="bottom"
+            offset={[0, -10]}
+            closeButton
+            closeOnClick={false}
+            onClose={() => setMinePopup(null)}
+          >
+            <div className="max-w-[240px] p-1">
+              <p className="font-heading text-sm font-bold text-navy">{minePopup.properties.name}</p>
+              <p className="text-[11px] font-medium text-slate-500">
+                {minePopup.properties.site_name
+                  ? `${minePopup.properties.site_name} AOI`
+                  : 'Not assigned to a site AOI'}
+              </p>
+              <p className="mt-0.5 font-mono text-[10px] text-text-muted">
+                {minePopup.coordinates[1].toFixed(4)}°N, {minePopup.coordinates[0].toFixed(4)}°E
+              </p>
+              <p className="mt-1 text-[11px] text-text-secondary">
+                <span className="font-semibold">Coordinate confidence:</span>{' '}
+                {minePopup.properties.confidence}
+                {!minePopup.properties.in_aoi && ' · excluded from the site box'}
+              </p>
+              {minePopup.properties.source && (
+                <p className="mt-1 text-[10px] leading-snug text-text-muted">
+                  {minePopup.properties.source}
+                </p>
+              )}
+              {minePopup.properties.note && (
+                <p className="mt-1 text-[10px] leading-snug text-text-muted">
+                  {minePopup.properties.note}
+                </p>
+              )}
+            </div>
+          </Popup>
         )}
 
         {/* Selected Site Popup */}

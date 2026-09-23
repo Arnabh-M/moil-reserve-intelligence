@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 
 import generate_features as _gf
-from geo_utils import compute_structural_features, sample_field
+from geo_utils import SITE_AOIS, SITE_BBOXES, compute_structural_features, sample_field
 
 RNG_SEED = 42
 rng = np.random.default_rng(RNG_SEED)
@@ -58,12 +58,17 @@ OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ---------------------------------------------------------------------
-# Shared site config — kept consistent with seed_graph.cypher
+# Shared site config — site IDs kept consistent with seed_graph.cypher.
+# Boxes and target_output come from data/moil_sites.json via geo_utils, so
+# this file cannot drift from the DB, the pipelines or the map.
 # ---------------------------------------------------------------------
 SITES = {
-    "balaghat": {"target_output": 1200, "lat_range": (21.7, 22.0), "lon_range": (80.1, 80.4)},
-    "nagpur":   {"target_output": 900,  "lat_range": (21.0, 21.3), "lon_range": (79.0, 79.3)},
-    "bhandara": {"target_output": 700,  "lat_range": (21.1, 21.4), "lon_range": (79.5, 79.8)},
+    key: {
+        "target_output": SITE_AOIS[key]["target_output"],
+        "lat_range": box["lat_range"],
+        "lon_range": box["lon_range"],
+    }
+    for key, box in SITE_BBOXES.items()
 }
 SITE_IDS = list(SITES.keys())
 

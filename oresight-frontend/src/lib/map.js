@@ -1,5 +1,15 @@
 // Map configuration for the MOIL manganese belt (P4 Day 1).
 
+// THE site definition. `moil_sites.json` is a generated, byte-identical copy of
+// the repo-root data/moil_sites.json that geo_utils, generate_datasets,
+// app/seed_dev (the DB `sites.geom`) and the GEE/prospectivity pipelines all
+// read. Regenerate all copies with `python -m scripts.build_site_aois`;
+// `--check` fails if they have drifted. Nothing in the frontend should
+// hardcode a site box, centre or the combined extent again.
+import moilSites from './moil_sites.json'
+
+export const MOIL_SITES = moilSites
+
 // Muted, low-saturation basemap so semi-transparent data overlays (NDVI,
 // spectral alteration, reserve confidence) stay legible against it — a
 // bright/colorful basemap competes with the data layers drawn on top of it.
@@ -29,17 +39,32 @@ export const MAP_ATTRIBUTION = {
 
 export const MAP_ZOOM = 8.2
 
-// 3-Area Regional Extent derived from the actual combined bounds of Balaghat, Nagpur, and Bhandara
+// Combined extent of the three AOIs, as [[W, S], [E, N]].
+const [COMBINED_W, COMBINED_S, COMBINED_E, COMBINED_N] = MOIL_SITES.combined_bbox
+
+// 3-Area Regional Extent — the real combined bounds of Balaghat, Nagpur and Bhandara
 export const REGIONAL_BOUNDS = [
-  [79.0085, 21.0691], // Southwest [lng, lat] (Nagpur SW)
-  [80.2810, 21.8910], // Northeast [lng, lat] (Balaghat NE)
+  [COMBINED_W, COMBINED_S], // Southwest [lng, lat]
+  [COMBINED_E, COMBINED_N], // Northeast [lng, lat]
 ]
 
 // Geographic midpoint of the 3 operational areas
 export const MAP_CENTER = {
-  latitude: 21.48,
-  longitude: 79.645,
+  latitude: (COMBINED_S + COMBINED_N) / 2,
+  longitude: (COMBINED_W + COMBINED_E) / 2,
 }
+
+// The four corners of the combined extent, in the [NW, NE, SE, SW] order
+// MapLibre image sources want. Every raster overlay is rendered over exactly
+// this extent (gis/generate_tiles.py uses geo_utils.COMBINED_BBOX, which is
+// the same `combined_bbox`), so they share one definition here — a raster
+// whose corners disagree with its PNG shifts silently, with no error.
+export const RASTER_OVERLAY_COORDINATES = [
+  [COMBINED_W, COMBINED_N],
+  [COMBINED_E, COMBINED_N],
+  [COMBINED_E, COMBINED_S],
+  [COMBINED_W, COMBINED_S],
+]
 
 // `id` matches the real numeric /sites id (stable across this deployment);
 // `slug` is only for the static per-site prospectivity GeoJSON filenames
@@ -47,47 +72,27 @@ export const MAP_CENTER = {
 // used to be the same string ('balaghat' etc. as `id`), disconnected from
 // the numeric site_id every other API response uses -- callers had to
 // dual-check both forms wherever a selected site crossed into map filtering.
-export const SAMPLE_SITES = [
-  {
-    id: 1,
-    slug: 'balaghat',
-    name: 'Balaghat',
-    latitude: 21.8,
-    longitude: 80.2,
-    bounds: [
-      [80.0988, 21.7095],
-      [80.2810, 21.8910],
-    ],
-  },
-  {
-    id: 2,
-    slug: 'nagpur',
-    name: 'Nagpur',
-    latitude: 21.1,
-    longitude: 79.1,
-    bounds: [
-      [79.0085, 21.0691],
-      [79.1715, 21.2314],
-    ],
-  },
-  {
-    id: 3,
-    slug: 'bhandara',
-    name: 'Bhandara',
-    latitude: 21.2,
-    longitude: 79.6,
-    bounds: [
-      [79.5791, 21.0993],
-      [79.7210, 21.2405],
-    ],
-  },
-]
+//
+// latitude/longitude are the AOI centre, matching `sites.centroid` in the DB;
+// bounds are the AOI itself, matching `sites.geom`.
+export const SAMPLE_SITES = MOIL_SITES.sites.map((site) => ({
+  id: site.db_id,
+  slug: site.key,
+  name: site.name,
+  latitude: (site.bbox.min_lat + site.bbox.max_lat) / 2,
+  longitude: (site.bbox.min_lon + site.bbox.max_lon) / 2,
+  bounds: [
+    [site.bbox.min_lon, site.bbox.min_lat],
+    [site.bbox.max_lon, site.bbox.max_lat],
+  ],
+}))
 
 export const MAP_LAYERS = [
   { id: 'prospectivity', label: 'Prospectivity Heatmap' },
   { id: 'spectral', label: 'Spectral Alteration' },
   { id: 'lineament', label: 'Structural Lineament' },
   { id: 'ndvi', label: 'NDVI Time-Series' },
+  { id: 'mines', label: 'MOIL Mines' },
 ]
 
 export const RESERVE_ZONES_SOURCE_ID = 'reserve-zones'
@@ -113,6 +118,76 @@ export const RESERVE_ZONE_FILL_PAINT = {
   ],
   'fill-opacity': 0.65,
 }
+
+// ---------------------------------------------------------------------------
+// MOIL mines point layer — the actual pits each AOI was built around.
+// /moil_mines.geojson is generated from data/moil_sites.json by
+// `python -m scripts.build_site_aois`; do not edit it by hand.
+// ---------------------------------------------------------------------------
+export const MOIL_MINES_URL = '/moil_mines.geojson'
+export const MOIL_MINES_SOURCE_ID = 'moil-mines'
+export const MOIL_MINES_LAYER_ID = 'moil-mines-points'
+export const MOIL_MINES_LABEL_LAYER_ID = 'moil-mines-labels'
+
+// Positional confidence of each mine's coordinates. Extends the existing
+// CONFIDENCE_COLOR_RAMP semantic (red = least certain, green = most) so the
+// mine dots read as the same system as the reserve-zone fill.
+export const MINE_CONFIDENCE_COLORS = {
+  high: '#1a6b3c',
+  'medium-high': CONFIDENCE_COLOR_RAMP.high,
+  medium: CONFIDENCE_COLOR_RAMP.mid,
+  'low-medium': '#d4923f',
+  low: CONFIDENCE_COLOR_RAMP.low,
+}
+
+export const MOIL_MINES_CIRCLE_PAINT = {
+  'circle-color': [
+    'match',
+    ['get', 'confidence'],
+    'high', MINE_CONFIDENCE_COLORS.high,
+    'medium-high', MINE_CONFIDENCE_COLORS['medium-high'],
+    'medium', MINE_CONFIDENCE_COLORS.medium,
+    'low-medium', MINE_CONFIDENCE_COLORS['low-medium'],
+    'low', MINE_CONFIDENCE_COLORS.low,
+    MINE_CONFIDENCE_COLORS.low,
+  ],
+  'circle-radius': [
+    'interpolate', ['linear'], ['zoom'],
+    7, ['match', ['get', 'confidence'], 'high', 4.5, 'medium-high', 4, 'medium', 3.5, 3],
+    12, ['match', ['get', 'confidence'], 'high', 9, 'medium-high', 8.5, 'medium', 8, 7],
+  ],
+  // Lower-confidence coordinates render softer, so a dot you should not trust
+  // to the metre does not look as solid as an OSM-verified pit.
+  'circle-opacity': [
+    'match', ['get', 'confidence'],
+    'high', 1, 'medium-high', 0.95, 'medium', 0.9, 'low-medium', 0.8, 0.7,
+  ],
+  // Stroke carries inclusion, not confidence: a white ring means the mine is
+  // inside its site's AOI, a pale dashed-looking thin ring means it was left
+  // out (Gumgaon, Tirodi) and is shown for reference only.
+  'circle-stroke-color': ['case', ['get', 'in_aoi'], '#ffffff', '#1a1815'],
+  'circle-stroke-width': ['case', ['get', 'in_aoi'], 1.5, 1],
+  'circle-stroke-opacity': ['case', ['get', 'in_aoi'], 1, 0.45],
+}
+
+export const MOIL_MINES_LABEL_LAYOUT = {
+  'text-field': ['get', 'name'],
+  'text-size': ['interpolate', ['linear'], ['zoom'], 8, 10, 12, 13],
+  'text-offset': [0, 1.1],
+  'text-anchor': 'top',
+  'text-allow-overlap': false,
+}
+
+export const MOIL_MINES_LABEL_PAINT = {
+  'text-color': '#1a1815',
+  'text-halo-color': 'rgba(255,255,255,0.9)',
+  'text-halo-width': 1.4,
+  'text-opacity': ['case', ['get', 'in_aoi'], 1, 0.6],
+}
+
+// Below this zoom the belt-wide view puts the Nagpur cluster's three mines
+// within a few pixels of each other; labels are unreadable and the dots merge.
+export const MOIL_MINES_MIN_ZOOM = 7
 
 // P4 Day 4: Structural Lineament Layer Configuration
 export const STRUCTURAL_LINES_SOURCE_ID = 'structural-lines'
@@ -264,12 +339,7 @@ export const SPECTRAL_LAYER_CONFIG = {
   layerId: 'spectral-alteration-layer',
   url: '/tiles/iron_oxide_latest.png',
   date: '2026-09-22',
-  coordinates: [
-    [79.0, 22.0],
-    [80.4, 22.0],
-    [80.4, 21.0],
-    [79.0, 21.0],
-  ],
+  coordinates: RASTER_OVERLAY_COORDINATES,
 }
 
 export const NDVI_TIMESERIES_CONFIG = [
@@ -281,12 +351,7 @@ export const NDVI_TIMESERIES_CONFIG = [
     window_start: '2026-08-25',
     window_end: '2026-09-01',
     url: '/tiles/ndvi_week_1.png',
-    coordinates: [
-      [79.0, 22.0],
-      [80.4, 22.0],
-      [80.4, 21.0],
-      [79.0, 21.0],
-    ],
+    coordinates: RASTER_OVERLAY_COORDINATES,
   },
   {
     week_index: 2,
@@ -296,12 +361,7 @@ export const NDVI_TIMESERIES_CONFIG = [
     window_start: '2026-09-01',
     window_end: '2026-09-08',
     url: '/tiles/ndvi_week_2.png',
-    coordinates: [
-      [79.0, 22.0],
-      [80.4, 22.0],
-      [80.4, 21.0],
-      [79.0, 21.0],
-    ],
+    coordinates: RASTER_OVERLAY_COORDINATES,
   },
   {
     week_index: 3,
@@ -311,12 +371,7 @@ export const NDVI_TIMESERIES_CONFIG = [
     window_start: '2026-09-08',
     window_end: '2026-09-15',
     url: '/tiles/ndvi_week_3.png',
-    coordinates: [
-      [79.0, 22.0],
-      [80.4, 22.0],
-      [80.4, 21.0],
-      [79.0, 21.0],
-    ],
+    coordinates: RASTER_OVERLAY_COORDINATES,
   },
   {
     week_index: 4,
@@ -326,11 +381,6 @@ export const NDVI_TIMESERIES_CONFIG = [
     window_start: '2026-09-15',
     window_end: '2026-09-22',
     url: '/tiles/ndvi_week_4.png',
-    coordinates: [
-      [79.0, 22.0],
-      [80.4, 22.0],
-      [80.4, 21.0],
-      [79.0, 21.0],
-    ],
+    coordinates: RASTER_OVERLAY_COORDINATES,
   },
 ]

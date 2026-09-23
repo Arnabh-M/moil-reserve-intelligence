@@ -1,14 +1,47 @@
 {
   "pipeline": "MOIL Reserve Intelligence \u2014 Site Daily Climate & Satellite Exporter",
   "script_version": "1.0.0",
-  "generated_at": "2026-09-23T02:42:34.718760+00:00",
+  "generated_at": "2026-09-23T11:42:39.483501+00:00",
   "start": "2025-01-01",
-  "end": "2026-09-22",
+  "end": "2026-09-23",
   "simulated": false,
   "geometry_source": {
-    "balaghat": "bbox",
-    "nagpur": "bbox",
-    "bhandara": "bbox"
+    "balaghat": {
+      "source": "db_polygon",
+      "db_site_id": 1,
+      "bounds_wsen": [
+        80.178988,
+        21.804981,
+        80.515012,
+        22.016019
+      ],
+      "area_km2": 810.79,
+      "moil_sites_sha256_12": "efa9739f2326"
+    },
+    "nagpur": {
+      "source": "db_polygon",
+      "db_site_id": 2,
+      "bounds_wsen": [
+        79.217755,
+        21.352881,
+        79.327745,
+        21.465719
+      ],
+      "area_km2": 142.48,
+      "moil_sites_sha256_12": "efa9739f2326"
+    },
+    "bhandara": {
+      "source": "db_polygon",
+      "db_site_id": 3,
+      "bounds_wsen": [
+        79.645712,
+        21.486481,
+        79.800588,
+        21.595419
+      ],
+      "area_km2": 193.45,
+      "moil_sites_sha256_12": "efa9739f2326"
+    }
   },
   "products": {
     "rainfall": {
@@ -16,16 +49,16 @@
       "band": "precipitation",
       "scale_m": 5566,
       "units": "mm/day",
-      "latest_valid_date": "2026-09-21",
-      "valid_day_count": 1887
+      "latest_valid_date": "2026-09-22",
+      "valid_day_count": 1890
     },
     "soil_moisture": {
       "dataset_id": "NASA/SMAP/SPL4SMGP/008",
       "band": "sm_surface",
       "scale_m": 9000,
       "units": "m3/m3",
-      "latest_valid_date": "2026-09-18",
-      "valid_day_count": 1878
+      "latest_valid_date": "2026-09-19",
+      "valid_day_count": 1881
     },
     "lst": {
       "dataset_id": "MODIS/061/MOD11A1",
@@ -33,7 +66,7 @@
       "scale_m": 1000,
       "units": "deg_c",
       "latest_valid_date": "2026-09-20",
-      "valid_day_count": 881
+      "valid_day_count": 853
     },
     "ndvi": {
       "dataset_id": "COPERNICUS/S2_SR_HARMONIZED",
@@ -41,19 +74,10 @@
       "scale_m": 30,
       "units": "unitless [-1, 1]",
       "latest_valid_date": "2026-09-22",
-      "valid_day_count": 1630,
+      "valid_day_count": 1560,
       "composite_days": 10,
       "method": "10-day cloud-masked (SCL) median composite; one reduceRegion(mean) per window, not per image",
-      "min_valid_pixel_fraction": 0.1,
-      "last_ndvi_only_update": {
-        "start": "2025-01-01",
-        "end": "2026-09-22",
-        "sites": [
-          "balaghat",
-          "nagpur",
-          "bhandara"
-        ]
-      }
+      "min_valid_pixel_fraction": 0.1
     }
   },
   "columns": [

@@ -65,7 +65,7 @@ Outputs written:
 - `data/satellite_daily_features.meta.json`
 
 ### Sentinel-2 Raster Preparation (`gee_prep.py`)
-Generates georeferenced GeoTIFFs and MapLibre browser tiles across `geo_utils.COMBINED_BBOX` (`[79.0, 21.0, 80.4, 22.0]`):
+Generates georeferenced GeoTIFFs and MapLibre browser tiles across `geo_utils.COMBINED_BBOX` — the combined extent of the three site AOIs, read from `data/moil_sites.json` (currently `[79.2178, 21.3529, 80.5150, 22.0160]`):
 ```bash
 # Live run:
 python gee_pipeline/gee_prep.py --scale 250

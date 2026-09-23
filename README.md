@@ -625,8 +625,9 @@ Set `VITE_API_BASE_URL` (default `http://localhost:8000`) or `VITE_USE_MOCK=true
 ### 5️⃣ ML Pipeline (hard dependency chain — run in order)
 ```bash
 pip install -r requirements.txt       # root env
+python -m scripts.build_site_aois     # Site AOIs — run first, see below
 python generate_datasets.py
-python generate_features.py           # Part 1 — features
+python generate_features.py           # Part 1 — features + structural_lines.geojson
 python train_reserve_classifier.py    # Part 2 — classifier
 python build_confidence_surface.py    # Part 3 — kriging
 python export_reserve_zones.py        # Part 4 — GeoJSON
@@ -674,6 +675,50 @@ driver.close()
 | `VITE_API_BASE_URL` | `http://localhost:8000` | Frontend → API base |
 | `VITE_USE_MOCK` | `false` | Offline mock-data mode |
 
+### Site AOIs — one definition, everywhere
+
+`data/moil_sites.json` is **the** definition of where the three sites are: each
+site's MOIL mines (with coordinates, positional confidence and provenance) and
+the AOI box, which is the bounding box of that site's included mines plus a
+**5 km** buffer on every side.
+
+| Site | Mines in the AOI | Box | Size |
+|---|---|---|---|
+| `balaghat` | Bharveli, Ukwa | 21.8050–22.0160 N, 80.1790–80.5150 E | 34.7 × 23.3 km |
+| `nagpur` | Kandri, Munsar, Beldongri | 21.3529–21.4657 N, 79.2178–79.3277 E | 11.4 × 12.5 km |
+| `bhandara` | Chikla, Sitapatore, Dongri Buzurg | 21.4865–21.5954 N, 79.6457–79.8006 E | 16.0 × 12.1 km |
+
+Gumgaon (low-confidence coordinates) and Tirodi (~55 km west of Bharveli, in a
+different belt) are listed in the file but **excluded** from every box. They
+still render on the **MOIL Mines** map layer as faded, dark-ringed markers.
+
+Everything reads that one file:
+
+- `geo_utils.SITE_BBOXES` / `COMBINED_BBOX` / `SITE_AOIS` / `MINES`
+- `generate_datasets.py`, `generate_features.py`, `build_confidence_surface.py`,
+  `export_reserve_zones.py`, `gis/*`, `gee_pipeline/*`
+- `oresight-backend/app/seed_dev.py` → `sites.geom` and `sites.centroid` in Postgres
+- `oresight-frontend/src/lib/map.js` → site bounds, map centre, raster overlay
+  corners, the mines layer
+
+```bash
+python -m scripts.build_site_aois            # regenerate every copy
+python -m scripts.build_site_aois --check    # fail if any copy has drifted
+```
+
+The generated copies are `oresight-backend/app/data/moil_sites.json`,
+`oresight-frontend/src/lib/moil_sites.json` (byte-identical) and
+`oresight-frontend/public/moil_mines.geojson` (derived). `pytest
+tests/test_site_aoi_sync.py` in the backend asserts they are in sync, that each
+box really is its mines plus the buffer, that no two AOIs overlap, and that
+every reserve-zone block lands inside its site.
+
+**No fallback boxes.** If a pipeline cannot reach Postgres it now fails with an
+actionable message instead of silently switching to a different rectangle. Pass
+`--geometry-source=file` to `gee_pipeline/export_site_daily_climate.py`, or call
+`prospectivity.training_data.site_geometries_from_file()`, to use the JSON
+deliberately — that returns the same AOIs the DB was seeded with.
+
 ### ID Conventions (shared across graph, CSVs, and DB)
 - **Site IDs:** `balaghat`, `nagpur`, `bhandara` — used as `MineSite.id` and `site_id` everywhere
 - **Equipment IDs:** `eq_<site>_<01-05>` (e.g. `eq_bal_01`) — identical between Neo4j `Equipment.id` and `equipment_id` in `equipment_downtime_log.csv`
@@ -686,17 +731,24 @@ driver.close()
 
 | Model | AUC-ROC | Precision | Recall | F1 |
 |---|---|---|---|---|
-| **RandomForest (selected)** | **0.875** | **0.800** | **1.000** | **0.889** |
-| XGBoost | 0.875 | 0.750 | 0.750 | 0.750 |
+| **RandomForest (selected)** | **0.625** | **0.667** | **1.000** | **0.800** |
+| XGBoost | 0.625 | 0.600 | 0.750 | 0.667 |
 
-Because an 8-point test fold is coarse, the result was further validated:
+> Measured after the site AOIs moved onto the real MOIL mines. The 40 labelled
+> points are drawn inside the site boxes, so new boxes mean a new sample: this
+> is a different draw, not a degraded model. The previous numbers on the old
+> (mis-placed) boxes were RF/XGB AUC 0.875. An 8-point test fold moves by 0.125
+> per point, so neither figure should be read as a precise estimate.
 
 | Check | Result |
 |---|---|
-| 5-fold stratified CV × 3 seeds | RF mean AUC **0.773** · XGBoost **0.715** |
-| Label-shuffle permutation test | Real 0.773 vs shuffled null mean 0.49 / p95 0.71 → **p = 0.005** |
-| Feature importance | `dist_to_nearest_structure` dominates (~0.45) |
-| Point-biserial correlation | `dist_to_nearest_structure` r = −0.57 (p = 0.0001) · `structural_density` r = +0.58 (p = 0.0001) |
+| Feature importance | `dist_to_nearest_structure` dominates (RF 0.37, XGB 0.63) |
+
+> **Stale — needs re-running on the current AOIs.** The 5-fold CV (RF 0.773 /
+> XGB 0.715), label-shuffle permutation test (p = 0.005) and point-biserial
+> correlations previously quoted here were measured on the old boxes, and the
+> one-off script that produced them is not in the repo. They have been removed
+> rather than left standing as if they described the shipped model.
 
 ---
 

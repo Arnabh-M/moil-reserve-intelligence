@@ -18,6 +18,7 @@ MOIL Reserve Intelligence (SIH26009) — Part 1: Feature Engineering
 Run: python generate_features.py
 """
 
+import json
 import os
 
 import numpy as np
@@ -38,6 +39,10 @@ rng = np.random.default_rng(RNG_SEED)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 MODELS_DIR = os.path.join(BASE_DIR, "models")
+# The map fetches /structural_lines.geojson from here. It used to be a manual
+# export with no script behind it, so it silently went stale every time the
+# lineaments were regenerated; main() now writes it alongside the CSV.
+FRONTEND_PUBLIC_DIR = os.path.join(BASE_DIR, "oresight-frontend", "public")
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(MODELS_DIR, exist_ok=True)
 
@@ -53,6 +58,9 @@ SITE_STRIKES = {
     "nagpur":   {"dominant": 150, "secondary": 60, "dominant_weight": 0.75},
     "bhandara": {"dominant": 20, "secondary": 100, "dominant_weight": 0.7},
 }
+# Used if data/moil_sites.json ever gains a site with no entry above, so a new
+# AOI produces isotropic-ish lineaments instead of a KeyError.
+DEFAULT_STRIKE = {"dominant": 45, "secondary": 135, "dominant_weight": 0.5}
 
 
 def sample_azimuth(strike_cfg, n):
@@ -78,7 +86,7 @@ def generate_structural_lines():
 
         center_lats = rng.uniform(lat_lo, lat_hi, n_lines)
         center_lons = rng.uniform(lon_lo, lon_hi, n_lines)
-        azimuths_deg = sample_azimuth(SITE_STRIKES[site_id], n_lines)
+        azimuths_deg = sample_azimuth(SITE_STRIKES.get(site_id, DEFAULT_STRIKE), n_lines)
         lengths_m = rng.uniform(500, 3000, n_lines)
         types = rng.choice(STRUCTURE_TYPES, size=n_lines, p=[0.4, 0.35, 0.25])
 
@@ -111,6 +119,36 @@ def generate_structural_lines():
     path = os.path.join(DATA_DIR, "structural_lines.csv")
     df.to_csv(path, index=False)
     return df
+
+
+def export_structural_lines_geojson(lines_df, out_path=None):
+    """Write the lineaments the frontend renders, from the same DataFrame that
+    produced data/structural_lines.csv."""
+    out_path = out_path or os.path.join(FRONTEND_PUBLIC_DIR, "structural_lines.geojson")
+    features = [
+        {
+            "type": "Feature",
+            "properties": {
+                "line_id": row.line_id,
+                "site_id": row.site_id,
+                "structure_type": row.structure_type,
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [row.start_lon, row.start_lat],
+                    [row.end_lon, row.end_lat],
+                ],
+            },
+        }
+        for row in lines_df.itertuples(index=False)
+    ]
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump({"type": "FeatureCollection", "features": features}, f, indent=2)
+        f.write("\n")
+    return out_path
 
 
 def build_and_save_fields():
@@ -157,6 +195,9 @@ def main():
     print(lines_df["site_id"].value_counts().to_string())
     print("structure_type counts:")
     print(lines_df["structure_type"].value_counts().to_string())
+
+    geojson_path = export_structural_lines_geojson(lines_df)
+    print(f"[structural_lines.geojson] {len(lines_df)} features -> {geojson_path}")
 
     ndvi_field, elevation_field = build_and_save_fields()
     print("\nSaved random-field interpolators: models/ndvi_field.pkl, models/elevation_field.pkl")

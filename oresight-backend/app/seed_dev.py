@@ -8,11 +8,13 @@ key, so running this twice never creates duplicates. Run with:
 
 from __future__ import annotations
 
+import json
 import random
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
 from geoalchemy2.elements import WKTElement
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db import SessionLocal
@@ -28,46 +30,88 @@ from app.models import (
 
 random.seed(2026)  # deterministic across re-runs
 
-SITE_SPECS = [
-    {
-        "name": "Balaghat",
-        "belt_name": "Balaghat Manganese Belt",
-        "district": "Balaghat",
-        "state": "Madhya Pradesh",
-        "lat": 21.80,
-        "lon": 80.19,
-        "half_deg": 0.09,
-        "base_output": 1250.0,
-    },
-    {
-        "name": "Nagpur",
-        "belt_name": "Nagpur-Bhandara Manganese Belt",
-        "district": "Nagpur",
-        "state": "Maharashtra",
-        "lat": 21.15,
-        "lon": 79.09,
-        "half_deg": 0.08,
-        "base_output": 950.0,
-    },
-    {
-        "name": "Bhandara",
-        "belt_name": "Nagpur-Bhandara Manganese Belt",
-        "district": "Bhandara",
-        "state": "Maharashtra",
-        "lat": 21.17,
-        "lon": 79.65,
-        "half_deg": 0.07,
-        "base_output": 800.0,
-    },
-]
+# The three site AOIs are NOT defined here. They come from the canonical
+# data/moil_sites.json (copied to app/data/moil_sites.json by
+# `python -m scripts.build_site_aois`), which is also what geo_utils,
+# generate_datasets, the GEE/prospectivity pipelines and the frontend read.
+# There is deliberately no fallback: seeding the DB with a box that differs
+# from everything else is the failure this file was restructured to remove.
+SITES_JSON_PATH = Path(__file__).resolve().parent / "data" / "moil_sites.json"
+
+
+def _load_site_specs() -> list[dict]:
+    with SITES_JSON_PATH.open(encoding="utf-8") as f:
+        doc = json.load(f)
+
+    specs = []
+    for site in doc["sites"]:
+        bbox = site["bbox"]
+        specs.append(
+            {
+                "key": site["key"],
+                "name": site["name"],
+                "belt_name": site["belt_name"],
+                "district": site["district"],
+                "state": site["state"],
+                "min_lat": bbox["min_lat"],
+                "max_lat": bbox["max_lat"],
+                "min_lon": bbox["min_lon"],
+                "max_lon": bbox["max_lon"],
+                # Box centre, kept as `lat`/`lon` because that is what
+                # `sites.centroid` and every existing caller expects.
+                "lat": (bbox["min_lat"] + bbox["max_lat"]) / 2,
+                "lon": (bbox["min_lon"] + bbox["max_lon"]) / 2,
+                "base_output": site["base_output"],
+            }
+        )
+    return specs
+
+
+SITE_SPECS = _load_site_specs()
+
+# Reserve-zone blocks are placed as a FRACTION of each site's half-extent, not
+# as a fixed number of degrees. The AOIs are now real rectangles of different
+# sizes (Balaghat is ~35 x 23 km, Nagpur ~11 x 12 km), so the old fixed
+# +/-0.035 deg offset with a 0.025 deg half-width pushed blocks outside the
+# smaller boxes entirely. With offset 0.50 and half-extent 0.24, every block
+# reaches at most 0.74 of the way to its site's edge and no two blocks
+# overlap, at any box size.
+ZONE_OFFSET_FRAC = 0.50
+ZONE_HALF_FRAC = 0.24
 
 ZONE_TEMPLATES = [
-    {"suffix": "North Block", "dx": 0.0, "dy": 0.035, "confidence": 0.88, "grade": 38.5, "depth": 42.0},
-    {"suffix": "South Block", "dx": 0.0, "dy": -0.035, "confidence": 0.42, "grade": 21.5, "depth": 81.0},
-    {"suffix": "East Block", "dx": 0.035, "dy": 0.0, "confidence": 0.63, "grade": 29.4, "depth": 60.0},
-    {"suffix": "West Block", "dx": -0.035, "dy": 0.0, "confidence": 0.75, "grade": 33.2, "depth": 52.0},
+    {"suffix": "North Block", "fx": 0.0, "fy": 1.0, "confidence": 0.88, "grade": 38.5, "depth": 42.0},
+    {"suffix": "South Block", "fx": 0.0, "fy": -1.0, "confidence": 0.42, "grade": 21.5, "depth": 81.0},
+    {"suffix": "East Block", "fx": 1.0, "fy": 0.0, "confidence": 0.63, "grade": 29.4, "depth": 60.0},
+    {"suffix": "West Block", "fx": -1.0, "fy": 0.0, "confidence": 0.75, "grade": 33.2, "depth": 52.0},
 ]
-ZONE_HALF_DEG = 0.025
+
+
+def site_half_extent(spec: dict) -> tuple[float, float]:
+    """(half_lon_deg, half_lat_deg) of a site's AOI rectangle."""
+    return (
+        (spec["max_lon"] - spec["min_lon"]) / 2.0,
+        (spec["max_lat"] - spec["min_lat"]) / 2.0,
+    )
+
+
+def zone_centroid(spec: dict, template: dict) -> tuple[float, float]:
+    """(lon, lat) centre of one reserve-zone block within a site's AOI."""
+    half_lon, half_lat = site_half_extent(spec)
+    return (
+        spec["lon"] + template["fx"] * ZONE_OFFSET_FRAC * half_lon,
+        spec["lat"] + template["fy"] * ZONE_OFFSET_FRAC * half_lat,
+    )
+
+
+def zone_bbox(spec: dict, template: dict) -> tuple[float, float, float, float]:
+    """(min_lon, min_lat, max_lon, max_lat) of one reserve-zone block."""
+    half_lon, half_lat = site_half_extent(spec)
+    zone_lon, zone_lat = zone_centroid(spec, template)
+    dx = ZONE_HALF_FRAC * half_lon
+    dy = ZONE_HALF_FRAC * half_lat
+    return (zone_lon - dx, zone_lat - dy, zone_lon + dx, zone_lat + dy)
+
 
 EQUIPMENT_TEMPLATES = [
     {"prefix": "Excavator", "code": "EX", "equipment_type": "Excavator"},
@@ -148,13 +192,17 @@ RISK_EVENT_SPECS = [
 ]
 
 
-def _box_polygon(lon: float, lat: float, half_deg: float) -> WKTElement:
+def _bbox_polygon(
+    min_lon: float, min_lat: float, max_lon: float, max_lat: float
+) -> WKTElement:
+    """Rectangle from explicit bounds. The AOIs are rectangles, not squares --
+    a single `half_deg` cannot express a 35 x 23 km box."""
     ring = (
-        f"{lon - half_deg} {lat - half_deg}, "
-        f"{lon + half_deg} {lat - half_deg}, "
-        f"{lon + half_deg} {lat + half_deg}, "
-        f"{lon - half_deg} {lat + half_deg}, "
-        f"{lon - half_deg} {lat - half_deg}"
+        f"{min_lon} {min_lat}, "
+        f"{max_lon} {min_lat}, "
+        f"{max_lon} {max_lat}, "
+        f"{min_lon} {max_lat}, "
+        f"{min_lon} {min_lat}"
     )
     return WKTElement(f"POLYGON(({ring}))", srid=4326)
 
@@ -163,9 +211,39 @@ def _point(lon: float, lat: float) -> WKTElement:
     return WKTElement(f"POINT({lon} {lat})", srid=4326)
 
 
+def _geom_matches(session: Session, stored, expected: WKTElement) -> bool:
+    """True if a stored geometry is the same shape as the one the spec wants.
+
+    Compared with ST_Equals in the database rather than by WKT string: PostGIS
+    renders coordinates its own way, so a text comparison would report a
+    difference on every run and rewrite geometry that is already correct.
+    """
+    if stored is None:
+        return False
+    return bool(session.scalar(select(func.ST_Equals(stored, expected))))
+
+
 def _get_or_create_site(session: Session, spec: dict) -> tuple[Site, bool]:
     existing = session.scalar(select(Site).where(Site.name == spec["name"]))
     if existing is not None:
+        # Skip-if-exists applies to the ROW, not to its geometry. The AOI is
+        # defined in data/moil_sites.json, so if the stored polygon no longer
+        # matches that file the row is stale and gets rewritten. Without this,
+        # re-seeding an existing DB after the AOIs move leaves Postgres holding
+        # the old boxes forever while every other consumer has the new ones —
+        # a silent fourth copy of the site definition.
+        geom = _bbox_polygon(
+            spec["min_lon"], spec["min_lat"], spec["max_lon"], spec["max_lat"]
+        )
+        centroid = _point(spec["lon"], spec["lat"])
+        if not _geom_matches(session, existing.geom, geom):
+            print(
+                f"  [seed_dev] {spec['name']}: AOI polygon differs from "
+                f"moil_sites.json — updating sites.geom and sites.centroid"
+            )
+            existing.geom = geom
+            existing.centroid = centroid
+            session.flush()
         return existing, False
 
     site = Site(
@@ -173,7 +251,9 @@ def _get_or_create_site(session: Session, spec: dict) -> tuple[Site, bool]:
         belt_name=spec["belt_name"],
         district=spec["district"],
         state=spec["state"],
-        geom=_box_polygon(spec["lon"], spec["lat"], spec["half_deg"]),
+        geom=_bbox_polygon(
+            spec["min_lon"], spec["min_lat"], spec["max_lon"], spec["max_lat"]
+        ),
         centroid=_point(spec["lon"], spec["lat"]),
     )
     session.add(site)
@@ -191,6 +271,18 @@ def _seed_reserve_zones(session: Session, site: Site, spec: dict) -> int:
             )
         )
         if existing is not None:
+            # Same rule as the site row above: the block's POSITION is derived
+            # from the site's AOI, so a stale polygon is rewritten. Its
+            # confidence/grade/depth are NOT touched here — those are owned
+            # downstream by import_p2_data and import_prospectivity_scores.
+            zone_geom = _bbox_polygon(*zone_bbox(spec, template))
+            if not _geom_matches(session, existing.geom, zone_geom):
+                print(
+                    f"  [seed_dev] {zone_name}: block position differs from the "
+                    f"site AOI — updating reserve_zones.geom"
+                )
+                existing.geom = zone_geom
+                session.flush()
             continue
 
         # Small deterministic per-site, per-zone spread so no two sites look identical.
@@ -198,14 +290,11 @@ def _seed_reserve_zones(session: Session, site: Site, spec: dict) -> int:
         site_offset = (i - 1) * 0.02 + site_index * 0.015
         confidence = min(0.92, max(0.35, template["confidence"] + site_offset * 0.1))
 
-        zone_lon = spec["lon"] + template["dx"]
-        zone_lat = spec["lat"] + template["dy"]
-
         session.add(
             ReserveZone(
                 site_id=site.id,
                 zone_name=zone_name,
-                geom=_box_polygon(zone_lon, zone_lat, ZONE_HALF_DEG),
+                geom=_bbox_polygon(*zone_bbox(spec, template)),
                 confidence_score=round(confidence, 2),
                 estimated_grade_pct=round(template["grade"] + site_offset, 1),
                 estimated_depth_m=round(template["depth"] + site_offset * 10, 1),

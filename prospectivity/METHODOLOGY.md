@@ -144,13 +144,19 @@ cells, so the click-detail panel still shows real per-cell values. Use
 
 ## 4. What IS real and verified
 
-- Site boundary polygons retrieved from PostGIS (Balaghat 371.0 km², Nagpur
-  294.4 km², Bhandara 225.4 km²).
+- Site boundary polygons retrieved from PostGIS (Balaghat 810.8 km², Nagpur
+  142.5 km², Bhandara 193.5 km²). These are the AOIs defined in
+  `data/moil_sites.json`: each one is the bounding box of that site's MOIL
+  mines plus a 5 km buffer, and PostGIS is seeded from the same file, so the
+  polygon here and the box on the map cannot differ. (Before that change the
+  areas were 371.0 / 294.4 / 225.4 km², boxes centred on Nagpur city and
+  Bhandara town that contained none of the mines they were named after.)
 - Per-site grids at a fixed 100 m cell size, dimensions derived from real
-  extents: **188×201**, **169×180**, **147×157** — all distinct, confirming the
-  grid is not forced to a uniform count. (The previous implementation used a
-  fixed 100×100 grid over the *combined* bbox, giving ~1460×1120 m non-square
-  cells — ~14× coarser, and the cause of the blurry map.)
+  extents — all distinct, confirming the grid is not forced to a uniform
+  count. Run `python -m prospectivity.grid` to print the current dimensions;
+  they change whenever an AOI does. (The previous implementation used a fixed
+  100×100 grid over the *combined* bbox, giving ~1460×1120 m non-square cells
+  — ~14× coarser, and the cause of the blurry map.)
 - UTM projection, cell geometry, kriging (with IDW fallback), Jenks
   classification, the majority-agreement gate, GeoJSON validation.
 - The entire Part 7 rendering path, browser-verified.
