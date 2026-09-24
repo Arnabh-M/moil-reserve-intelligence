@@ -1,4 +1,4 @@
-import { mockData, findSite } from './mockData';
+import { mockData, findSite, buildEquipmentMetrics, buildEquipmentMetricsById } from './mockData';
 
 // Live API is the default path; mock is the offline/venue-wifi fallback,
 // opted into explicitly with VITE_USE_MOCK=true when the backend isn't reachable.
@@ -34,6 +34,14 @@ const query = (params) => {
 };
 const bySite = (records, siteId) => records.filter((record) => Number(record.site_id) === Number(siteId));
 const delay = (value) => useMock ? wait(value) : value;
+
+// Mock-only: recover the window length the caller asked for from start/end.
+// The backend's window spans start..end inclusive (start = end - N days), so
+// N is the day difference; no dates means the backend's 90-day default.
+function mockWindowDays(start, end) {
+  if (!start || !end) return 90;
+  return Math.round((new Date(`${end}T00:00:00Z`) - new Date(`${start}T00:00:00Z`)) / 86400000);
+}
 
 // Blast-event mock rows live here rather than in mockData.js so the mock
 // fallback stays functional without editing the shared fixture module.
@@ -240,6 +248,25 @@ export const api = {
     }
     return request(`/equipment/${Number(id)}/history${query({ limit, before })}`);
   },
+  // Equipment performance metrics (availability / MTBF / MTTR / maintenance
+  // due). Omitting siteId returns fleet-wide totals across every site --
+  // that's what the Dashboard's fleet-availability card uses.
+  //
+  // The mock branch derives the window length from start/end the same way the
+  // backend does (inclusive of both ends), so the 30/90/180 toggle behaves
+  // identically offline.
+  async getEquipmentMetrics(siteId, { start, end } = {}) {
+    if (useMock) return delay(buildEquipmentMetrics(siteId == null ? null : Number(siteId), mockWindowDays(start, end)));
+    return request(`/equipment/metrics${query({ site_id: siteId == null ? undefined : Number(siteId), start, end })}`);
+  },
+  async getEquipmentMetricsById(id, { start, end } = {}) {
+    if (useMock) {
+      const row = buildEquipmentMetricsById(Number(id), mockWindowDays(start, end));
+      if (!row) throw contractError(404, { detail: `Equipment ${id} not found`, error_code: 'NOT_FOUND' });
+      return delay(row);
+    }
+    return request(`/equipment/${Number(id)}/metrics${query({ start, end })}`);
+  },
   async getEquipmentSiteHistory({ site_id, since, limit = 100 } = {}) {
     if (useMock) {
       let rows = mockEquipmentStatusLog;
@@ -327,10 +354,14 @@ export const api = {
   async getHealth() { return useMock ? delay(mockData.health) : request('/health'); },
   async getAdminJobs() { return useMock ? delay(mockData.jobs) : request('/admin/jobs'); },
   async getTrainingRanges() { if (useMock) return delay(null); try { return await request('/simulate/training-ranges'); } catch { return null; } },
+  // Soft-fail to null, like getDemoScenarios/getTrainingRanges: the fleet
+  // availability card degrades to "—" rather than taking the whole dashboard
+  // down with it.
+  async getFleetEquipmentMetrics() { try { return await this.getEquipmentMetrics(null); } catch { return null; } },
   async getDashboard() {
-    const [kpi, sites, risks, recommendations] = await Promise.all([this.getKpiSummary(), this.getSites(), this.getRiskEvents(undefined, false), this.getRecommendations()]);
+    const [kpi, sites, risks, recommendations, equipmentMetrics] = await Promise.all([this.getKpiSummary(), this.getSites(), this.getRiskEvents(undefined, false), this.getRecommendations(), this.getFleetEquipmentMetrics()]);
     const production = await Promise.all(sitesFor(this, sites));
-    return { kpi, sites, risks, recommendations, production: production.flat() };
+    return { kpi, sites, risks, recommendations, equipmentMetrics, production: production.flat() };
   },
   async getSiteWorkspace(id) {
     const siteId = Number(id);

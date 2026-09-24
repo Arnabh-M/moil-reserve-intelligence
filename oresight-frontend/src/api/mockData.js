@@ -213,3 +213,257 @@ export const mockData = {
 };
 
 export const findSite = (id) => sites.find((site) => site.id === Number(id)) || sites[0];
+
+// -- Equipment performance metrics (GET /equipment/metrics) ------------------
+//
+// Only the BASE inputs are written by hand: downtime hours per category, a
+// failure count, and the maintenance record. Every derived number in the
+// response (availability, MTBF, MTTR, fleet totals) is computed below by the
+// contract's own formulas, so the fixture cannot drift out of internal
+// consistency the way a hand-typed table would. Fleet hours are the sum of
+// machine hours by construction, and a machine with zero failures gets null
+// MTBF/MTTR (never 0).
+//
+// Hours are authored against a 90-day window and scaled pro-rata for the
+// 30/180-day toggle; availability is always divided by the window's real
+// hours, so the invariants hold at every window length.
+//
+// Shape is pinned by the contract. The live backend's numbers will differ
+// (and Task 2/3 is regenerating the real downtime data to a realistic
+// 80-92% band) -- these mock values already sit in that band so the offline
+// fallback doesn't look unrealistically perfect next to the live path.
+
+const MOCK_ANCHOR_END = '2026-09-22';
+const MOCK_DATA_THROUGH = '2026-09-22T07:34:41.463153Z';
+const MOCK_BASE_WINDOW_DAYS = 90;
+
+const CATEGORY_KEYS = ['planned_maintenance', 'failure', 'spare_parts_wait', 'operational', 'weather', 'other'];
+// Categories deducted from PHYSICAL availability. Weather and operator-gap
+// downtime reduce overall availability only -- the machine itself wasn't
+// broken. Mirrors the backend's DEFINITIONS exactly.
+const PHYSICAL_CATEGORIES = ['planned_maintenance', 'failure', 'spare_parts_wait'];
+
+// hours: 90-day baseline per category. maint: null => never maintained
+// ("unknown"). Covers all four badge states and both zero-failure cases.
+const EQUIPMENT_METRIC_BASE = [
+  { equipment_id: 101, hours: { planned_maintenance: 48, failure: 120, spare_parts_wait: 36, operational: 12, weather: 18, other: 6 }, failures: 4, top_failure_reason: 'hydraulic leak', maint: { last: '2026-07-15T09:20:00Z', due: '2026-08-14', days: 69, status: 'overdue' } },
+  { equipment_id: 102, hours: { planned_maintenance: 72, failure: 150, spare_parts_wait: 24, operational: 16, weather: 12, other: 4 }, failures: 5, top_failure_reason: 'mechanical failure', maint: { last: '2026-09-10T11:05:00Z', due: '2026-10-10', days: 12, status: 'ok' } },
+  { equipment_id: 103, hours: { planned_maintenance: 180, failure: 0, spare_parts_wait: 0, operational: 24, weather: 36, other: 8 }, failures: 0, top_failure_reason: null, maint: { last: '2026-08-26T08:40:00Z', due: '2026-09-25', days: 27, status: 'due_soon' } },
+  { equipment_id: 104, hours: { planned_maintenance: 0, failure: 96, spare_parts_wait: 48, operational: 18, weather: 14, other: 6 }, failures: 3, top_failure_reason: 'electrical fault', maint: null },
+  { equipment_id: 105, hours: { planned_maintenance: 60, failure: 204, spare_parts_wait: 72, operational: 20, weather: 16, other: 10 }, failures: 6, top_failure_reason: 'mechanical failure', maint: { last: '2026-09-05T14:15:00Z', due: '2026-10-05', days: 17, status: 'ok' } },
+  { equipment_id: 201, hours: { planned_maintenance: 24, failure: 168, spare_parts_wait: 96, operational: 22, weather: 20, other: 8 }, failures: 5, top_failure_reason: 'electrical fault', maint: { last: '2026-07-28T07:50:00Z', due: '2026-08-27', days: 56, status: 'overdue' } },
+  { equipment_id: 202, hours: { planned_maintenance: 84, failure: 132, spare_parts_wait: 0, operational: 14, weather: 24, other: 0 }, failures: 4, top_failure_reason: 'hydraulic leak', maint: { last: '2026-09-12T10:30:00Z', due: '2026-10-12', days: 10, status: 'ok' } },
+  { equipment_id: 203, hours: { planned_maintenance: 48, failure: 72, spare_parts_wait: 24, operational: 30, weather: 42, other: 12 }, failures: 2, top_failure_reason: 'mechanical failure', maint: { last: '2026-09-08T09:10:00Z', due: '2026-10-08', days: 14, status: 'ok' } },
+  { equipment_id: 204, hours: { planned_maintenance: 120, failure: 90, spare_parts_wait: 36, operational: 16, weather: 18, other: 6 }, failures: 3, top_failure_reason: 'electrical fault', maint: { last: '2026-08-29T13:25:00Z', due: '2026-09-28', days: 24, status: 'due_soon' } },
+  { equipment_id: 205, hours: { planned_maintenance: 144, failure: 0, spare_parts_wait: 0, operational: 20, weather: 28, other: 4 }, failures: 0, top_failure_reason: null, maint: { last: '2026-09-14T15:40:00Z', due: '2026-10-14', days: 8, status: 'ok' } },
+  { equipment_id: 301, hours: { planned_maintenance: 60, failure: 108, spare_parts_wait: 24, operational: 12, weather: 30, other: 0 }, failures: 3, top_failure_reason: 'mechanical failure', maint: { last: '2026-09-02T08:05:00Z', due: '2026-10-02', days: 20, status: 'ok' } },
+  { equipment_id: 302, hours: { planned_maintenance: 0, failure: 180, spare_parts_wait: 48, operational: 10, weather: 16, other: 4 }, failures: 4, top_failure_reason: 'hydraulic leak', maint: null },
+  { equipment_id: 303, hours: { planned_maintenance: 72, failure: 96, spare_parts_wait: 36, operational: 24, weather: 20, other: 8 }, failures: 3, top_failure_reason: 'electrical fault', maint: { last: '2026-09-06T12:00:00Z', due: '2026-10-06', days: 16, status: 'ok' } },
+  { equipment_id: 304, hours: { planned_maintenance: 48, failure: 156, spare_parts_wait: 60, operational: 18, weather: 22, other: 6 }, failures: 4, top_failure_reason: 'mechanical failure', maint: { last: '2026-09-11T16:45:00Z', due: '2026-10-11', days: 11, status: 'ok' } },
+  { equipment_id: 305, hours: { planned_maintenance: 36, failure: 228, spare_parts_wait: 84, operational: 26, weather: 24, other: 12 }, failures: 6, top_failure_reason: 'electrical fault', maint: { last: '2026-08-02T09:55:00Z', due: '2026-09-01', days: 51, status: 'overdue' } },
+];
+
+const round1 = (n) => Number(n.toFixed(1));
+const round2 = (n) => Number(n.toFixed(2));
+const emptyCategories = () => Object.fromEntries(CATEGORY_KEYS.map((key) => [key, 0]));
+const sumCategories = (hours) => CATEGORY_KEYS.reduce((total, key) => total + (hours[key] || 0), 0);
+const physicalDeduction = (hours) => PHYSICAL_CATEGORIES.reduce((total, key) => total + (hours[key] || 0), 0);
+
+// The backend's window is inclusive of both end dates: start = end - N days
+// gives N+1 calendar days of hours. Mirrored here so mock and live agree.
+const mockWindowHours = (windowDays) => (windowDays + 1) * 24;
+
+function mockWindowStart(windowDays) {
+  const end = new Date(`${MOCK_ANCHOR_END}T00:00:00Z`);
+  end.setUTCDate(end.getUTCDate() - windowDays);
+  return end.toISOString().slice(0, 10);
+}
+
+// Availability/MTBF/MTTR from hours + failures, by the contract's formulas.
+// Zero failures => null MTBF and MTTR, never 0.
+function deriveMetrics(hours, failures, windowHours) {
+  const downtime = sumCategories(hours);
+  const uptime = windowHours - downtime;
+  return {
+    physical_availability_pct: round1(((windowHours - physicalDeduction(hours)) / windowHours) * 100),
+    overall_availability_pct: round1((uptime / windowHours) * 100),
+    failures,
+    mtbf_hours: failures > 0 ? round2(uptime / failures) : null,
+    mttr_hours: failures > 0 ? round2(hours.failure / failures) : null,
+    downtime_hours: round2(downtime),
+    downtime_hours_by_category: Object.fromEntries(CATEGORY_KEYS.map((key) => [key, round2(hours[key] || 0)])),
+  };
+}
+
+// Scale the 90-day baseline to the requested window. Failure count scales
+// with it but never rounds to 0 while failure hours remain, which would
+// contradict the MTTR definition.
+function scaleBase(base, windowDays) {
+  const ratio = windowDays / MOCK_BASE_WINDOW_DAYS;
+  const hours = Object.fromEntries(CATEGORY_KEYS.map((key) => [key, round2((base.hours[key] || 0) * ratio)]));
+  const failures = base.failures === 0 ? 0 : Math.max(1, Math.round(base.failures * ratio));
+  return { hours, failures };
+}
+
+function mockMachineMetrics(base, windowDays) {
+  const machine = equipment.find((row) => row.id === base.equipment_id);
+  const { hours, failures } = scaleBase(base, windowDays);
+  return {
+    equipment_id: machine.id,
+    name: machine.name,
+    equipment_type: machine.equipment_type,
+    site_id: machine.site_id,
+    status: machine.status,
+    ...deriveMetrics(hours, failures, mockWindowHours(windowDays)),
+    top_failure_reason: failures > 0 ? base.top_failure_reason : null,
+    last_maintenance_at: base.maint ? base.maint.last : null,
+    days_since_last_maintenance: base.maint ? base.maint.days : null,
+    next_maintenance_due: base.maint ? base.maint.due : null,
+    maintenance_status: base.maint ? base.maint.status : 'unknown',
+    utilisation_pct: null,
+    utilisation_note: 'Needs operating-hours (hour-meter) data',
+  };
+}
+
+// Fleet totals are summed from the same per-machine hours the rows report,
+// never averaged from their percentages.
+function mockFleetTotals(bases, siteId, windowDays) {
+  const windowHours = mockWindowHours(windowDays) * bases.length;
+  const hours = emptyCategories();
+  let failures = 0;
+  bases.forEach((base) => {
+    const scaled = scaleBase(base, windowDays);
+    CATEGORY_KEYS.forEach((key) => { hours[key] += scaled.hours[key]; });
+    failures += scaled.failures;
+  });
+  const derived = deriveMetrics(hours, failures, windowHours);
+  const statuses = bases.map((base) => (base.maint ? base.maint.status : 'unknown'));
+  return {
+    site_id: siteId,
+    equipment_count: bases.length,
+    physical_availability_pct: derived.physical_availability_pct,
+    overall_availability_pct: derived.overall_availability_pct,
+    failures: derived.failures,
+    mtbf_hours: derived.mtbf_hours,
+    mttr_hours: derived.mttr_hours,
+    downtime_hours_by_category: derived.downtime_hours_by_category,
+    maintenance_overdue_count: statuses.filter((status) => status === 'overdue').length,
+    maintenance_due_soon_count: statuses.filter((status) => status === 'due_soon').length,
+  };
+}
+
+const MOCK_ASSUMPTIONS = {
+  maintenance_interval_days: 30,
+  due_soon_days: 7,
+  categories: {
+    planned_maintenance: ['scheduled maintenance'],
+    failure: ['electrical fault', 'hydraulic leak', 'mechanical failure'],
+    spare_parts_wait: ['spare parts unavailable'],
+    operational: ['operator shift gap'],
+    weather: ['weather delay'],
+    other: [],
+  },
+};
+
+const MOCK_DATA_NOTE = 'Downtime history loaded from the downtime log and field entries; demo data is synthetic until MOIL maintenance records are connected.';
+
+// site_id omitted => fleet-wide across every site (what the Dashboard card uses).
+export function buildEquipmentMetrics(siteId, windowDays = MOCK_BASE_WINDOW_DAYS) {
+  const bases = siteId == null
+    ? EQUIPMENT_METRIC_BASE
+    : EQUIPMENT_METRIC_BASE.filter((base) => equipment.find((row) => row.id === base.equipment_id).site_id === Number(siteId));
+  return {
+    generated_at: MOCK_DATA_THROUGH,
+    window: {
+      start: mockWindowStart(windowDays),
+      end: MOCK_ANCHOR_END,
+      hours: mockWindowHours(windowDays),
+      data_through: MOCK_DATA_THROUGH,
+    },
+    assumptions: MOCK_ASSUMPTIONS,
+    fleet: mockFleetTotals(bases, siteId == null ? null : Number(siteId), windowDays),
+    equipment: bases.map((base) => mockMachineMetrics(base, windowDays)),
+    data_note: MOCK_DATA_NOTE,
+  };
+}
+
+// Weekly buckets and events are derived from the same scaled hours as the
+// totals, so the series always sums back to the machine's downtime.
+function mockEvents(base, windowDays) {
+  const { hours, failures } = scaleBase(base, windowDays);
+  const start = new Date(`${mockWindowStart(windowDays)}T00:00:00Z`);
+  const spanHours = mockWindowHours(windowDays);
+  const events = [];
+  CATEGORY_KEYS.forEach((category, categoryIndex) => {
+    const total = hours[category];
+    if (!total) return;
+    const count = category === 'failure' ? Math.max(1, failures) : 1;
+    const each = total / count;
+    for (let i = 0; i < count; i += 1) {
+      // Deterministic spread across the window, offset per category so
+      // events don't all stack on the same hour.
+      const fraction = (i + 1) / (count + 1);
+      const offset = fraction * (spanHours - each) + categoryIndex * 3;
+      const eventStart = new Date(start.getTime() + offset * 3600 * 1000);
+      const eventEnd = new Date(eventStart.getTime() + each * 3600 * 1000);
+      events.push({
+        start: eventStart.toISOString(),
+        end: eventEnd.toISOString(),
+        hours: round2(each),
+        reason: category === 'failure' ? base.top_failure_reason : MOCK_ASSUMPTIONS.categories[category][0] || 'unclassified',
+        category,
+        source: 'downtime_log_import',
+      });
+    }
+  });
+  return events.sort((a, b) => (a.start < b.start ? -1 : 1));
+}
+
+function mockWeekly(base, windowDays) {
+  const events = mockEvents(base, windowDays);
+  const windowStart = new Date(`${mockWindowStart(windowDays)}T00:00:00Z`);
+  const windowEnd = new Date(`${MOCK_ANCHOR_END}T00:00:00Z`);
+  windowEnd.setUTCDate(windowEnd.getUTCDate() + 1);
+  // ISO weeks start Monday; getUTCDay() is 0 for Sunday.
+  const cursor = new Date(windowStart);
+  cursor.setUTCDate(cursor.getUTCDate() - ((cursor.getUTCDay() + 6) % 7));
+
+  const weeks = [];
+  while (cursor < windowEnd) {
+    const bucketStart = new Date(Math.max(cursor.getTime(), windowStart.getTime()));
+    const nextWeek = new Date(cursor);
+    nextWeek.setUTCDate(nextWeek.getUTCDate() + 7);
+    const bucketEnd = new Date(Math.min(nextWeek.getTime(), windowEnd.getTime()));
+    const bucketHours = (bucketEnd - bucketStart) / 3600000;
+
+    let downtime = 0;
+    let physicalDowntime = 0;
+    let failures = 0;
+    events.forEach((event) => {
+      const overlap = (Math.min(new Date(event.end).getTime(), bucketEnd.getTime()) - Math.max(new Date(event.start).getTime(), bucketStart.getTime())) / 3600000;
+      if (overlap <= 0) return;
+      downtime += overlap;
+      if (PHYSICAL_CATEGORIES.includes(event.category)) physicalDowntime += overlap;
+      if (event.category === 'failure') failures += 1;
+    });
+
+    weeks.push({
+      week_start: cursor.toISOString().slice(0, 10),
+      downtime_hours: round2(downtime),
+      failures,
+      physical_availability_pct: bucketHours > 0 ? round1(((bucketHours - physicalDowntime) / bucketHours) * 100) : 100,
+    });
+    cursor.setUTCDate(cursor.getUTCDate() + 7);
+  }
+  return weeks;
+}
+
+export function buildEquipmentMetricsById(equipmentId, windowDays = MOCK_BASE_WINDOW_DAYS) {
+  const base = EQUIPMENT_METRIC_BASE.find((row) => row.equipment_id === Number(equipmentId));
+  if (!base) return null;
+  return {
+    ...mockMachineMetrics(base, windowDays),
+    weekly: mockWeekly(base, windowDays),
+    events: mockEvents(base, windowDays),
+  };
+}
