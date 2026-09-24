@@ -544,7 +544,7 @@ function getActiveSeverityLevel(levels, severityValue) {
 function makeCondition(overrides = {}) {
   const type = overrides.type || 'equipment_down';
   const defaultSeverity = DEFAULT_SEVERITY_LEVELS[type]?.[1]?.value ?? 1.4;
-  const defaultDuration = type === 'rainfall_event' ? 14 : type === 'delay_blasting' ? 7 : 1;
+  const defaultDuration = type === 'rainfall_event' ? 14 : type === 'delay_blasting' ? 3 : 1;
   return { id: Date.now() + Math.random(), type, equipment: 'dragline_1', severity: defaultSeverity, duration: defaultDuration, ...overrides };
 }
 

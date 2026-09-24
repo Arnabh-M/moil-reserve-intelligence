@@ -12,7 +12,7 @@ Lines marked **INFERRED** were NOT executed or found documented; double-check th
 # 0. Start Docker Desktop first (Start menu) and wait until it reports "Engine running".
 #    Check with:  docker info    (an error like "cannot connect to the docker API" = it is not up yet)
 cd oresight-backend
-docker compose up -d          # Postgres + Neo4j + api container; from a fully downed stack: 33 s (09-23), 93 s to (healthy) / 99 s to /health (09-24); ~1 s if already up
+docker compose up -d          # Postgres + Neo4j + api container; from a fully downed stack allow ~100-130 s (measured 99 s and 131 s on 09-24; 33 s on 09-23) -- Neo4j's healthcheck is the slow part, it has not hung; ~1 s if already up
 docker compose ps             # wait until postgres and neo4j show (healthy); api answers /health ~3 s after start
 ```
 ```powershell

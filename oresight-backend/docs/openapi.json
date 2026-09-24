@@ -2419,7 +2419,6 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 100.0,
                 "minimum": 0.0
               },
               {
@@ -5173,7 +5172,6 @@
             "anyOf": [
               {
                 "type": "number",
-                "maximum": 100.0,
                 "minimum": 0.0
               },
               {
@@ -5292,6 +5290,25 @@
               }
             ],
             "title": "Out Of Distribution Warning"
+          },
+          "model_state_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model State As Of"
+          },
+          "model_inputs_missing": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Model Inputs Missing"
           }
         },
         "type": "object",

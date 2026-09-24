@@ -65,44 +65,76 @@ ground-truth points nearest each zone (only ever 0.0, 0.5, 0.67 or 1.0).
 
 ### Shortfall Forecaster — XGBoost Regressor
 
-`XGBRegressor(n_estimators=300, max_depth=4, learning_rate=0.05)` trained on
-`production_history.csv` + `equipment_downtime_log.csv`, 8 engineered
-features (rolling 7-day downtime %, days since last maintenance, a
-monsoon-shaped rainfall proxy, 14-day trailing schedule pressure, and
-cyclical day-of-week/month encodings), predicting daily `shortfall_pct`. Time
--based 80/20 split — trained on the first ~8 months, tested on the last
-~5 weeks (never a random shuffle, so the test set is genuinely unseen
-future).
+Everything about this model is trained on **synthetic production data**, so the
+first thing to be clear about is what is real and what is not.
 
-**Actual measured result (this session, `finalize_shortfall_model.py`):**
+**Real inputs.** Daily rainfall per site comes from satellite records (CHIRPS /
+IMERG) and soil moisture from SMAP, both in `data/satellite_daily_features.csv`
+(2025-01-01 onward). `app/services/weather_history.py` loads rainfall through a
+fallback chain: the satellite CSV first; the Open-Meteo archive for any date the
+CSV lacks (cached to disk, finished days only); and if neither has a value, NaN
+with `rain_source="missing"`. It never fills a gap with an estimate.
 
-| Metric | Value |
+**Synthetic outcome.** `scripts/synthetic_operations.py` generates the equipment
+downtime log (19 machines, 80-92% availability) and the daily production history
+from an explicit *causal* model, so that we know the true effect of each driver
+and can grade what the forecaster learned. The constants are **documented
+assumptions, not measured MOIL figures**:
+
+| Driver | Assumed effect on a day's loss |
 |---|---|
-| Test RMSE | 0.1571 |
-| Test MAE | 0.1175 |
-| Test-set target mean / std | 0.1362 / 0.0903 |
+| Rain | 0.004 per mm of rain on t-1 and 0.002 per mm on t-2 (each day capped at 50 mm), plus a flat 0.08 when 3-day rain exceeds 60 mm |
+| Equipment down | Class weights per machine-day of downtime: Excavator 0.100, Conveyor 0.083, Loader 0.067, Drill 0.050, Compressor 0.033 |
+| Backlog | 0.02 x decayed unmet output (decay 0.85 per day), a secondary compounding term |
+| Blast delay | 0.06 per delay-day on each of the following 5 days (delays 1-4 days; 3-8% daily probability, higher after heavy rain) |
+| Noise | 3% day-to-day jitter; total loss capped at 0.9 |
 
-**This model is unreliable for demo purposes as a quantitative forecaster**:
-RMSE (0.157) is *larger* than the test set's own standard deviation (0.090)
-— it performs worse than the trivial baseline of predicting the mean
-shortfall for every day. `month_sin`/`month_cos`/`rainfall_proxy` together
-account for ~58% of feature importance, meaning the model has effectively
-learned "it's monsoon season" and little else; `schedule_pressure` and
-`rolling_7day_downtime_pct` carry weak or counter-intuitive learned effects,
-confirmed empirically in this session by running the live Simulator against
-the demo's real equipment-failure scenario (Nagpur, Haul Truck HT-302): the
-model's before/after production forecast and risk score came back
-**identical** — the `equipment_down` perturbation doesn't move the
-prediction at all, because 6 months of synthetic downtime data has too few
-severe events for the trees to have learned a response. The `rainfall_event`
-scenario, by contrast, behaves as expected (a real, sensible before/after
-delta), since seasonal rainfall is a genuine, strong signal in the
-synthetic generator.
+Two of these constants were changed after a first pass and both changes were
+reported at the time rather than tuned silently. The first-pass downtime weights
+(0.30/0.20/0.15/0.25/0.10) summed to about 1.0 against a fleet that is ~14% down,
+giving 16.85 percentage points of loss from downtime alone, and the backlog loop
+(coefficient 0.10, gain 0.667) amplified everything about 3x, together a 60.6%
+mean loss. Downtime weights were scaled by 1/3 and the backlog coefficient set to
+0.02, giving a 13.4% mean loss (rain 3.1pp, downtime 5.7pp, backlog 1.8pp, blast
+delays 2.9pp). These are plausibility choices, not calibration to real data.
 
-**Practical consequence:** the Planner's recommendation ranking does not
-rely on this model's absolute output magnitude (see Agent architecture
-below) — it uses the model's *direction* as one bounded input to a ranking
-score, specifically because the raw magnitude is not trustworthy on its own.
+**Features (14).** `rain_today_mm`, `rain_3d_mm`, `rain_7d_mm`,
+`heavy_rain_lag1` (rain on t-1 at or above 35 mm), `soil_moisture_m3m3`,
+`rolling_7d_downtime_pct`, `equipment_down_today_pct`,
+`days_since_last_maintenance`, `backlog_t`, `blast_delay_days_lag`, and cyclical
+day-of-week and month encodings. Every feature except `rain_today_mm` and the
+calendar encodings is computed from data strictly before the day being predicted,
+and a machine-checked test re-derives each one with an independent loop and
+rejects deliberately leaky variants. `rain_today_mm` is the one exception: in
+training it is the observed value (a perfect same-day forecast), so reported
+accuracy is an optimistic ceiling relative to live use. The rainfall proxy and
+14-day schedule pressure of the earlier model no longer exist.
+
+**Evaluation.** `XGBRegressor(n_estimators=300, max_depth=4, learning_rate=0.05,
+subsample=0.8, colsample_bytree=0.8)`, one run, no tuning. Time-ordered split:
+the last 20% of dates (2026-05-22 to 2026-09-22, 372 site-days) are held out,
+and the model must beat **both** a train-mean baseline and a persistence baseline
+(yesterday's shortfall) pooled and at each site.
+
+| Holdout slice | Model RMSE / MAE | Train-mean RMSE | Persistence RMSE | R² gain over persistence |
+|---|---|---|---|---|
+| Pooled | 0.0566 / 0.0448 | 0.1168 | 0.0844 | +0.302 |
+| Balaghat | 0.0575 / 0.0450 | 0.1145 | 0.0835 | +0.287 |
+| Nagpur | 0.0566 / 0.0453 | 0.1105 | 0.0797 | +0.259 |
+| Bhandara | 0.0557 / 0.0441 | 0.1250 | 0.0898 | +0.377 |
+
+The target's standard deviation on the holdout is 0.114, so the model roughly
+halves the error of predicting the mean. A rolling-origin check (three expanding
+windows) is a stability check, not the gate; it found one slice where the model
+loses to persistence (Bhandara, 2026-03-22 to 06-21). The model was also graded
+against the generator's known effects: rain and blast-delay responses are
+recovered and monotone, equipment downtime today is monotone, and backlog is too
+weak to learn. The full account, including what should not be claimed, is in
+`docs/MODEL_LIMITATIONS.md`.
+
+**The Planner** does not rely on this model's absolute magnitude for its ranking
+(see Agent architecture): it blends a fixed prior per option type with a bounded
+model-derived signal.
 
 ## Agent architecture
 
@@ -113,16 +145,27 @@ orchestrate, so a graph-orchestration framework would add dependency weight
 without buying anything):
 
 - **Watcher** polls Postgres for new equipment-down or production-shortfall
-  signals, dedupes against already-open risk events, and — when it finds a
+  signals and, every 5 minutes, the Open-Meteo 72-hour forecast for each site:
+  a worst rolling 24 hours of 35 mm or more raises `weather_advisory_rain`
+  (score 0.4) and 64.5 mm (IMD heavy rain) raises `weather_heavy_rain` (score
+  0.6 rising to 1.0 at 115.5 mm), each auto-resolving when the forecast clears;
+  if the forecast cannot be fetched it logs a warning and creates nothing. It
+  dedupes against already-open risk events, and — when it finds a
   genuinely new one — writes it to both Postgres (`risk_events`) and Neo4j
   (a linked `RiskEvent` node with a causal edge from the triggering entity),
   keeping the relational "current state" store and the graph "causal
   history" store in sync.
 - **Simulator** runs read-only what-if projections: given a scenario type
   (equipment down / blast delayed / rainfall event), a site, and a duration,
-  it builds the site's real current feature vector from live Postgres data,
-  perturbs it for the hypothetical, and gets real before/after predictions
-  from the trained Shortfall Forecaster — then separately traverses the
+  it builds the site's real feature vector from live data (satellite rain,
+  equipment status history, production backlog, blast events), perturbs only
+  the features the scenario physically touches (equipment down changes
+  `equipment_down_today_pct`, a blast delay changes `blast_delay_days_lag`,
+  a rainfall event of S mm over 3 days changes `rain_3d_mm`, `rain_7d_mm` and
+  `heavy_rain_lag1`), and gets real before/after predictions
+  from the trained Shortfall Forecaster. The starting state is the latest
+  finished day with a complete rain record (reported in the response), and any
+  input no source has is passed as missing rather than filled in — then separately traverses the
   Neo4j causal graph outward from the relevant node to show which
   BlastPlan/OreZone/RiskEvent chain is actually affected.
 - **Planner** finds mitigation candidates (redeploy idle equipment /
@@ -134,11 +177,15 @@ without buying anything):
 ## Explicit limitations
 
 - All models are trained on **synthetic data and public-style proxies**
-  (NDVI/elevation stand-ins, a hand-shaped seasonal rainfall proxy, a
-  hand-generated deposit ground truth) — **none of this has been validated
+  (NDVI/elevation stand-ins, a hand-generated deposit ground truth, and a
+  synthetic production outcome whose causal constants are documented assumptions;
+  rainfall itself is real satellite data) — **none of this has been validated
   against real MOIL production, equipment, or exploration data.**
 - Honestly reported above rather than glossed over: the shortfall forecaster
-  underperforms a mean-only baseline on RMSE. The reserve classifier reaches
+  beats both baselines on the holdout, but on data whose causal structure we
+  wrote ourselves, and about 63% of its edge over persistence rides on one
+  feature (`blast_delay_days_lag`) whose live source is also synthetic; see
+  `docs/MODEL_LIMITATIONS.md`. The reserve classifier reaches
   CV AUC ≈ 0.77 (permutation p = 0.005), but only because its training
   labels are *synthetically generated from the same features it then learns*
   — it demonstrates the pipeline works end to end, not that these
