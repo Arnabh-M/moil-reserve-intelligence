@@ -87,6 +87,10 @@ them — the same way a human would run them one at a time):
                                  (import_p2_data deletes those rows). Was a
                                  separate manual step until now.
 
+ 13. scripts.clean_test_residue removes risk events that tests or manual status toggling leave
+                                 behind ("Smoke test failure" and equipment_flapping), so a pre-demo
+                                 rebuild always ends clean.
+
 After this, both of these return a "redeploy" option:
   GET /recommendations?risk_event_id=<Drill NAG-1 "is down" event>   -> Drill BHD-1
   GET /recommendations?risk_event_id=<Haul Truck HT-302 event>       -> Haul Truck HT-303
@@ -124,6 +128,7 @@ STEPS: list[tuple[str, list[str]]] = [
         "scripts.backfill_equipment_status_log  (downtime history -> equipment_status_log; AFTER import_p2_data)",
         ["-m", "scripts.backfill_equipment_status_log"],
     ),
+    ("scripts.clean_test_residue  (drop 'Smoke test failure' / flapping risk events left by tests)", ["-m", "scripts.clean_test_residue"]),
 ]
 
 

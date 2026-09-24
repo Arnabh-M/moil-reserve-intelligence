@@ -58,7 +58,7 @@ The forecaster beats both a train-mean and a persistence baseline on a time-orde
 - **The state is not "now".** The starting point is the latest finished day with a complete observed rain record (usually 1-3 days old), shown in the results. Nothing is filled in for what is missing.
 - **Delay durations outside 1-4 days are extrapolation.** Training delays lasted 1-4 days; longer requests are flagged out-of-distribution. The window also saturates at 7 days.
 - **Reserve confidence and risk score are heuristics.** Reserve confidence decays by a fixed per-day rate; the risk score follows the model's predicted worsening (capped at 0.97). Neither is a learned model.
-- **Planner ranking:** recommendation impact scores blend a fixed prior per option type with a bounded model signal, and the model term now saturates, so many options show the same +62%. That is a heuristic, not a measurement.
+- **Planner ranking has no honest impact number.** The option score is a fixed prior per option type plus a bonus that always saturates (redeploy always 82, reschedule always 62, whatever the risk event or site), and the simulated scenario is site-level, so it cannot tell two actions at the same site apart. The UI therefore shows no impact percentage; options are ordered by action type. The confidence pill is likewise a fixed per-type heuristic (0.70-0.80), not a measurement.
 
 ## 8. Sign was wired in; how much of the magnitude was learned? (Stage 5A diagnostic)
 

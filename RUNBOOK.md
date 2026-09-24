@@ -1,6 +1,6 @@
-# RUNBOOK: start the MOIL / OreSight stack (Windows; run from the repo root unless noted)
+﻿# RUNBOOK: start the MOIL / OreSight stack (Windows; run from the repo root unless noted)
 
-Ports: Postgres 5432 · Neo4j 7474/7687 · API 8000 · frontend 5173.
+Ports: Postgres 5432 Â· Neo4j 7474/7687 Â· API 8000 Â· frontend 5173.
 Use curl.exe in PowerShell (plain curl is an alias). Quick start was executed end to end on 2026-09-23 and again on
 2026-09-24 (Windows 11, PowerShell; the second time as a cold start from `docker compose down`, after the Stage 4 model
 swap; Docker Desktop was already running, so step 0 was not re-tested). Timings below are measured.
@@ -16,8 +16,8 @@ docker compose up -d          # Postgres + Neo4j + api container; from a fully d
 docker compose ps             # wait until postgres and neo4j show (healthy); api answers /health ~3 s after start
 ```
 ```powershell
-# Only if the demo DB is empty/dirty (after tests, or first run). ~57 s (measured 2026-09-24; 12 steps)
-# (includes seeding blast_events and the equipment_status_log backfill; no separate step)
+# Only if the demo DB is empty/dirty (after tests, or first run). ~57 s (measured 2026-09-24; 13 steps; the last one clears leftover test risk events)
+# (includes seeding blast_events and the equipment_status_log backfill and a cleanup of leftover test risk events; no separate step)
 venv\Scripts\python -m scripts.rebuild_demo_db
 ```
 ```powershell
@@ -69,7 +69,7 @@ curl.exe -X POST http://localhost:8000/simulate -H "Content-Type: application/js
 #   rain record (1-3 days ago); model_inputs_missing normally lists soil_moisture_m3m3 (SMAP lags the rain record)
 docker exec -it oresight-postgres psql -U oresight -d oresight -c "\dx"   # postgis + vector installed
 ```
-- Neo4j Browser: http://localhost:7474 · Swagger: http://localhost:8000/docs
+- Neo4j Browser: http://localhost:7474 Â· Swagger: http://localhost:8000/docs
 - Frontend: open http://localhost:5173, then /map (zones + heatmap) and /site/1. Verified: the page calls
   `GET /sites` and `GET /reserve-zones` on :8000 (both 200), 12 zones, no page errors, no mock.
 - Optional end-to-end check (needs api + `pnpm dev` up; ~1.7 min): `cd oresight-frontend; pnpm test:smoke` (21 tests). On a
