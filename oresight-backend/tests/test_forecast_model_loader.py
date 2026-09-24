@@ -4,6 +4,7 @@
 See test_model_artifact_regression.py for WHY the guard exists.
 """
 
+import importlib.metadata
 import re
 from pathlib import Path
 
@@ -24,7 +25,8 @@ REQUIREMENTS = Path(__file__).resolve().parents[1] / "requirements.txt"
 
 class _StubModel:
     """Picklable stand-in for a trained XGBRegressor (fitting one needs sklearn,
-    which the backend venv deliberately does not have)."""
+    which is only in requirements-train.txt): keeps these guard tests independent
+    of both sklearn and any trained artifact."""
 
 
 def _dump_stub(tmp_path, meta):
@@ -67,14 +69,34 @@ def test_artifact_without_a_training_version_is_refused(tmp_path, meta):
         load_shortfall_model(_dump_stub(tmp_path, meta))
 
 
+def _xgboost_pin(path: Path) -> tuple[str, str]:
+    """(distribution, exact version) from the single xgboost line of a requirements file."""
+    pins = re.findall(r"^\s*(xgboost(?:-cpu)?)\s*([^\s#]*)", path.read_text(encoding="utf-8"), re.M)
+    assert len(pins) == 1, f"expected one xgboost line in {path.name}, found {pins}"
+    dist, spec = pins[0]
+    match = re.fullmatch(r"==\s*([0-9][0-9.]*)", spec)
+    assert match, f"xgboost must be pinned with '==' (a range lets a silently-incompatible pickle through): {dist}{spec!r}"
+    return dist, match.group(1)
+
+
 def test_requirements_pin_is_exact_and_matches_the_installed_xgboost():
-    """Compares VERSIONS, not distribution names: the venv has `xgboost`, the
-    Docker image installs `xgboost-cpu`, both provide the same module."""
-    pins = re.findall(r"^\s*xgboost(?:-cpu)?\s*(.*)$", REQUIREMENTS.read_text(encoding="utf-8"), re.M)
-    assert len(pins) == 1, f"expected one xgboost line in requirements.txt, found {pins}"
-    match = re.match(r"==\s*([0-9][0-9.]*)", pins[0])
-    assert match, f"xgboost must be pinned with '==' (a range lets a silently-incompatible pickle through): {pins[0]!r}"
-    assert match.group(1) == xgboost.__version__, (
-        f"requirements.txt pins xgboost {match.group(1)} but {xgboost.__version__} is installed"
-    )
+    """Checks the DISTRIBUTION as well as the version. `xgboost` and `xgboost-cpu`
+    provide the same module and overwrite each other's files, so a venv that has one
+    while the Docker image installs the other is exactly the silent drift the pin
+    exists to prevent. Both requirements files must name the same one, and it must be
+    the only one installed."""
+    dist, version = _xgboost_pin(REQUIREMENTS)
+    assert version == xgboost.__version__, f"requirements.txt pins xgboost {version} but {xgboost.__version__} is installed"
     assert forecast_model.xgboost.__version__ == xgboost.__version__
+
+    assert importlib.metadata.version(dist) == version, f"{dist} is not installed at the pinned {version}"
+    other = ({"xgboost", "xgboost-cpu"} - {dist}).pop()
+    with pytest.raises(importlib.metadata.PackageNotFoundError):
+        importlib.metadata.version(other)  # the venv must not also carry the other distribution
+
+    root_requirements = REQUIREMENTS.parents[1] / "requirements.txt"
+    if not root_requirements.exists():  # e.g. inside the Docker image, whose build context is oresight-backend/
+        return
+    assert _xgboost_pin(root_requirements) == (dist, version), (
+        f"repo-root requirements.txt must pin exactly the same xgboost as the backend's ({dist}=={version})"
+    )

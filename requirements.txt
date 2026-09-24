@@ -1,5 +1,5 @@
 scikit-learn
-xgboost==2.1.4  # must equal oresight-backend/requirements.txt (xgboost-cpu==2.1.4): model pickles are not portable across versions
+xgboost-cpu==2.1.4  # same distribution AND version as oresight-backend/requirements.txt: model pickles are not portable across versions, and `xgboost` + `xgboost-cpu` overwrite each other's files if both are installed
 pykrige
 geopandas
 rasterio

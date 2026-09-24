@@ -61,7 +61,9 @@ XGBOOST VERSION MATTERS. Train with the SAME interpreter the backend runs
 (oresight-backend/venv). A pickle written by a newer xgboost and loaded by an
 older one does not raise: it silently mispredicts (observed: max abs prediction
 difference 0.37 between xgboost 3.4.1 and 2.1.4). The reverse direction (older
-pickle, newer xgboost) is fine. No sklearn is needed or used here for that reason.
+pickle, newer xgboost) is fine. Fitting XGBRegressor needs scikit-learn, which comes from
+oresight-backend/requirements-train.txt (installed into that same venv); the API itself
+never imports it. A retrain under that venv reproduces the shipped pickle byte for byte.
 
 Run: oresight-backend/venv/Scripts/python train_shortfall_model.py           # evaluate, write models/candidate/
      oresight-backend/venv/Scripts/python train_shortfall_model.py --ship    # also install over the shipped artifacts (only if gate passed)

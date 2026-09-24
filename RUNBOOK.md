@@ -7,6 +7,8 @@ PowerShell); timings below are measured. Lines marked **INFERRED** were NOT exec
 ## Quick start (already set up once)
 
 ```powershell
+# 0. Start Docker Desktop first (Start menu) and wait until it reports "Engine running".
+#    Check with:  docker info    (an error like "cannot connect to the docker API" = it is not up yet)
 cd oresight-backend
 docker compose up -d          # Postgres + Neo4j + api container; ~33 s from stopped to /health ok, ~1 s if already up
 docker compose ps             # wait until postgres and neo4j show (healthy); api answers /health ~3 s after start
@@ -79,6 +81,18 @@ cd oresight-backend; venv\Scripts\python -m pytest -q        # full suite (~25 s
 cd oresight-frontend; pnpm typecheck; pnpm build             # tsc + vite build (~40 s)
 ```
 
+## Optional, retraining the shortfall forecaster (not needed to run the app)
+
+```powershell
+cd oresight-backend
+venv\Scripts\pip install -r requirements-train.txt    # adds scikit-learn on top of requirements.txt; ONE xgboost dist only (xgboost-cpu==2.1.4)
+cd ..
+oresight-backend\venv\Scripts\python train_shortfall_model.py          # evaluates, writes models\candidate\ (gitignored); ~15 s
+oresight-backend\venv\Scripts\python train_shortfall_model.py --ship   # also installs over models\ if the ship gate passes
+```
+Retraining is deterministic: on 2026-09-24 a retrain from `requirements-train.txt` alone reproduced the candidate pickle byte for byte.
+Never `pip install xgboost` next to `xgboost-cpu`: both write the same `xgboost/` files (a test fails if both are present).
+
 ## Optional, data regeneration only (not needed to run the app)
 
 GEE / satellite / prospectivity / tiles (`gee_pipeline/`, `prospectivity/`, `gis/`): see HANDOFF.md, section "GEE setup".
@@ -88,7 +102,9 @@ GEE / satellite / prospectivity / tiles (`gee_pipeline/`, `prospectivity/`, `gis
 - The API image needs `docker compose build api` (+ recreate) after backend code changes, or it serves stale routes.
 - The backend test suite dirties the demo DB: run `rebuild_demo_db` afterwards (it now includes the equipment-history
   backfill; rebuild before too, if a previous run left flip history behind). `scripts.export_contract` dirties it too.
-  Note rebuild does NOT delete `blast_events` rows it did not seed (hand-entered or leaked-test rows stay).
+  Note rebuild does NOT delete `blast_events` rows it did not seed (hand-entered or leaked-test rows stay). Four leaked
+  test rows (ids 298, 412, 413, 433) were deleted by hand on 2026-09-24; three untagged rows (29-31) are intentional demo
+  entries. Check with: `SELECT id, notes FROM blast_events WHERE notes IS NULL OR notes NOT LIKE 'synthetic:%'`.
 - `pnpm typecheck` needs `pnpm install` first (typescript is now a devDependency).
 - GEE steps need `gee_pipeline/.env` with `EE_PROJECT` and `EE_SERVICE_ACCOUNT_JSON`; keep the key file OUTSIDE git.
 - Zone confidence scores (~0.20-0.41) are correct and intentionally low; see HANDOFF.md.
