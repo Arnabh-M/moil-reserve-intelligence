@@ -13,8 +13,8 @@ docker compose ps             # wait until postgres and neo4j show (healthy); ap
 ```
 ```powershell
 # Only if the demo DB is empty/dirty (after tests, or first run). ~32 s
+# (includes seeding blast_events and the equipment_status_log backfill; no separate step)
 venv\Scripts\python -m scripts.rebuild_demo_db
-venv\Scripts\python -m scripts.backfill_equipment_status_log   # always AFTER rebuild; ~2 s
 ```
 ```powershell
 # Only after backend code changed: the api container does NOT pick up code by itself
@@ -44,8 +44,7 @@ pip install -r requirements.txt       # backend deps; ~2-3 min (INFERRED)
 copy .env.example .env        # backend env (defaults already match docker-compose.yml)
 docker compose up -d --build  # builds the Postgres+PostGIS+pgvector image and api; several min first time
 docker compose ps             # wait for (healthy)
-python -m scripts.rebuild_demo_db                  # alembic + seeds + Neo4j load + scenarios; ~32 s (measured on an existing DB)
-python -m scripts.backfill_equipment_status_log    # equipment history for /equipment/metrics
+python -m scripts.rebuild_demo_db                  # alembic + seeds + Neo4j load + scenarios + blast events + equipment history; ~32 s (measured on an existing DB)
 cd ..\oresight-frontend
 pnpm install                  # Node v24 / pnpm 12.3.4 (packageManager pin); ~1 min (INFERRED)
 pnpm dev
@@ -87,8 +86,9 @@ GEE / satellite / prospectivity / tiles (`gee_pipeline/`, `prospectivity/`, `gis
 ## Known gotchas
 
 - The API image needs `docker compose build api` (+ recreate) after backend code changes, or it serves stale routes.
-- The backend test suite dirties the demo DB: run `rebuild_demo_db` then `backfill_equipment_status_log` afterwards
-  (and rebuild before, if a previous run left flip history behind). `scripts.export_contract` dirties it too.
+- The backend test suite dirties the demo DB: run `rebuild_demo_db` afterwards (it now includes the equipment-history
+  backfill; rebuild before too, if a previous run left flip history behind). `scripts.export_contract` dirties it too.
+  Note rebuild does NOT delete `blast_events` rows it did not seed (hand-entered or leaked-test rows stay).
 - `pnpm typecheck` needs `pnpm install` first (typescript is now a devDependency).
 - GEE steps need `gee_pipeline/.env` with `EE_PROJECT` and `EE_SERVICE_ACCOUNT_JSON`; keep the key file OUTSIDE git.
 - Zone confidence scores (~0.20-0.41) are correct and intentionally low; see HANDOFF.md.

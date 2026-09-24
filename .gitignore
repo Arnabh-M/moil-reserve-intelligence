@@ -24,4 +24,6 @@ playwright/.cache/
 /temp-replit-import/
 
 # Pipeline and intermediate GEE cache
-data/cache/**
+data/cache/**
+# Retrained-but-not-yet-installed forecaster artifacts (train_shortfall_model.py; installed with --ship)
+oresight-backend/models/candidate/

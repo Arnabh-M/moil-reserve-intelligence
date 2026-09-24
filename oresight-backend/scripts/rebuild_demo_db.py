@@ -69,6 +69,23 @@ them — the same way a human would run them one at a time):
                                  removed and HT-302 is absent.
  10. scripts.seed_site_notes    ~5 field notes per site + embeddings, so
                                  GET /site-notes/search returns real hits.
+ 11. scripts.seed_blast_events  data/blast_events.csv -> blast_events (the
+                                 synthetic delayed-blast history). Needs the
+                                 sites to exist (step 2); it is
+                                 independent of the equipment backfill that
+                                 follows. It feeds the shortfall
+                                 model's blast_delay_days_lag, the model's
+                                 highest-importance feature: without these rows
+                                 that feature is empty at inference. Idempotent
+                                 by its own notes tag; hand-entered rows are
+                                 never touched. reserve_zone_id stays NULL (the
+                                 CSV has no zone information).
+ 12. scripts.backfill_equipment_status_log
+                                 data/equipment_downtime_log.csv -> the
+                                 equipment_status_log downtime history that
+                                 /equipment/metrics needs. Must run AFTER step 3
+                                 (import_p2_data deletes those rows). Was a
+                                 separate manual step until now.
 
 After this, both of these return a "redeploy" option:
   GET /recommendations?risk_event_id=<Drill NAG-1 "is down" event>   -> Drill BHD-1
@@ -99,6 +116,14 @@ STEPS: list[tuple[str, list[str]]] = [
     ("scripts.seed_scenario_b  (Nagpur Drill-down realignment + FK repair)", ["-m", "scripts.seed_scenario_b"]),
     ("scripts.enrich_risk_event_5  (Haul Truck HT-302 redeploy graph)", ["-m", "scripts.enrich_risk_event_5"]),
     ("scripts.seed_site_notes  (field notes + embeddings for RAG search)", ["-m", "scripts.seed_site_notes"]),
+    (
+        "scripts.seed_blast_events  (delayed-blast history -> blast_events; feeds blast_delay_days_lag)",
+        ["-m", "scripts.seed_blast_events"],
+    ),
+    (
+        "scripts.backfill_equipment_status_log  (downtime history -> equipment_status_log; AFTER import_p2_data)",
+        ["-m", "scripts.backfill_equipment_status_log"],
+    ),
 ]
 
 

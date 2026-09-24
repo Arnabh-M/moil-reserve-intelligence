@@ -346,7 +346,7 @@ AIML_Manganese_MOIL/
 │   ├── geo_utils.py                # Shared geospatial helpers
 │   ├── generate_features.py        # Part 1 — structural lines + training features
 │   ├── prospectivity/              # Parts 2-4 — per-site models, map layers, zone-confidence source
-│   ├── shortfall_features_wip.py   # Part 5 — shortfall feature engineering
+│   ├── shortfall_feature_engineering.py  # Part 5 — shortfall features + look-ahead guard
 │   ├── train_shortfall_model.py    # Day 3 — XGBoost shortfall forecaster
 │   └── finalize_shortfall_model.py
 │
@@ -471,8 +471,7 @@ python generate_datasets.py
 python generate_features.py           # Part 1
 python -m prospectivity.train_models --allow-synthetic   # Part 2
 python -m prospectivity.classify_export                  # Part 3/4
-python shortfall_features_wip.py      # Part 5 (independent)
-python train_shortfall_model.py
+oresight-backend/venv/Scripts/python train_shortfall_model.py   # Part 5; must run under the backend venv (pinned xgboost)
 ```
 > `pykrige`, `geopandas`, and `rasterio` carry native/GDAL dependencies. If pip
 > fails on Windows, use

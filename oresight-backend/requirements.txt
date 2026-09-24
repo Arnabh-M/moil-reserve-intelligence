@@ -17,7 +17,14 @@ httpx>=0.27,<1.0
 pytest>=8.3,<9.0
 
 # Agent layer (app/agents/) — shortfall forecaster inference
-xgboost-cpu>=2.1,<3.0
+# EXACT pin, not a range. shortfall_forecaster.pkl is only safe to load under the
+# xgboost it was trained with: a pickle written by 3.4.1 and loaded by 2.1.4
+# raises nothing and returns predictions up to 0.37 off (measured). Changing this
+# line means retraining the model (see requirements-train.txt) and regenerating
+# models/shortfall_regression_fixture.json; tests/test_model_artifact_regression.py
+# fails until both are done, and app.services.forecast_model refuses to load a
+# mismatched artifact.
+xgboost-cpu==2.1.4
 joblib>=1.4,<2.0
 pandas>=2.2,<3.0
 numpy>=1.26,<3.0

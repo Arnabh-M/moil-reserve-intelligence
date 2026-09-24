@@ -263,7 +263,7 @@ flowchart LR
     EX --> ZC["import_prospectivity_scores<br/>zone mean → reserve_zones.confidence_score"]
     ZC --> ZAPI[["/reserve-zones, zone panel"]]
 
-    GD --> SF["shortfall_features_wip.py<br/>feature engineering"]
+    GD --> SF["shortfall_feature_engineering.py<br/>features + look-ahead guard"]
     SF --> TS["train_shortfall_model.py<br/>XGBRegressor (time split)"]
     TS --> FS["finalize_shortfall_model.py"]
     FS --> SIM[["🤖 SimulatorAgent"]]
@@ -504,7 +504,7 @@ moil-reserve-intelligence/
 ├── geo_utils.py                   # Shared geospatial helpers
 ├── generate_features.py           # Structural lines + training features
 ├── prospectivity/                 # Per-site models, map layers, zone-confidence source (see its METHODOLOGY.md)
-├── shortfall_features_wip.py      # Shortfall feature engineering
+├── shortfall_feature_engineering.py  # Shortfall features + machine-checked look-ahead guard
 ├── train_shortfall_model.py       # XGBoost shortfall forecaster
 ├── finalize_shortfall_model.py
 │
@@ -631,9 +631,9 @@ python -m prospectivity.feature_cache --force            # GEE features (live Ea
 python -m prospectivity.train_models --allow-synthetic   # Part 2 — per-site models
 python -m prospectivity.classify_export                  # Part 3/4 — map layers
 # then, from oresight-backend/: python -m scripts.import_prospectivity_scores
-python shortfall_features_wip.py      # Part 5 — independent
-python train_shortfall_model.py
-python finalize_shortfall_model.py
+# Shortfall model: train with the BACKEND venv (pinned xgboost; a model pickled by another version mispredicts silently)
+#   pip install -r oresight-backend/requirements-train.txt   (inside oresight-backend/venv)
+oresight-backend/venv/Scripts/python train_shortfall_model.py
 ```
 > ⚠️ `pykrige`, `geopandas`, and `rasterio` carry native/GDAL dependencies. If pip fails on Windows:
 > ```bash
