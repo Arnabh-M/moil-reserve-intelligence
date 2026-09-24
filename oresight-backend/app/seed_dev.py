@@ -365,6 +365,13 @@ def _seed_production_records(
     inserted = 0
     shortfall_records: list[ProductionRecord] = []
 
+    # Once a site has a real history (import_p2_data loads a ~630-day series that ends before today), the
+    # synthetic 60-day window must not pad the days after it: rebuild_demo_db runs this a second time, and
+    # padding would add 1-2 rows dated after the real series with a different target than the real data.
+    has_real_history = (
+        session.scalar(select(func.count()).select_from(ProductionRecord).where(ProductionRecord.site_id == site.id)) or 0
+    ) > 60
+
     for offset in range(60):
         record_date = start + timedelta(days=offset)
         existing = session.scalar(
@@ -376,6 +383,8 @@ def _seed_production_records(
         if existing is not None:
             if offset in shortfall_days:
                 shortfall_records.append(existing)
+            continue
+        if has_real_history:
             continue
 
         weekday = record_date.weekday()

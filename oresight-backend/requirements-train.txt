@@ -1,0 +1,13 @@
+# Extra dependency for RETRAINING the shortfall forecaster (train_shortfall_model.py
+# at the repo root). Not needed to run the API, so it is kept out of requirements.txt
+# and out of the Docker image.
+#
+#   pip install -r requirements-train.txt        (inside oresight-backend/venv)
+#   venv\Scripts\python ..\train_shortfall_model.py
+#
+# Train with THIS venv's interpreter so the pickled model is written by the exact
+# xgboost the API runs (pinned in requirements.txt). The trainer refuses to run
+# under any other xgboost version. xgboost's sklearn wrapper needs scikit-learn to
+# fit at all, which is the only reason it appears here.
+-r requirements.txt
+scikit-learn>=1.6,<2.0

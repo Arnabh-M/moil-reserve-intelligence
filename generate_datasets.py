@@ -1,12 +1,19 @@
 """
 MOIL Reserve Intelligence (SIH26009) — Synthetic Dataset Generator
 ====================================================================
-Generates three CSVs consistent with seed_graph.cypher's node IDs:
+Generates the CSVs consistent with seed_graph.cypher's node IDs:
 
-  1. production_history.csv     — 6 months of daily output per site
-  2. equipment_downtime_log.csv — ~30-40 downtime events, matching
-                                    Equipment IDs from the graph
-  3. deposit_ground_truth.csv   — 40 labeled points for tomorrow's
+  1. production_history.csv     — 630 days (2025-01-01..2026-09-22) of
+                                    daily output per site, causally driven
+                                    by real rainfall, equipment downtime,
+                                    accumulated backlog and delayed blasts.
+                                    See scripts/synthetic_operations.py.
+  2. equipment_downtime_log.csv — same span, 19-machine renewal-process
+                                    reliability model (also
+                                    scripts/synthetic_operations.py).
+  3. blast_events.csv           — delayed-blast events feeding term 4
+                                    above (scripts/synthetic_operations.py).
+  4. deposit_ground_truth.csv   — 40 labeled points for tomorrow's
                                     deposit classifier. is_confirmed_deposit
                                     is drawn Bernoulli(p) where p is a
                                     logistic function of the point's OWN
@@ -21,20 +28,31 @@ Output: ./data/*.csv
 """
 
 import os
+
 import numpy as np
 import pandas as pd
 
 import generate_features as _gf
-from geo_utils import SITE_AOIS, SITE_BBOXES, compute_structural_features, sample_field
+from geo_utils import compute_structural_features, sample_field
+from scripts.synthetic_operations import (
+    DATA_DIR,
+    END_DATE,
+    START_DATE,
+    generate_equipment_downtime_log,
+    generate_production_history,
+    print_downtime_summary,
+    print_production_summary,
+    sha256_of,
+)
 
-RNG_SEED = 42
-rng = np.random.default_rng(RNG_SEED)
-
-# deposit_ground_truth.csv draws from its OWN Generator, never the shared
-# `rng` above. production_history.csv and equipment_downtime_log.csv are
-# generated first and consume `rng` sequentially; keeping deposits (locations
-# AND the feature-conditioned label) on a separate stream means nothing about
-# the deposit step can shift the byte content of those two files.
+# deposit_ground_truth.csv draws from its OWN Generator, never anything in
+# scripts.synthetic_operations. production_history.csv and
+# equipment_downtime_log.csv are generated first (via that module, which
+# owns its own RNG_SEED=42 / PRODUCTION_RNG_SEED=43 streams); keeping
+# deposits (locations AND the feature-conditioned label) on a separate
+# stream means nothing about the deposit step can shift the byte content
+# of those two files, and nothing in synthetic_operations.py can shift
+# deposit_ground_truth.csv's.
 DEPOSIT_RNG_SEED = 2026
 
 # Logistic label rule (STEP 2). Each feature is z-scored across the sample,
@@ -54,14 +72,19 @@ LABEL_FEATURE_WEIGHTS = {
 # is a moderate probabilistic tendency, not a clean separator.
 LABEL_ZSCORE_NOISE_SD = 0.42
 
-OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+OUT_DIR = str(DATA_DIR)
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ---------------------------------------------------------------------
-# Shared site config — site IDs kept consistent with seed_graph.cypher.
-# Boxes and target_output come from data/moil_sites.json via geo_utils, so
-# this file cannot drift from the DB, the pipelines or the map.
+# Site config for deposit_ground_truth.csv — lat/lon ranges come from
+# data/moil_sites.json via geo_utils, so this cannot drift from the DB,
+# the pipelines or the map. site_id/target_output/equipment roster for
+# production_history.csv and equipment_downtime_log.csv now live in
+# scripts/synthetic_operations.py (SITE_IDS there is the same
+# moil_sites.json, just read directly rather than via geo_utils).
 # ---------------------------------------------------------------------
+from geo_utils import SITE_AOIS, SITE_BBOXES  # noqa: E402
+
 SITES = {
     key: {
         "target_output": SITE_AOIS[key]["target_output"],
@@ -72,142 +95,13 @@ SITES = {
 }
 SITE_IDS = list(SITES.keys())
 
-# Equipment IDs/types must match seed_graph.cypher exactly
-EQUIPMENT = {
-    "balaghat": [
-        ("eq_bal_01", "Excavator"), ("eq_bal_02", "Drill"), ("eq_bal_03", "Conveyor"),
-        ("eq_bal_04", "Loader"), ("eq_bal_05", "Compressor"),
-    ],
-    "nagpur": [
-        ("eq_nag_01", "Excavator"), ("eq_nag_02", "Drill"), ("eq_nag_03", "Conveyor"),
-        ("eq_nag_04", "Loader"), ("eq_nag_05", "Compressor"),
-    ],
-    "bhandara": [
-        ("eq_bhd_01", "Excavator"), ("eq_bhd_02", "Drill"), ("eq_bhd_03", "Conveyor"),
-        ("eq_bhd_04", "Loader"), ("eq_bhd_05", "Compressor"),
-    ],
-}
-
-END_DATE = pd.Timestamp("2026-08-30")
-START_DATE = END_DATE - pd.Timedelta(days=182)  # ~6 months, daily
-
 
 # =====================================================================
-# 1. production_history.csv
+# 1 & 2. production_history.csv / equipment_downtime_log.csv / blast_events.csv
+# now live in scripts/synthetic_operations.py (Stage 1: downtime renewal
+# process; Stage 2: causal production model). Imported above and called
+# from main() below rather than duplicated here.
 # =====================================================================
-def generate_production_history():
-    dates = pd.date_range(START_DATE, END_DATE, freq="D")
-    rows = []
-
-    for site_id in SITE_IDS:
-        base_target = SITES[site_id]["target_output"]
-
-        # Week-to-week variation in target: a slow random walk on a
-        # per-week basis, smoothed back out to daily.
-        n_weeks = int(np.ceil(len(dates) / 7)) + 1
-        weekly_drift = rng.normal(0, 0.03, n_weeks).cumsum()
-        weekly_drift = np.clip(weekly_drift, -0.12, 0.12)
-        daily_drift = np.repeat(weekly_drift, 7)[: len(dates)]
-        target_series = base_target * (1 + daily_drift)
-
-        # Light seasonal dip during monsoon months (Jun-Sep)
-        month = dates.month
-        seasonal_factor = np.where(np.isin(month, [6, 7, 8, 9]), 0.90, 1.0)
-
-        # Actual output tracks target with normal noise
-        noise = rng.normal(0, 0.05, len(dates))
-        actual_series = target_series * seasonal_factor * (1 + noise)
-
-        # Inject 2-3 shortfall events (5-10 day windows), 20-40% below target
-        n_events = rng.integers(2, 4)  # 2 or 3
-        used_ranges = []  # list of (start_idx, end_idx) half-open intervals
-        for _ in range(n_events):
-            duration = int(rng.integers(5, 11))  # 5-10 days
-            for _attempt in range(50):
-                start_idx = int(rng.integers(0, len(dates) - duration))
-                end_idx = start_idx + duration
-                overlaps = any(start_idx < e and s < end_idx for s, e in used_ranges)
-                if not overlaps:
-                    used_ranges.append((start_idx, end_idx))
-                    break
-            else:
-                continue
-            drop_pct = rng.uniform(0.20, 0.40)
-            actual_series[start_idx:end_idx] *= (1 - drop_pct)
-
-        actual_series = np.clip(actual_series, a_min=0, a_max=None)
-
-        for d, tgt, act in zip(dates, target_series, actual_series):
-            rows.append(
-                {
-                    "site_id": site_id,
-                    "date": d.strftime("%Y-%m-%d"),
-                    "actual_output": round(float(act), 1),
-                    "target_output": round(float(tgt), 1),
-                }
-            )
-
-    df = pd.DataFrame(rows)
-    path = os.path.join(OUT_DIR, "production_history.csv")
-    df.to_csv(path, index=False)
-    return df
-
-
-# =====================================================================
-# 2. equipment_downtime_log.csv
-# =====================================================================
-DOWNTIME_REASONS = [
-    "scheduled maintenance",
-    "mechanical failure",
-    "weather delay",
-    "electrical fault",
-    "spare parts unavailable",
-    "operator shift gap",
-    "hydraulic leak",
-]
-
-
-def generate_equipment_downtime_log(n_events=36):
-    all_equipment = [
-        (eq_id, eq_type, site_id)
-        for site_id, items in EQUIPMENT.items()
-        for eq_id, eq_type in items
-    ]
-
-    rows = []
-    span_days = (END_DATE - START_DATE).days
-
-    for _ in range(n_events):
-        eq_id, eq_type, site_id = all_equipment[rng.integers(0, len(all_equipment))]
-        start_offset = rng.integers(0, span_days - 1)
-        down_start = START_DATE + pd.Timedelta(days=int(start_offset))
-        down_start += pd.Timedelta(hours=int(rng.integers(0, 24)))
-
-        reason = DOWNTIME_REASONS[rng.integers(0, len(DOWNTIME_REASONS))]
-        if reason == "scheduled maintenance":
-            duration_hours = rng.uniform(2, 8)
-        elif reason == "weather delay":
-            duration_hours = rng.uniform(6, 48)
-        else:
-            duration_hours = rng.uniform(1, 24)
-
-        down_end = down_start + pd.Timedelta(hours=float(duration_hours))
-
-        rows.append(
-            {
-                "equipment_id": eq_id,
-                "site_id": site_id,
-                "down_start": down_start.strftime("%Y-%m-%d %H:%M:%S"),
-                "down_end": down_end.strftime("%Y-%m-%d %H:%M:%S"),
-                "duration_hours": round(float(duration_hours), 2),
-                "reason": reason,
-            }
-        )
-
-    df = pd.DataFrame(rows).sort_values("down_start").reset_index(drop=True)
-    path = os.path.join(OUT_DIR, "equipment_downtime_log.csv")
-    df.to_csv(path, index=False)
-    return df
 
 
 # =====================================================================
@@ -230,7 +124,7 @@ def _confirmation_probability(features: dict, noise: np.ndarray) -> np.ndarray:
 
 
 def generate_deposit_ground_truth(n_total=40):
-    # Everything below draws from this isolated stream, not the module `rng`.
+    # Everything below draws from this isolated stream, not synthetic_operations.py's RNGs.
     deposit_rng = np.random.default_rng(DEPOSIT_RNG_SEED)
 
     per_site = {"balaghat": 13, "nagpur": 13, "bhandara": 14}  # sums to 40
@@ -309,36 +203,34 @@ def generate_deposit_ground_truth(n_total=40):
 # Main
 # =====================================================================
 def main():
-    prod_df = generate_production_history()
-    downtime_df = generate_equipment_downtime_log()
+    deposit_path = DATA_DIR / "deposit_ground_truth.csv"
+    hash_before = sha256_of(deposit_path) if deposit_path.exists() else None
+
+    downtime_df, overdue_ids = generate_equipment_downtime_log()
+    downtime_df.to_csv(os.path.join(OUT_DIR, "equipment_downtime_log.csv"), index=False)
+
+    prod_df, blast_df, diagnostics = generate_production_history()
+    prod_df.to_csv(os.path.join(OUT_DIR, "production_history.csv"), index=False)
+    blast_df.to_csv(os.path.join(OUT_DIR, "blast_events.csv"), index=False)
+
     deposit_df = generate_deposit_ground_truth()
+    hash_after = sha256_of(deposit_path)
 
     print("=" * 70)
     print("MOIL Reserve Intelligence - synthetic dataset summary")
     print("=" * 70)
 
-    print("\n[production_history.csv]")
-    print(f"  rows: {len(prod_df)}")
-    print(f"  date range: {prod_df['date'].min()} -> {prod_df['date'].max()}")
-    print(f"  sites: {sorted(prod_df['site_id'].unique().tolist())}")
-    print("  avg actual/target ratio by site:")
-    ratio = prod_df.groupby("site_id")[["actual_output", "target_output"]].apply(
-        lambda g: (g["actual_output"] / g["target_output"]).mean()
-    )
-    for site_id, val in ratio.items():
-        print(f"    {site_id}: {val:.2%}")
-
-    print("\n[equipment_downtime_log.csv]")
-    print(f"  rows: {len(downtime_df)}")
-    print(f"  date range: {downtime_df['down_start'].min()} -> {downtime_df['down_start'].max()}")
-    print(f"  events per site:\n{downtime_df['site_id'].value_counts().to_string()}")
-    print(f"  reason counts:\n{downtime_df['reason'].value_counts().to_string()}")
+    print_downtime_summary(downtime_df, overdue_ids)
+    print_production_summary(prod_df, blast_df, diagnostics)
 
     print("\n[deposit_ground_truth.csv]")
     print(f"  rows: {len(deposit_df)}")
     print(f"  points per site:\n{deposit_df['site_id'].value_counts().to_string()}")
     class_balance = deposit_df["is_confirmed_deposit"].value_counts(normalize=True)
     print(f"  class balance (is_confirmed_deposit):\n{class_balance.to_string()}")
+    print(f"  sha256: {hash_after}")
+    if hash_before is not None:
+        print(f"  unchanged from before this run: {hash_before == hash_after}")
 
     print("\nAll CSVs written to:", OUT_DIR)
     print("=" * 70)

@@ -31,12 +31,12 @@ MODELING NOTE on `projected_impact` — SimulatorAgent only models 3
 directly. Each candidate is evaluated by simulating what happens if its
 underlying risk factor is left unaddressed for a realistic horizon, and
 `projected_impact` = the risk-score escalation that simulation predicts —
-i.e., the risk avoided by acting on this option now. See train_shortfall_
-model.py and simulator.py's own notes: `schedule_pressure` (used by
-`delay_blasting`, which RESCHEDULE and ADJUST_PLAN key off) has a *weak or
-inverted* learned effect in the current model given limited training
-signal — RESCHEDULE/ADJUST_PLAN projected_impact numbers may come back
-small or 0 as an honest consequence, not a bug in this agent.
+i.e., the risk avoided by acting on this option now. Each candidate type maps to
+one simulator scenario (redeploy -> equipment_down, reschedule -> rainfall_event,
+adjust_plan -> delay_blasting), and each of those now moves the model through a
+feature it responds to monotonically (see simulator.py's scenario -> feature
+mapping). Small or zero numbers can still occur where the model's response is
+genuinely small; that is an honest consequence, not a bug in this agent.
 """
 
 from __future__ import annotations
@@ -79,13 +79,12 @@ _BASE_IMPACT_BY_TYPE = {
     # (a documented heuristic, not model-calibrated): redeploy fully
     # replaces the lost capacity with an equivalent idle unit; reschedule
     # and adjust_plan only shift the shortfall in time or offload it
-    # elsewhere, not eliminate it. This exists because the shortfall
-    # model's own equipment_down response is empirically flat for the
-    # current data (see finalize_shortfall_model.py's fit-quality note —
-    # rolling_7day_downtime_pct saturates), which without this prior would
-    # make a correctly-matched redeploy candidate score a literal 0 and
-    # rank below a less relevant option, purely as an artifact of that
-    # weak model signal rather than the option actually being worse.
+    # elsewhere, not eliminate it. Originally added because the previous
+    # shortfall model's equipment_down response was flat (it would have made a
+    # correctly-matched redeploy candidate score a literal 0 and rank below a
+    # less relevant option, an artifact of that weak signal). The current model
+    # responds to equipment_down monotonically, but the prior is kept: it is
+    # what makes the 40-85 ranking scale legible and it was not re-derived.
     "redeploy": 70,
     "reschedule": 50,
     "adjust_plan": 45,

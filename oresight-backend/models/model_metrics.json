@@ -1,8 +1,140 @@
 {
-  "rmse": 0.158,
-  "mae": 0.1177,
-  "residual_std": 0.153,
-  "target_shortfall_mean": 0.1362,
-  "target_shortfall_std": 0.0903,
-  "test_sample_count": 111
+  "rmse": 0.0566,
+  "mae": 0.0448,
+  "residual_std": 0.0564,
+  "target_shortfall_mean": 0.1567,
+  "target_shortfall_std": 0.1142,
+  "test_sample_count": 372,
+  "baseline_train_mean_rmse": 0.1168,
+  "baseline_persistence_rmse": 0.0844,
+  "r2_gain_over_persistence": 0.3021,
+  "perfect_forecast_caveat": "rain_today_mm is trained on OBSERVED same-day rain (a perfect forecast). Reported accuracy is an optimistic ceiling relative to live use with a real forecast.",
+  "data_source": "synthetic (causal generator: scripts/synthetic_operations.py)",
+  "features": [
+    "rain_today_mm",
+    "rain_3d_mm",
+    "rain_7d_mm",
+    "heavy_rain_lag1",
+    "soil_moisture_m3m3",
+    "rolling_7d_downtime_pct",
+    "equipment_down_today_pct",
+    "days_since_last_maintenance",
+    "backlog_t",
+    "blast_delay_days_lag",
+    "dow_sin",
+    "dow_cos",
+    "month_sin",
+    "month_cos"
+  ],
+  "evaluation": "time-ordered 20% holdout; 14-day warm-up dropped per site; see train_shortfall_model.py docstring",
+  "ship_gate_passed": true,
+  "xgboost_version": "2.1.4",
+  "feature_constants": {
+    "machines_per_site": {
+      "balaghat": 5,
+      "nagpur": 5,
+      "bhandara": 9
+    },
+    "heavy_rain_mm": 35.0,
+    "backlog_decay": 0.85,
+    "rolling_downtime_window_days": 7,
+    "maintenance_reason": "scheduled maintenance"
+  },
+  "feature_provenance": {
+    "rain_today_mm": {
+      "causal_term_in_generator": false,
+      "note": "no causal term in synthetic generator; learned effect is a dataset artifact, do not cite as a finding. The generator's rain loss uses lags 1 and 2 only, so today's rain helps only through rain autocorrelation. Also trained on OBSERVED same-day rain (a perfect forecast): reported accuracy is an optimistic ceiling."
+    },
+    "rain_3d_mm": {
+      "causal_term_in_generator": true,
+      "note": "proxies the lag-1/lag-2 rain terms and the wet-pit trigger (3-day rain > 60mm)"
+    },
+    "rain_7d_mm": {
+      "causal_term_in_generator": true,
+      "note": "indirect: correlates with the causal rain lags; no term of its own"
+    },
+    "heavy_rain_lag1": {
+      "causal_term_in_generator": true,
+      "note": "proxies the lag-1 rain term (rain on t-1 >= 35mm)"
+    },
+    "soil_moisture_m3m3": {
+      "causal_term_in_generator": false,
+      "note": "no causal term in synthetic generator; learned effect is a dataset artifact, do not cite as a finding. Real SMAP data that merely co-varies with rain."
+    },
+    "rolling_7d_downtime_pct": {
+      "causal_term_in_generator": true,
+      "note": "indirect: outages persist, so trailing downtime co-varies with today's causal downtime term; not monotone in the learned model"
+    },
+    "equipment_down_today_pct": {
+      "causal_term_in_generator": true,
+      "note": "direct: class-weighted hours down today (unweighted here)"
+    },
+    "days_since_last_maintenance": {
+      "causal_term_in_generator": false,
+      "note": "no causal term in synthetic generator; learned effect is a dataset artifact, do not cite as a finding. The generator's overdue machines simply stop being serviced; failure rates do not depend on maintenance age. Do NOT claim the model learned that overdue maintenance raises shortfall."
+    },
+    "backlog_t": {
+      "causal_term_in_generator": true,
+      "note": "direct but weak (0.02 x backlog, ~1.8pp mean); learned slope is roughly a quarter of the truth"
+    },
+    "blast_delay_days_lag": {
+      "causal_term_in_generator": true,
+      "note": "direct: +0.06 loss per delay-day on the following 5 days; feature window is 7 days"
+    },
+    "dow_sin": {
+      "causal_term_in_generator": false,
+      "note": "no causal term in synthetic generator; learned effect is a dataset artifact, do not cite as a finding (no day-of-week effect exists in the generator)"
+    },
+    "dow_cos": {
+      "causal_term_in_generator": false,
+      "note": "no causal term in synthetic generator; learned effect is a dataset artifact, do not cite as a finding (no day-of-week effect exists in the generator)"
+    },
+    "month_sin": {
+      "causal_term_in_generator": false,
+      "note": "seasonality enters only through real rainfall; any month effect beyond rain is an artifact"
+    },
+    "month_cos": {
+      "causal_term_in_generator": false,
+      "note": "seasonality enters only through real rainfall; any month effect beyond rain is an artifact"
+    }
+  },
+  "known_limitations": [
+    "Rolling-origin stability check (a stability check, NOT the ship gate): the model's edge over persistence is largest in monsoon periods and can fall below persistence in dry windows at high-downtime sites. Recorded, not fixed: no re-split, re-tune or re-framing was done to remove it.",
+    "Features with NO causal term in the synthetic generator (rain_today_mm, soil_moisture_m3m3, days_since_last_maintenance, dow/month beyond rainfall) have learned effects that are dataset artifacts; do not cite them as findings. See feature_provenance.",
+    "backlog_t: the true effect (0.02 x backlog) is too weak for the model to recover reliably; the learned slope is about a quarter of the truth."
+  ],
+  "rolling_origin_pooled_rmse": [
+    {
+      "window": 1,
+      "test_period": "2025-12-19 .. 2026-03-21",
+      "model": 0.0559,
+      "persistence": 0.0709,
+      "train_mean": 0.0987
+    },
+    {
+      "window": 2,
+      "test_period": "2026-03-22 .. 2026-06-21",
+      "model": 0.061,
+      "persistence": 0.0669,
+      "train_mean": 0.1047
+    },
+    {
+      "window": 3,
+      "test_period": "2026-06-22 .. 2026-09-22",
+      "model": 0.0609,
+      "persistence": 0.0902,
+      "train_mean": 0.1284
+    }
+  ],
+  "rolling_origin_slices_not_beating_both_baselines": [
+    {
+      "window": 2,
+      "test_period": "2026-03-22 .. 2026-06-21",
+      "slice": "bhandara",
+      "model_rmse": 0.0825,
+      "persistence_rmse": 0.0768,
+      "train_mean_rmse": 0.1261,
+      "r2_gain_over_persistence": -0.071
+    }
+  ]
 }

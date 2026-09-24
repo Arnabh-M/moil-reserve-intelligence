@@ -143,20 +143,21 @@ export const api = {
     };
     if (useMock) {
       const ranges = {
-        equipment_down: { severity_min_pct: 0, severity_max_pct: 5.3, duration_min_days: 0.1, duration_max_days: 1.9 },
-        delay_blasting: { severity_min_pct: 0.4, severity_max_pct: 34.9, duration_min_days: 5, duration_max_days: 10 },
-        rainfall_event: { severity_min_pct: 14.6, severity_max_pct: 100.0, duration_min_days: 1, duration_max_days: 30 },
+        equipment_down: { severity_min_pct: 0, severity_max_pct: 14.2, duration_min_days: 0, duration_max_days: 5 },
+        delay_blasting: { severity_min_pct: 5.4, severity_max_pct: 36, duration_min_days: 1, duration_max_days: 4 },
+        rainfall_event: { severity_min_pct: 0, severity_max_pct: 147, duration_min_days: 1, duration_max_days: 30 }, // severity: mm of rain over 3 days
       };
       const items = conditions && conditions.length > 0 ? conditions : [{ type: scenario_type, duration: duration_days, severity }];
       let anyOOD = false;
       const conditions_ood = items.map((c, idx) => {
         const r = ranges[c.type] || { severity_min_pct: 0, severity_max_pct: 100, duration_min_days: 1, duration_max_days: 30 };
+        const unit = c.type === 'rainfall_event' ? ' mm' : '%';
         const sevOOD = c.severity != null && (c.severity < r.severity_min_pct || c.severity > r.severity_max_pct);
         const durOOD = c.duration != null && (c.duration < r.duration_min_days || c.duration > r.duration_max_days);
         const ood = Boolean(sevOOD || durOOD);
         if (ood) anyOOD = true;
         const warnings = [];
-        if (sevOOD) warnings.push(`Severity ${c.severity}% is outside validated training range (${r.severity_min_pct}–${r.severity_max_pct}%).`);
+        if (sevOOD) warnings.push(`Severity ${c.severity}${unit} is outside validated training range (${r.severity_min_pct}–${r.severity_max_pct}${unit}).`);
         if (durOOD) warnings.push(`Duration ${c.duration}d is outside validated training range (${r.duration_min_days}–${r.duration_max_days} days).`);
         return {
           index: idx,

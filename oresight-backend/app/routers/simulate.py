@@ -21,6 +21,8 @@ from sqlalchemy.orm import Session
 from app.agents.simulator import SCENARIO_TYPES, SimulatorAgent
 from app.db import get_db
 from app.graph_db import get_graph_driver
+from app.services.forecast_model import ModelVersionMismatchError
+from app.services.live_features import LiveDataUnavailableError
 from app.schemas import (
     CausalGraphOut,
     ConditionInput,
@@ -35,6 +37,11 @@ logger = logging.getLogger("oresight.simulate")
 router = APIRouter(prefix="/simulate", tags=["simulation"])
 
 _MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
+
+
+def _severity_unit(scenario_type: str) -> str:
+    """rainfall_event severity is mm of rain over 3 days; the other scenarios use a percentage."""
+    return " mm" if scenario_type == "rainfall_event" else "%"
 
 
 def _load_training_ranges() -> dict | None:
@@ -56,22 +63,24 @@ def evaluate_conditions_distribution(
     Returns:
         (out_of_distribution: bool, conditions_ood: list[ConditionOODStatus], warning_message: str | None)
     """
+    # Fallback used only when models/training_data_ranges.json is missing; mirrors the shipped file's bounds.
+    # rainfall_event severity is mm of 3-day rain (0-147 mm in training), not a 0-100 index.
     ranges = _load_training_ranges() or {
         "equipment_down": {
             "severity_min_pct": 0.0,
-            "severity_max_pct": 5.3,
-            "duration_min_days": 0.1,
-            "duration_max_days": 1.9,
+            "severity_max_pct": 14.2,
+            "duration_min_days": 0.0,
+            "duration_max_days": 5.0,
         },
         "delay_blasting": {
-            "severity_min_pct": 0.4,
-            "severity_max_pct": 34.9,
-            "duration_min_days": 5.0,
-            "duration_max_days": 10.0,
+            "severity_min_pct": 5.4,
+            "severity_max_pct": 36.0,
+            "duration_min_days": 1.0,
+            "duration_max_days": 4.0,
         },
         "rainfall_event": {
-            "severity_min_pct": 14.6,
-            "severity_max_pct": 100.0,
+            "severity_min_pct": 0.0,
+            "severity_max_pct": 147.0,
             "duration_min_days": 1.0,
             "duration_max_days": 30.0,
         },
@@ -103,6 +112,7 @@ def evaluate_conditions_distribution(
         if type_range:
             s_min = float(type_range.get("severity_min_pct", 0.0))
             s_max = float(type_range.get("severity_max_pct", 100.0))
+            unit = _severity_unit(sc_type)
             d_min = float(type_range.get("duration_min_days", 1.0))
             d_max = float(type_range.get("duration_max_days", 30.0))
             sev_range = [s_min, s_max]
@@ -112,7 +122,7 @@ def evaluate_conditions_distribution(
                 if sev < s_min or sev > s_max:
                     sev_ood = True
                     warnings.append(
-                        f"Severity {sev}% is outside validated training range ({s_min}–{s_max}%)."
+                        f"Severity {sev}{unit} is outside validated training range ({s_min}–{s_max}{unit})."
                     )
 
             if dur is not None:
@@ -175,6 +185,15 @@ def training_ranges() -> dict:
     return data
 
 
+def _projection_severity(payload: SimulateRequest) -> float | None:
+    """The severity that drives the projection: the request's own, else the first condition's when
+    that condition is the scenario being run. Only rainfall_event uses it (as mm of 3-day rain)."""
+    if payload.severity is not None:
+        return payload.severity
+    first = payload.conditions[0] if payload.conditions else None
+    return first.severity if first is not None and first.type == payload.scenario_type else None
+
+
 @router.post(
     "", response_model=SimulateResponse, summary="Run a what-if scenario simulation"
 )
@@ -213,15 +232,25 @@ def simulate(
             status_code=503,
             detail="Forecasting model is unavailable on the server. Run train_shortfall_model.py.",
         ) from exc
+    except (ModelVersionMismatchError, LiveDataUnavailableError) as exc:
+        # The artifact is not safe to use under this xgboost / predates the live-feature constants:
+        # refuse rather than serve silently wrong numbers.
+        logger.error("SimulatorAgent refused to start: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Forecasting model is unavailable: {exc}") from exc
 
     try:
         result = agent.run_scenario(
             payload.scenario_type,
             site_id=payload.site_id,
             duration_days=payload.duration_days,
+            severity=_projection_severity(payload),
         )
     except HTTPException:
         raise
+    except LiveDataUnavailableError as exc:
+        # e.g. the satellite rainfall record is not mounted or has stopped updating: say so, do not guess.
+        logger.error("SimulatorAgent live data unavailable: %s", exc)
+        raise HTTPException(status_code=503, detail=f"Live model inputs are unavailable: {exc}") from exc
     except (ServiceUnavailable, OperationalError, InterfaceError):
         # Neo4j or Postgres is down — let the app-level handlers turn these
         # into a clean 503 rather than masking them as a 502 engine failure.
@@ -270,5 +299,7 @@ def simulate(
         out_of_distribution=any_ood,
         conditions_ood=conditions_ood,
         out_of_distribution_warning=ood_warning,
+        model_state_as_of=result["model_state_as_of"],
+        model_inputs_missing=result["model_inputs_missing"],
     )
 

@@ -1,111 +1,113 @@
 {
   "data_source": "synthetic",
-  "data_generator": "generate_datasets.py",
-  "date_range": "2026-03-01 to 2026-08-30",
+  "data_generator": "scripts/synthetic_operations.py via generate_datasets.py",
+  "date_range": "2025-01-01 to 2026-09-22",
   "equipment_down": {
     "severity_min_pct": 0,
-    "severity_max_pct": 5.3,
-    "severity_p25_pct": 0.8,
-    "severity_p50_pct": 1.4,
-    "severity_p75_pct": 2.5,
-    "severity_p95_pct": 4.7,
+    "severity_max_pct": 14.2,
+    "severity_p25_pct": 0.5,
+    "severity_p50_pct": 1.1,
+    "severity_p75_pct": 3.5,
+    "severity_p95_pct": 7.7,
     "severity_levels": {
-      "low": 0.8,
-      "medium": 1.4,
-      "high": 2.5,
-      "severe": 4.7
+      "low": 0.5,
+      "medium": 1.1,
+      "high": 3.5,
+      "severe": 7.7
     },
-    "duration_min_days": 0.1,
-    "duration_max_days": 1.9,
-    "duration_p25_days": 0.3,
-    "duration_p50_days": 0.5,
-    "duration_p75_days": 0.9,
-    "duration_p95_days": 1.7,
-    "event_count": 36
+    "duration_min_days": 0.0,
+    "duration_max_days": 5.0,
+    "duration_p25_days": 0.2,
+    "duration_p50_days": 0.6,
+    "duration_p75_days": 1.6,
+    "duration_p95_days": 3.3,
+    "event_count": 1492
   },
   "equipment_down_by_reason": {
     "electrical fault": {
-      "duration_min_days": 0.4,
-      "duration_max_days": 0.9,
-      "severity_min_hours": 8.4,
-      "severity_max_hours": 21.9,
-      "count": 6
+      "duration_min_days": 0.1,
+      "duration_max_days": 1.0,
+      "severity_min_hours": 2.2,
+      "severity_max_hours": 23.9,
+      "count": 172
     },
     "hydraulic leak": {
-      "duration_min_days": 0.1,
-      "duration_max_days": 0.9,
-      "severity_min_hours": 3.4,
-      "severity_max_hours": 21.6,
-      "count": 7
+      "duration_min_days": 0.2,
+      "duration_max_days": 2.0,
+      "severity_min_hours": 4.8,
+      "severity_max_hours": 47.4,
+      "count": 101
     },
     "mechanical failure": {
       "duration_min_days": 0.2,
-      "duration_max_days": 0.9,
-      "severity_min_hours": 5.3,
-      "severity_max_hours": 21.1,
-      "count": 4
+      "duration_max_days": 3.0,
+      "severity_min_hours": 4.8,
+      "severity_max_hours": 71.9,
+      "count": 357
     },
     "operator shift gap": {
-      "duration_min_days": 0.4,
-      "duration_max_days": 0.9,
-      "severity_min_hours": 9.8,
-      "severity_max_hours": 22.4,
-      "count": 3
+      "duration_min_days": 0.0,
+      "duration_max_days": 0.3,
+      "severity_min_hours": 1.2,
+      "severity_max_hours": 8.0,
+      "count": 143
     },
     "scheduled maintenance": {
       "duration_min_days": 0.1,
       "duration_max_days": 0.3,
-      "severity_min_hours": 2.4,
-      "severity_max_hours": 7.5,
-      "count": 7
+      "severity_min_hours": 2.0,
+      "severity_max_hours": 8.0,
+      "count": 390
     },
     "spare parts unavailable": {
-      "duration_min_days": 0.2,
-      "duration_max_days": 0.8,
-      "severity_min_hours": 4.2,
-      "severity_max_hours": 19.7,
-      "count": 3
+      "duration_min_days": 1.0,
+      "duration_max_days": 5.0,
+      "severity_min_hours": 24.0,
+      "severity_max_hours": 119.9,
+      "count": 172
     },
     "weather delay": {
       "duration_min_days": 0.3,
-      "duration_max_days": 1.9,
-      "severity_min_hours": 6.7,
-      "severity_max_hours": 44.6,
-      "count": 6
+      "duration_max_days": 2.0,
+      "severity_min_hours": 6.2,
+      "severity_max_hours": 47.5,
+      "count": 157
     }
   },
   "delay_blasting": {
-    "severity_min_pct": 0.4,
-    "severity_max_pct": 34.9,
-    "severity_p25_pct": 0.4,
-    "severity_p50_pct": 6.2,
-    "severity_p75_pct": 12.3,
-    "severity_p95_pct": 34.9,
+    "severity_min_pct": 5.4,
+    "severity_max_pct": 36.0,
+    "severity_p25_pct": 5.4,
+    "severity_p50_pct": 11.3,
+    "severity_p75_pct": 19.1,
+    "severity_p95_pct": 36.0,
     "severity_levels": {
-      "low": 0.4,
-      "medium": 6.2,
-      "high": 12.3,
-      "severe": 34.9
+      "low": 5.4,
+      "medium": 11.3,
+      "high": 19.1,
+      "severe": 36.0
     },
-    "duration_min_days": 5,
-    "duration_max_days": 10,
-    "duration_p25_days": 5,
-    "duration_p50_days": 7,
-    "duration_p75_days": 9,
-    "duration_p95_days": 10
+    "duration_min_days": 1,
+    "duration_max_days": 4,
+    "duration_p25_days": 2.0,
+    "duration_p50_days": 3.0,
+    "duration_p75_days": 4.0,
+    "duration_p95_days": 4.0
   },
   "rainfall_event": {
-    "severity_min_pct": 14.6,
-    "severity_max_pct": 100.0,
-    "severity_p25_pct": 49.1,
-    "severity_p50_pct": 84.8,
-    "severity_p75_pct": 96.4,
-    "severity_p95_pct": 99.9,
+    "severity_unit": "mm of rain over the preceding 3 days (was: 0-100 cosine index)",
+    "severity_basis": "percentiles over the 794 of 1848 training 3-day windows with >= 2.5 mm (IMD rainy-day threshold); min/max are over all windows",
+    "severity_min_pct": 0.0,
+    "severity_max_pct": 147.0,
+    "severity_p25_pct": 7.5,
+    "severity_p50_pct": 23.5,
+    "severity_p75_pct": 46.4,
+    "severity_p95_pct": 87.8,
     "severity_levels": {
-      "low": 49.1,
-      "medium": 84.8,
-      "high": 96.4,
-      "severe": 99.9
+      "low": 7.5,
+      "medium": 23.5,
+      "high": 46.4,
+      "severe": 87.8
     },
     "duration_min_days": 1,
     "duration_max_days": 30,

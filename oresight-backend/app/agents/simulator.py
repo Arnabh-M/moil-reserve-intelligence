@@ -23,16 +23,72 @@ _score). Both before/after start from the same real Postgres average, and
 `after` applies a small explicit decay heuristic scaled by duration_days
 (same spirit as the stub's own _SCENARIO_RATES table). It's honestly a
 placeholder pending a real reserve-confidence model, not a learned effect.
+
+HOW A SCENARIO BECOMES A FORECAST
+  "Before" is the model run on the site's real feature row (app.services.live_features:
+  satellite rain, equipment_status_log downtime, production backlog, blast_events).
+  "After" is the SAME row with only the features the scenario physically touches
+  changed, then the same model. Nothing else moves, so the difference is the model's
+  own response to exactly those features.
+
+SCENARIO -> FEATURE MAPPING (approved; do not widen without re-checking the model)
+  equipment_down  -> equipment_down_today_pct    (+1 machine, i.e. +1/n_machines of the fleet)
+  delay_blasting  -> blast_delay_days_lag        (the delay days added to the trailing 7-day window)
+  rainfall_event  -> rain_3d_mm, rain_7d_mm, heavy_rain_lag1
+
+  WHY equipment_down does NOT perturb rolling_7d_downtime_pct. The Stage 3 partial-dependence
+  grading (train_shortfall_model.py, model_metrics.json) found the model's response to
+  rolling_7d_downtime_pct still non-monotone (7 of 18 steps decrease; +1pp net rise), while
+  equipment_down_today_pct is monotone (Spearman +0.96; slope 0.339 vs true 0.393). Perturbing
+  the non-monotone feature reproduces exactly the incoherent before/after behaviour that
+  tests/test_smoke.py's old xfail documented. The trade-off: rolling_7d_downtime_pct is left at its
+  live value, so the scenario is "a machine is down TODAY", not "it has been down all week".
+
+  WHY rainfall_event does NOT perturb rain_today_mm -- the answer to "why doesn't today's rain move
+  the forecast?". The synthetic world the model learned from has NO same-day rain effect: the
+  generator's rain loss uses rain on t-1 and t-2 (plus a wet-pit term on 3-day rain), so
+  rain_today_mm has no causal term and the model's slope on it is a dataset artifact. Moving it
+  would make the demo respond to an input that is not part of the mechanism being simulated. A
+  rainfall event is therefore a storm that fell over the preceding days and ended yesterday: it
+  raises the trailing rain windows and, if intense enough, yesterday's heavy-rain flag.
+
+  Rainfall event arithmetic. `severity` is mm of rain over 3 days. A storm of S mm lasting d days
+  falls at rate = S / min(d, 3) mm/day for d days ending yesterday, so
+      rain_3d_mm      += S                   (by definition of the severity)
+      rain_7d_mm      += rate * min(d, 7)    (the 7-day window holds at most 7 days of it)
+      heavy_rain_lag1  = 1 if yesterday's real rain + rate >= the model's heavy-rain threshold
+  A 60 mm storm in one day is a heavy-rain day; the same 60 mm spread over 3 days is not.
+  If no severity is sent, the Medium level of the training distribution is used (the same
+  value the UI preselects); that is a scenario default, not an observation.
+
+  What `duration_days` does. It sets the shape of the rain event above and of a blast delay;
+  for equipment_down it does not change the model input (the feature is "today's" fleet-hours
+  down, and any outage of a day or more fills the day), it only scales the reserve-confidence
+  heuristic and the uncertainty band.
+
+  `severity` for equipment_down and delay_blasting is NOT a model input: it is only compared with
+  the training range for the out-of-distribution flag (routers/simulate.py). Only rainfall's
+  severity drives the projection.
+
+LIMITATIONS (also in the final write-up)
+  * Only the FIRST condition of a multi-condition request is projected (pre-existing).
+  * ~63% of the model's edge over persistence rides on blast_delay_days_lag, whose live source
+    (blast_events) is synthetic seeded data; the rain/soil/downtime/backlog features come from real
+    or backfilled sources but the shortfall the model predicts is itself synthetic.
+  * Soil moisture is NaN in the live row (SMAP lags ~3 days behind the satellite rain record).
+    The model saw no NaN there in training; it is a low-importance feature (0.017).
+  * days_since_last_maintenance, soil_moisture, rain_today_mm, dow/month have NO causal term in
+    the synthetic generator: their learned effects are dataset artifacts, never findings.
+  * backlog_t's true effect is too weak (~1.8pp) for the model to learn reliably.
 """
 
 from __future__ import annotations
 
 import json
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Literal
 
-import joblib
 import numpy as np
 import pandas as pd
 from neo4j import Driver
@@ -40,8 +96,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.agents._bridge import find_neo4j_equipment_id, logger, pg_site_to_neo4j_id
-from app.models import Equipment, EquipmentStatus, ProductionRecord, ReserveZone, RiskEvent, Site
+from app.models import Equipment, ProductionRecord, ReserveZone, RiskEvent, Site
+from app.services.forecast_model import load_shortfall_model
+from app.services.live_features import FeatureConstants, LiveFeatures, build_live_features
 from app.services.lookups import get_site_or_404
+from app.services.shortfall_features import BLAST_LAG_WINDOW_DAYS, blast_delay_days_lag
 
 MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
 
@@ -51,6 +110,8 @@ _RESERVE_CONFIDENCE_DECAY_PER_DAY = {
     "delay_blasting": 0.0015,
     "rainfall_event": 0.003,
 }
+RAIN_3D_WINDOW_DAYS = 3
+RAIN_7D_WINDOW_DAYS = 7
 
 
 class SimulatorAgent:
@@ -63,18 +124,19 @@ class SimulatorAgent:
         Both db/driver are dependency-injected (not constructed here) so
         this is testable with mocks. Never writes to either store — every
         method here is read-only by design.
+
+        The model is loaded through app.services.forecast_model, which refuses an artifact
+        trained under a different xgboost major.minor (or with no recorded version): a silent
+        mispredict is worse than a 503.
         """
         self.db = db
         self.neo4j_driver = neo4j_driver
-        self.model = joblib.load(MODELS_DIR / "shortfall_forecaster.pkl")
+        self.model = load_shortfall_model(MODELS_DIR / "shortfall_forecaster.pkl")
         with open(MODELS_DIR / "feature_columns.json", encoding="utf-8") as f:
             self.feature_columns: list[str] = json.load(f)
-        metrics_file = MODELS_DIR / "model_metrics.json"
-        if metrics_file.exists():
-            with open(metrics_file, encoding="utf-8") as f:
-                self.metrics: dict = json.load(f)
-        else:
-            self.metrics = {"rmse": 0.158, "mae": 0.1177, "residual_std": 0.153}
+        with open(MODELS_DIR / "model_metrics.json", encoding="utf-8") as f:
+            self.metrics: dict = json.load(f)
+        self.constants = FeatureConstants.from_metrics(self.metrics)
 
     def run_scenario(
         self,
@@ -82,14 +144,20 @@ class SimulatorAgent:
         site_id: int,
         duration_days: int,
         equipment_id: int | None = None,
+        severity: float | None = None,
+        as_of: date | None = None,
     ) -> dict:
         """Project a hypothetical disruption's before/after impact.
 
-        Builds the site's CURRENT feature vector from live Postgres data,
-        perturbs it for the given scenario, runs the real trained model on
-        both, and traverses up to 3 hops in Neo4j from the relevant node to
-        find the affected BlastPlan/OreZone/RiskEvent chain. Read-only:
-        never mutates Postgres or Neo4j.
+        Builds the site's CURRENT feature vector from live data (see
+        app.services.live_features), perturbs it for the given scenario, runs the real
+        trained model on both, and traverses up to 3 hops in Neo4j from the relevant
+        node to find the affected BlastPlan/OreZone/RiskEvent chain. Read-only: never
+        mutates Postgres or Neo4j.
+
+        `as_of` replays the state as of a past date (used by the sweep and the parity
+        test); leave it None for the live state, which is anchored at the latest finished
+        day whose rain record is complete and reported back as `model_state_as_of`.
         """
         if scenario_type not in SCENARIO_TYPES:
             raise ValueError(f"Unknown scenario_type {scenario_type!r}; must be one of {SCENARIO_TYPES}")
@@ -97,13 +165,13 @@ class SimulatorAgent:
         site = get_site_or_404(self.db, site_id)
         neo4j_site_id = pg_site_to_neo4j_id(site)
 
-        base_features = self._current_features(site)
-        after_features = self._perturb_features(base_features, scenario_type, duration_days)
+        live = self._current_features(site, as_of)
+        after_features = self._perturb_features(live, scenario_type, duration_days, severity)
 
-        shortfall_before = float(self.model.predict(self._as_frame(base_features))[0])
+        shortfall_before = float(self.model.predict(self._as_frame(live.values))[0])
         shortfall_after = float(self.model.predict(self._as_frame(after_features))[0])
 
-        target_avg = self._recent_target_output(site) or 900.0
+        target_avg = self._recent_target_output(site, live.as_of) or 900.0
         reserve_confidence_before = self._avg_reserve_confidence(site)
         risk_before = self._baseline_risk_score(site)
 
@@ -125,9 +193,9 @@ class SimulatorAgent:
             "risk_score": round(risk_after, 3),
         }
 
-        residual_std = float(self.metrics.get("residual_std", 0.153))
-        model_rmse = float(self.metrics.get("rmse", 0.158))
-        model_mae = float(self.metrics.get("mae", 0.1177))
+        residual_std = float(self.metrics["residual_std"])
+        model_rmse = float(self.metrics["rmse"])
+        model_mae = float(self.metrics["mae"])
 
         prod_impact_delta = abs(after["production_forecast"] - before["production_forecast"])
         risk_delta = abs(after["risk_score"] - before["risk_score"])
@@ -137,8 +205,9 @@ class SimulatorAgent:
         # Instead of multiplying total daily production by unconditional residual_std and summing
         # across horizon days (which produced a nonsensical ±1,247t band on a 35t point estimate),
         # uncertainty is scaled to the scenario's predicted perturbation response using the model's
-        # holdout test-set relative error (~25%):
-        rel_error = 0.25
+        # holdout relative error: RMSE / mean shortfall, both read from the artifact
+        # (model_metrics.json), so it follows the model in use rather than a constant.
+        rel_error = model_rmse / float(self.metrics["target_shortfall_mean"])
 
         prod_impact_uncertainty = round(max(5.0, prod_impact_delta * rel_error), 1)
         risk_uncertainty = round(max(0.02, min(0.08, risk_delta * rel_error + 0.015)), 3)
@@ -173,96 +242,58 @@ class SimulatorAgent:
             "affected_graph_path": affected_graph_path,
             "updated_graph": updated_graph,
             "uncertainty": uncertainty,
+            "model_state_as_of": live.as_of,
+            "model_inputs_missing": live.missing,
         }
 
     # -- feature vector construction -----------------------------------------------------
 
-    def _current_features(self, site: Site) -> dict:
-        now = datetime.now(timezone.utc)
+    def _current_features(self, site: Site, as_of: date | None = None) -> LiveFeatures:
+        """The model's real feature row for `site` (see app.services.live_features)."""
+        return build_live_features(self.db, site, self.constants, as_of=as_of)
 
-        # Postgres has no downtime-HISTORY table (unlike Day 1's CSV-based
-        # training data) — only current Equipment.status/last_status_change.
-        # This proxies rolling_7day_downtime_pct from current status only:
-        # hours each currently-down unit has been down within the trailing
-        # 7-day window, over total equipment-hours in that window.
-        equipment = self.db.scalars(select(Equipment).where(Equipment.site_id == site.id)).all()
-        window_start = now - timedelta(days=7)
-        down_hours = 0.0
-        for eq in equipment:
-            if eq.status == EquipmentStatus.DOWN and eq.last_status_change:
-                down_since = max(eq.last_status_change, window_start)
-                down_hours += (now - down_since).total_seconds() / 3600
-        available_hours = max(len(equipment), 1) * 7 * 24
-        rolling_downtime_pct = min(1.0, down_hours / available_hours)
+    def default_rain_severity_mm(self) -> float:
+        """Medium level of the training distribution of 3-day rain (the UI's default), used when a
+        rainfall_event request carries no severity."""
+        with open(MODELS_DIR / "training_data_ranges.json", encoding="utf-8") as f:
+            return float(json.load(f)["rainfall_event"]["severity_levels"]["medium"])
 
-        # Postgres has no maintenance-event log at all — honestly reported
-        # as missing (NaN) rather than guessed; XGBoost handles this natively.
-        days_since_maintenance = np.nan
-
-        rainfall_proxy = self._rainfall_proxy(now.date())
-        schedule_pressure = self._schedule_pressure(site)
-
-        return {
-            "rolling_7day_downtime_pct": rolling_downtime_pct,
-            "days_since_last_maintenance": days_since_maintenance,
-            "rainfall_proxy": rainfall_proxy,
-            "schedule_pressure": schedule_pressure,
-            "dow_sin": np.sin(2 * np.pi * now.weekday() / 7),
-            "dow_cos": np.cos(2 * np.pi * now.weekday() / 7),
-            "month_sin": np.sin(2 * np.pi * now.month / 12),
-            "month_cos": np.cos(2 * np.pi * now.month / 12),
-        }
-
-    def _perturb_features(self, base: dict, scenario_type: str, duration_days: int) -> dict:
-        after = dict(base)
+    def _perturb_features(
+        self, live: LiveFeatures, scenario_type: str, duration_days: int, severity: float | None = None
+    ) -> dict:
+        """The live row with ONLY the scenario's features changed (mapping in the module docstring)."""
+        after = dict(live.values)
         if scenario_type == "equipment_down":
-            # Recompute downtime% as if `duration_days` (capped at the
-            # 7-day window) of additional downtime is added on top of
-            # whatever's already down.
-            added_pct = min(1.0, duration_days / 7.0) * 0.2  # one more unit out of ~5 typical
-            after["rolling_7day_downtime_pct"] = min(1.0, base["rolling_7day_downtime_pct"] + added_pct)
+            # one more machine down for (at least) the whole of today
+            after["equipment_down_today_pct"] = min(1.0, live.values["equipment_down_today_pct"] + 1.0 / live.n_machines)
         elif scenario_type == "delay_blasting":
-            # +0.03/day of schedule_pressure: a hand-picked perturbation
-            # magnitude (like the 0.2 "one more unit" above), not model- or
-            # data-derived — there's no real blast-plan-delay signal in the
-            # training CSVs to calibrate this against (see
-            # finalize_shortfall_model.py's fit-quality note).
-            after["schedule_pressure"] = min(1.0, base["schedule_pressure"] + 0.03 * duration_days)
+            # `duration_days` more blast-delay days ending yesterday, unioned with the real delay days already in
+            # the window by the SAME function training uses (a delay day already counted is not counted twice)
+            days = min(int(duration_days), BLAST_LAG_WINDOW_DAYS)
+            scenario_delay = (live.as_of - timedelta(days=days), days)
+            after["blast_delay_days_lag"] = blast_delay_days_lag([*live.blast_events, scenario_delay], live.as_of)
         elif scenario_type == "rainfall_event":
-            # +0.05/day of rainfall_proxy: same status as the two constants
-            # above — a hand-picked perturbation magnitude, not derived from
-            # the model or training data.
-            after["rainfall_proxy"] = min(1.0, base["rainfall_proxy"] + 0.05 * duration_days)
+            mm = float(severity) if severity is not None else self.default_rain_severity_mm()
+            rate = mm / min(duration_days, RAIN_3D_WINDOW_DAYS)  # mm/day, the storm ending yesterday
+            after["rain_3d_mm"] = live.values["rain_3d_mm"] + mm
+            after["rain_7d_mm"] = live.values["rain_7d_mm"] + rate * min(duration_days, RAIN_7D_WINDOW_DAYS)
+            after["heavy_rain_lag1"] = (
+                float(live.rain_lag1_mm + rate >= live.constants.heavy_rain_mm)
+                if not np.isnan(live.rain_lag1_mm)
+                else float("nan")
+            )
         return after
 
     def _as_frame(self, features: dict) -> pd.DataFrame:
-        return pd.DataFrame([[features[c] for c in self.feature_columns]], columns=self.feature_columns)
+        missing = [c for c in self.feature_columns if c not in features]
+        if missing:
+            raise RuntimeError(f"live feature row lacks model columns {missing}: feature_columns.json and live_features disagree")
+        return pd.DataFrame([[features[c] for c in self.feature_columns]], columns=self.feature_columns, dtype=float)
 
-    def _rainfall_proxy(self, today: date) -> float:
-        days_in_month = pd.Timestamp(today).days_in_month
-        fractional_month = today.month + (today.day - 1) / days_in_month
-        return float(0.5 * (1 + np.cos(2 * np.pi * (fractional_month - 7.5) / 12)))
-
-    def _schedule_pressure(self, site: Site) -> float:
-        rows = self.db.scalars(
-            select(ProductionRecord)
-            .where(ProductionRecord.site_id == site.id)
-            .order_by(ProductionRecord.date.desc())
-            .limit(14)
-        ).all()
-        if not rows:
-            return 0.0
-        shortfalls = [
-            max(0.0, (r.target_output - r.actual_output) / r.target_output)
-            for r in rows
-            if r.target_output
-        ]
-        return float(np.clip(np.mean(shortfalls), 0, 1)) if shortfalls else 0.0
-
-    def _recent_target_output(self, site: Site) -> float | None:
+    def _recent_target_output(self, site: Site, as_of: date) -> float | None:
         recent_subq = (
             select(ProductionRecord.target_output)
-            .where(ProductionRecord.site_id == site.id)
+            .where(ProductionRecord.site_id == site.id, ProductionRecord.date < as_of)
             .order_by(ProductionRecord.date.desc())
             .limit(14)
             .subquery()
