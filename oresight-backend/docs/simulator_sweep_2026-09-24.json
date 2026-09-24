@@ -1,0 +1,312 @@
+{
+  "measured_on": "2026-09-24",
+  "command": "python -m scripts.simulator_sweep --old-rev 1084074 [--old-calendar-only] [--old-full-year]",
+  "span": [
+    "2026-01-01",
+    "2026-09-22"
+  ],
+  "duration_days": 5,
+  "old_rev": "1084074",
+  "what_is_counted": "days on which the after production forecast is lower / equal / higher than before; risk_not_lower = days risk_after >= risk_before",
+  "current_model": {
+    "Balaghat/equipment_down": {
+      "days": 265,
+      "production_lower": 259,
+      "production_equal": 3,
+      "production_higher": 3,
+      "risk_not_lower": 265,
+      "mean_change_pct": -6.56
+    },
+    "Balaghat/delay_blasting": {
+      "days": 265,
+      "production_lower": 254,
+      "production_equal": 11,
+      "production_higher": 0,
+      "risk_not_lower": 265,
+      "mean_change_pct": -20.97
+    },
+    "Balaghat/rainfall_event": {
+      "days": 265,
+      "production_lower": 251,
+      "production_equal": 0,
+      "production_higher": 14,
+      "risk_not_lower": 265,
+      "mean_change_pct": -4.93
+    },
+    "Nagpur/equipment_down": {
+      "days": 265,
+      "production_lower": 264,
+      "production_equal": 1,
+      "production_higher": 0,
+      "risk_not_lower": 265,
+      "mean_change_pct": -6.48
+    },
+    "Nagpur/delay_blasting": {
+      "days": 265,
+      "production_lower": 253,
+      "production_equal": 12,
+      "production_higher": 0,
+      "risk_not_lower": 265,
+      "mean_change_pct": -20.62
+    },
+    "Nagpur/rainfall_event": {
+      "days": 265,
+      "production_lower": 261,
+      "production_equal": 0,
+      "production_higher": 4,
+      "risk_not_lower": 265,
+      "mean_change_pct": -5.28
+    },
+    "Bhandara/equipment_down": {
+      "days": 265,
+      "production_lower": 259,
+      "production_equal": 2,
+      "production_higher": 4,
+      "risk_not_lower": 265,
+      "mean_change_pct": -5.8
+    },
+    "Bhandara/delay_blasting": {
+      "days": 265,
+      "production_lower": 244,
+      "production_equal": 20,
+      "production_higher": 1,
+      "risk_not_lower": 265,
+      "mean_change_pct": -18.6
+    },
+    "Bhandara/rainfall_event": {
+      "days": 265,
+      "production_lower": 252,
+      "production_equal": 0,
+      "production_higher": 13,
+      "risk_not_lower": 265,
+      "mean_change_pct": -5.2
+    }
+  },
+  "old_model_replay_calendar_features_only": {
+    "Balaghat/equipment_down": {
+      "days": 265,
+      "production_lower": 125,
+      "production_equal": 0,
+      "production_higher": 140,
+      "risk_not_lower": 265,
+      "mean_change_pct": -0.34
+    },
+    "Balaghat/delay_blasting": {
+      "days": 265,
+      "production_lower": 8,
+      "production_equal": 0,
+      "production_higher": 257,
+      "risk_not_lower": 265,
+      "mean_change_pct": 10.56
+    },
+    "Balaghat/rainfall_event": {
+      "days": 265,
+      "production_lower": 173,
+      "production_equal": 0,
+      "production_higher": 92,
+      "risk_not_lower": 265,
+      "mean_change_pct": -2.7
+    },
+    "Nagpur/equipment_down": {
+      "days": 265,
+      "production_lower": 259,
+      "production_equal": 3,
+      "production_higher": 3,
+      "risk_not_lower": 265,
+      "mean_change_pct": -4.23
+    },
+    "Nagpur/delay_blasting": {
+      "days": 265,
+      "production_lower": 66,
+      "production_equal": 0,
+      "production_higher": 199,
+      "risk_not_lower": 265,
+      "mean_change_pct": 4.45
+    },
+    "Nagpur/rainfall_event": {
+      "days": 265,
+      "production_lower": 174,
+      "production_equal": 2,
+      "production_higher": 89,
+      "risk_not_lower": 265,
+      "mean_change_pct": -2.69
+    },
+    "Bhandara/equipment_down": {
+      "days": 265,
+      "production_lower": 153,
+      "production_equal": 0,
+      "production_higher": 112,
+      "risk_not_lower": 265,
+      "mean_change_pct": -0.94
+    },
+    "Bhandara/delay_blasting": {
+      "days": 265,
+      "production_lower": 0,
+      "production_equal": 0,
+      "production_higher": 265,
+      "risk_not_lower": 265,
+      "mean_change_pct": 5.64
+    },
+    "Bhandara/rainfall_event": {
+      "days": 265,
+      "production_lower": 116,
+      "production_equal": 0,
+      "production_higher": 149,
+      "risk_not_lower": 265,
+      "mean_change_pct": -1.05
+    }
+  },
+  "old_model_replay_whole_instant_faked": {
+    "Balaghat/equipment_down": {
+      "days": 265,
+      "production_lower": 1,
+      "production_equal": 256,
+      "production_higher": 8,
+      "risk_not_lower": 265,
+      "mean_change_pct": 0.08
+    },
+    "Balaghat/delay_blasting": {
+      "days": 265,
+      "production_lower": 4,
+      "production_equal": 0,
+      "production_higher": 261,
+      "risk_not_lower": 265,
+      "mean_change_pct": 10.84
+    },
+    "Balaghat/rainfall_event": {
+      "days": 265,
+      "production_lower": 169,
+      "production_equal": 0,
+      "production_higher": 96,
+      "risk_not_lower": 265,
+      "mean_change_pct": -2.49
+    },
+    "Nagpur/equipment_down": {
+      "days": 265,
+      "production_lower": 3,
+      "production_equal": 261,
+      "production_higher": 1,
+      "risk_not_lower": 265,
+      "mean_change_pct": -0.02
+    },
+    "Nagpur/delay_blasting": {
+      "days": 265,
+      "production_lower": 78,
+      "production_equal": 0,
+      "production_higher": 187,
+      "risk_not_lower": 265,
+      "mean_change_pct": 3.22
+    },
+    "Nagpur/rainfall_event": {
+      "days": 265,
+      "production_lower": 176,
+      "production_equal": 0,
+      "production_higher": 89,
+      "risk_not_lower": 265,
+      "mean_change_pct": -2.48
+    },
+    "Bhandara/equipment_down": {
+      "days": 265,
+      "production_lower": 153,
+      "production_equal": 0,
+      "production_higher": 112,
+      "risk_not_lower": 265,
+      "mean_change_pct": -0.94
+    },
+    "Bhandara/delay_blasting": {
+      "days": 265,
+      "production_lower": 0,
+      "production_equal": 0,
+      "production_higher": 265,
+      "risk_not_lower": 265,
+      "mean_change_pct": 5.64
+    },
+    "Bhandara/rainfall_event": {
+      "days": 265,
+      "production_lower": 116,
+      "production_equal": 0,
+      "production_higher": 149,
+      "risk_not_lower": 265,
+      "mean_change_pct": -1.05
+    }
+  },
+  "old_model_replay_whole_instant_faked_all_of_2026": {
+    "Balaghat/equipment_down": {
+      "days": 365,
+      "production_lower": 1,
+      "production_equal": 351,
+      "production_higher": 13,
+      "risk_not_lower": 365,
+      "mean_change_pct": 0.12
+    },
+    "Balaghat/delay_blasting": {
+      "days": 365,
+      "production_lower": 31,
+      "production_equal": 0,
+      "production_higher": 334,
+      "risk_not_lower": 365,
+      "mean_change_pct": 9.93
+    },
+    "Balaghat/rainfall_event": {
+      "days": 365,
+      "production_lower": 229,
+      "production_equal": 0,
+      "production_higher": 136,
+      "risk_not_lower": 365,
+      "mean_change_pct": -2.05
+    },
+    "Nagpur/equipment_down": {
+      "days": 365,
+      "production_lower": 6,
+      "production_equal": 358,
+      "production_higher": 1,
+      "risk_not_lower": 365,
+      "mean_change_pct": -0.03
+    },
+    "Nagpur/delay_blasting": {
+      "days": 365,
+      "production_lower": 113,
+      "production_equal": 0,
+      "production_higher": 252,
+      "risk_not_lower": 365,
+      "mean_change_pct": 3.91
+    },
+    "Nagpur/rainfall_event": {
+      "days": 365,
+      "production_lower": 235,
+      "production_equal": 0,
+      "production_higher": 130,
+      "risk_not_lower": 365,
+      "mean_change_pct": -1.99
+    },
+    "Bhandara/equipment_down": {
+      "days": 365,
+      "production_lower": 194,
+      "production_equal": 0,
+      "production_higher": 171,
+      "risk_not_lower": 365,
+      "mean_change_pct": -0.64
+    },
+    "Bhandara/delay_blasting": {
+      "days": 365,
+      "production_lower": 27,
+      "production_equal": 0,
+      "production_higher": 338,
+      "risk_not_lower": 365,
+      "mean_change_pct": 5.2
+    },
+    "Bhandara/rainfall_event": {
+      "days": 365,
+      "production_lower": 174,
+      "production_equal": 0,
+      "production_higher": 191,
+      "risk_not_lower": 365,
+      "mean_change_pct": -0.45
+    }
+  },
+  "caveats": [
+    "The old simulator has no as_of: it read datetime.now() and the CURRENT DB state, so its replay is a method choice; both methods are given and the conclusion holds under each.",
+    "The earlier baseline (Balaghat equipment_down 212/365 correct) was NOT reproduced by either method: calendar-only over all of 2026 gave 166 lower / 1 equal / 198 higher, whole-instant-faked gave 1 / 351 / 13. The old model's answer depends on the DB state at measurement time.",
+    "delay_blasting uses duration_days=5, above the 4-day maximum in the training data, so those requests are flagged out-of-distribution by the API; the direction is still measured."
+  ]
+}

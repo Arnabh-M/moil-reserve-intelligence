@@ -19,10 +19,11 @@ So the artifact is only valid under the xgboost it was trained with.
     (train_shortfall_model.py, run from this venv) and regenerate the fixture; a
     version bump without that fails here instead of in front of a judge.
 
-The shipped artifact is checked as soon as its model_metrics.json records a
-training xgboost version. A legacy artifact from before that existed is skipped
-(and is replaced when the retrained model is installed with --ship). The
-candidate artifact, if present, is checked the same way.
+The SHIPPED artifact is checked unconditionally: it must exist, must record the
+xgboost it was trained with, and must reproduce its fixture. There is no skip path
+for it (a legacy pickle from before the version was recorded now FAILS here instead
+of being waved through). Only the candidate artifact, which is gitignored and so
+absent on a fresh clone, may be skipped when it is not there.
 """
 
 import json
@@ -44,12 +45,18 @@ def _cases():
 
 @pytest.mark.parametrize("artifact_dir", _cases())
 def test_artifact_reproduces_stored_predictions(artifact_dir):
+    shipped = artifact_dir == MODELS_DIR
     if not (artifact_dir / "shortfall_forecaster.pkl").exists():
-        pytest.skip(f"no artifact in {artifact_dir}")
+        if shipped:
+            pytest.fail(f"the shipped model is missing: {artifact_dir / 'shortfall_forecaster.pkl'}")
+        pytest.skip(f"no candidate artifact in {artifact_dir} (gitignored; run train_shortfall_model.py)")
     metrics_path = artifact_dir / "model_metrics.json"
-    metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.exists() else {}
-    if "xgboost_version" not in metrics:
-        pytest.skip("legacy artifact with no recorded training xgboost version; replaced at ship")
+    assert metrics_path.exists(), f"{metrics_path} is missing"
+    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    assert "xgboost_version" in metrics, (
+        f"{metrics_path} records no training xgboost version: this is a legacy artifact. "
+        "Retrain with train_shortfall_model.py and install it with --ship."
+    )
 
     fixture_path = artifact_dir / "shortfall_regression_fixture.json"
     assert fixture_path.exists(), (

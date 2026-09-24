@@ -34,7 +34,7 @@ const severityLabel = (severity) => severity[0].toUpperCase() + severity.slice(1
 // Cascade severity reuses the same pill colour system as risk severity above (none/low -> good, moderate -> warn, high -> critical).
 const cascadeSeverityClass = (severity) => severity === 'high' ? 'critical' : severity === 'moderate' ? 'warn' : 'good';
 const cascadeClassificationClass = (classification) => classification === 'blocking' ? 'critical' : classification === 'shifted' ? 'warn' : 'good';
-const riskTypeLabel = (type) => ({ equipment_failure: 'Equipment failure', production_shortfall: 'Production shortfall', weather_delay: 'Weather delay', blast_delay: 'Blast delay' }[type] || type);
+const riskTypeLabel = (type) => ({ equipment_failure: 'Equipment failure', production_shortfall: 'Production shortfall', weather_delay: 'Weather delay', blast_delay: 'Blast delay', weather_heavy_rain: 'Heavy rain forecast', weather_advisory_rain: 'Rain advisory' }[type] || type);
 const percent = (value, digits = 0) => `${(Number(value) * 100).toFixed(digits)}%`;
 const recommendationTypeLabel = (type) => ({ reschedule: 'Reschedule plan', redeploy: 'Redeploy equipment', adjust_plan: 'Adjust plan' }[type] || type);
 // Must match POST /simulate's scenario_type enum exactly (confirmed live
@@ -52,7 +52,7 @@ const isValidScenarioType = (value) => SCENARIO_TYPE_OPTIONS.some((option) => op
 // actually caused by (e.g. Balaghat's only production_shortfall event today
 // is rainfall-driven) -- good enough to prefill the Simulator sensibly from
 // a recommendation, not a guaranteed-correct contract.
-const RISK_TYPE_TO_SCENARIO_TYPE = { equipment_failure: 'equipment_down', blast_delay: 'delay_blasting', weather_delay: 'rainfall_event', production_shortfall: 'rainfall_event' };
+const RISK_TYPE_TO_SCENARIO_TYPE = { equipment_failure: 'equipment_down', blast_delay: 'delay_blasting', weather_delay: 'rainfall_event', weather_heavy_rain: 'rainfall_event', weather_advisory_rain: 'rainfall_event', production_shortfall: 'rainfall_event' };
 function simulatorPathForRisk(risk, durationDays = 7) {
   if (!risk) return '/simulator';
   const scenarioType = RISK_TYPE_TO_SCENARIO_TYPE[risk.risk_type] || 'equipment_down';
@@ -487,24 +487,27 @@ const EQUIPMENT_AREAS = [
 ];
 const DEFAULT_SEVERITY_LEVELS = {
   equipment_down: [
-    { key: 'low', label: 'Low', percentile: '25th', value: 0.8 },
-    { key: 'medium', label: 'Medium', percentile: '50th', value: 1.4 },
-    { key: 'high', label: 'High', percentile: '75th', value: 2.5 },
-    { key: 'severe', label: 'Severe', percentile: '95th', value: 4.7 },
+    { key: 'low', label: 'Low', percentile: '25th', value: 0.5 },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: 1.1 },
+    { key: 'high', label: 'High', percentile: '75th', value: 3.5 },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: 7.7 },
   ],
   delay_blasting: [
-    { key: 'low', label: 'Low', percentile: '25th', value: 0.4 },
-    { key: 'medium', label: 'Medium', percentile: '50th', value: 6.2 },
-    { key: 'high', label: 'High', percentile: '75th', value: 12.3 },
-    { key: 'severe', label: 'Severe', percentile: '95th', value: 34.9 },
+    { key: 'low', label: 'Low', percentile: '25th', value: 5.4 },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: 11.3 },
+    { key: 'high', label: 'High', percentile: '75th', value: 19.1 },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: 36.0 },
   ],
+  // mm of rain over 3 days (percentiles of the training 3-day windows with >= 2.5 mm); was a 0-100 index
   rainfall_event: [
-    { key: 'low', label: 'Low', percentile: '25th', value: 49.1 },
-    { key: 'medium', label: 'Medium', percentile: '50th', value: 84.8 },
-    { key: 'high', label: 'High', percentile: '75th', value: 96.4 },
-    { key: 'severe', label: 'Severe', percentile: '95th', value: 99.9 },
+    { key: 'low', label: 'Low', percentile: '25th', value: 7.5 },
+    { key: 'medium', label: 'Medium', percentile: '50th', value: 23.5 },
+    { key: 'high', label: 'High', percentile: '75th', value: 46.4 },
+    { key: 'severe', label: 'Severe', percentile: '95th', value: 87.8 },
   ],
 };
+// Severity is mm of rain over 3 days for rainfall events and a percentage for the other scenarios.
+const severityUnit = (type) => (type === 'rainfall_event' ? ' mm' : '%');
 
 function getSeverityLevels(trainingRanges, conditionType) {
   const defaults = DEFAULT_SEVERITY_LEVELS[conditionType] || DEFAULT_SEVERITY_LEVELS.equipment_down;
@@ -552,9 +555,9 @@ function formatRangeHint(ranges, conditionType) {
 
   let severityHint;
   if (r.severity_p25_pct != null && r.severity_p75_pct != null) {
-    severityHint = `Typical: ${r.severity_p25_pct}–${r.severity_p75_pct}% (full range: ${r.severity_min_pct}–${r.severity_max_pct}%)`;
+    severityHint = `Typical: ${r.severity_p25_pct}–${r.severity_p75_pct}${severityUnit(conditionType)} (full range: ${r.severity_min_pct}–${r.severity_max_pct}${severityUnit(conditionType)})`;
   } else {
-    severityHint = `${r.severity_min_pct}–${r.severity_max_pct}%`;
+    severityHint = `${r.severity_min_pct}–${r.severity_max_pct}${severityUnit(conditionType)}`;
   }
 
   let durationHint;
@@ -579,6 +582,7 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove, traini
 
   const levels = getSeverityLevels(trainingRanges, condition.type);
   const activeLevel = getActiveSeverityLevel(levels, condition.severity);
+  const unit = severityUnit(condition.type);
 
   // State A: Outside full min/max observed in training data (strong warning)
   const isSeverityOutOfRange = r && condition.severity != null && (condition.severity < r.severity_min_pct || condition.severity > r.severity_max_pct);
@@ -663,9 +667,9 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove, traini
           <div className="field severity-field">
             <div className="severity-control-wrap">
               <div className="severity-header-row">
-                <label>Severity / magnitude</label>
+                <label>{condition.type === 'rainfall_event' ? 'Severity: rain over 3 days' : 'Severity / magnitude'}</label>
                 <span className="severity-current-badge" data-testid={`severity-badge-${index}`}>
-                  <strong>{activeLevel.label}</strong> · {condition.severity != null ? `${condition.severity}%` : `${activeLevel.value}%`}
+                  <strong>{activeLevel.label}</strong> · {condition.severity != null ? `${condition.severity}${unit}` : `${activeLevel.value}${unit}`}
                 </span>
               </div>
               <div className="severity-segmented-group" role="group" aria-label="Severity level" data-testid={`segmented-severity-${index}`}>
@@ -681,7 +685,7 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove, traini
                       aria-pressed={isSelected}
                     >
                       <span className="seg-label">{lvl.label}</span>
-                      <span className="seg-pct">{lvl.value}%</span>
+                      <span className="seg-pct">{lvl.value}{unit}</span>
                     </button>
                   );
                 })}
@@ -695,13 +699,13 @@ function ConditionCard({ condition, index, onChange, onRemove, canRemove, traini
             {isSeverityOutOfRange && (
               <div className="condition-ood-warning" data-testid={`warning-severity-${index}`}>
                 <AlertTriangle size={11} />
-                <span>This severity is outside the range the model was validated on ({r.severity_min_pct}–{r.severity_max_pct}%) — treat results with extra caution.</span>
+                <span>This severity is outside the range the model was validated on ({r.severity_min_pct}–{r.severity_max_pct}{unit}) — treat results with extra caution.</span>
               </div>
             )}
             {isSeverityUncommon && (
               <div className="condition-uncommon-info" data-testid={`info-severity-${index}`}>
                 <Info size={11} />
-                <span>Less common in training data ({severityUncommonDirection} typical range {r.severity_p25_pct}–{r.severity_p75_pct}%) — prediction may be less precise.</span>
+                <span>Less common in training data ({severityUncommonDirection} typical range {r.severity_p25_pct}–{r.severity_p75_pct}{unit}) — prediction may be less precise.</span>
               </div>
             )}
           </div>
@@ -863,6 +867,11 @@ function buildInterpretation(result, conditions, siteName, horizon) {
   if (prodDelta != null) parts.push(`Under this ${conditions.length}-condition scenario at ${siteName}, production is projected to ${prodDelta >= 0 ? 'increase' : 'decrease'} by ${Math.abs(prodDelta).toLocaleString()} tonnes over a ${horizon}-day horizon.`);
   if (riskBefore != null && riskAfter != null) parts.push(`Operational risk ${riskAfter < riskBefore ? 'decreases' : 'increases'} from ${percent(riskBefore)} to ${percent(riskAfter)}.`);
   if (confAfter != null) parts.push(`Reserve confidence under this scenario is ${percent(confAfter, 1)}.`);
+  if (result.model_state_as_of) {
+    const asOf = new Date(`${result.model_state_as_of}T00:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+    const missing = (result.model_inputs_missing || []).map((name) => name.replace(/_/g, ' '));
+    parts.push(`The starting point is the model state as of ${asOf}, the latest day with a complete satellite rain record${missing.length ? `; not yet observed for that day and left missing rather than filled in: ${missing.join(', ')}` : ''}.`);
+  }
   if (result.out_of_distribution) {
     parts.push('⚠️ Model validation warning: At least one scenario condition has severity or duration exceeding the training distribution. The model is extrapolating beyond historical bounds; predictions carry elevated uncertainty.');
   } else {

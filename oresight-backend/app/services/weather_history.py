@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import date as _date
 from pathlib import Path
 
@@ -38,7 +39,9 @@ logger = logging.getLogger("oresight.weather_history")
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent.parent  # oresight-backend/
 REPO_ROOT = BACKEND_ROOT.parent
-DATA_DIR = REPO_ROOT / "data"
+# MOIL_DATA_DIR overrides the repo-root data/ folder. The api Docker image only contains
+# oresight-backend/, so docker-compose.yml mounts ../data at /data and sets this explicitly.
+DATA_DIR = Path(os.environ.get("MOIL_DATA_DIR") or REPO_ROOT / "data")
 SATELLITE_CSV_PATH = DATA_DIR / "satellite_daily_features.csv"
 MOIL_SITES_PATH = DATA_DIR / "moil_sites.json"
 CACHE_PATH = DATA_DIR / "cache" / "weather_history_openmeteo.csv"
@@ -99,7 +102,7 @@ def _save_cache(df: pd.DataFrame) -> None:
 
 
 def _fetch_open_meteo_archive(
-    site_id: str, start: _date, end: _date
+    site_id: str, start: _date, end: _date, http_timeout: float | None = None
 ) -> pd.DataFrame:
     """One archive call per site covering [start, end]. Returns
     DataFrame[site_id, date, rainfall_mm, rain_source] — empty if the call
@@ -118,7 +121,7 @@ def _fetch_open_meteo_archive(
     }
     headers = {"User-Agent": USER_AGENT}
     try:
-        with httpx.Client(timeout=HTTP_TIMEOUT_SECONDS, headers=headers) as client:
+        with httpx.Client(timeout=http_timeout or HTTP_TIMEOUT_SECONDS, headers=headers) as client:
             response = client.get(OPEN_METEO_ARCHIVE_URL, params=params)
             response.raise_for_status()
             data = response.json()
@@ -151,7 +154,7 @@ def _fetch_open_meteo_archive(
     return pd.DataFrame(rows, columns=_CACHE_COLUMNS)
 
 
-def _fill_gaps_from_open_meteo(gaps: pd.DataFrame) -> pd.DataFrame:
+def _fill_gaps_from_open_meteo(gaps: pd.DataFrame, http_timeout: float | None = None) -> pd.DataFrame:
     """`gaps` has columns [site_id, date] for rows the satellite CSV doesn't
     cover. Returns rows fetched from the on-disk cache plus any newly fetched
     from Open-Meteo (which are appended to the cache file)."""
@@ -169,7 +172,7 @@ def _fill_gaps_from_open_meteo(gaps: pd.DataFrame) -> pd.DataFrame:
     if not still_missing.empty:
         for site_id, site_gaps in still_missing.groupby("site_id"):
             start, end = site_gaps["date"].min().date(), site_gaps["date"].max().date()
-            fetched = _fetch_open_meteo_archive(site_id, start, end)
+            fetched = _fetch_open_meteo_archive(site_id, start, end, http_timeout)
             if not fetched.empty:
                 new_rows.append(fetched)
 
@@ -177,7 +180,10 @@ def _fill_gaps_from_open_meteo(gaps: pd.DataFrame) -> pd.DataFrame:
             combined_cache = pd.concat(new_rows, ignore_index=True).drop_duplicates(
                 subset=["site_id", "date"], keep="last"
             )
-            _save_cache(combined_cache)
+            try:
+                _save_cache(combined_cache)
+            except OSError as exc:  # the cache is an optimisation; a read-only data dir must not fail a request
+                logger.warning("Could not write the Open-Meteo cache %s: %s", CACHE_PATH, exc)
             cache = combined_cache
 
     result = gaps.merge(cache, on=["site_id", "date"], how="left")
@@ -185,10 +191,33 @@ def _fill_gaps_from_open_meteo(gaps: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------
+# Soil moisture (satellite CSV only; there is no fallback source for it)
+# ---------------------------------------------------------------------
+_SOIL_FRAME: pd.DataFrame | None = None
+
+
+def load_soil_moisture(site_id: str, start_date: str | _date, end_date: str | _date) -> dict[_date, float]:
+    """Observed SMAP surface soil moisture (m3/m3) per date in [start_date, end_date] for one
+    site. Dates the CSV has no value for (SMAP lags ~3 days) are simply absent: never filled."""
+    global _SOIL_FRAME
+    if _SOIL_FRAME is None:
+        _SOIL_FRAME = pd.read_csv(
+            SATELLITE_CSV_PATH, usecols=["site_id", "date", "soil_moisture_m3m3"], parse_dates=["date"]
+        ).dropna(subset=["soil_moisture_m3m3"])
+    frame = _SOIL_FRAME
+    mask = (frame["site_id"] == site_id) & (frame["date"] >= pd.Timestamp(start_date)) & (frame["date"] <= pd.Timestamp(end_date))
+    return {d.date(): float(v) for d, v in zip(frame.loc[mask, "date"], frame.loc[mask, "soil_moisture_m3m3"])}
+
+
+# ---------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------
 def load_rainfall_history(
-    site_ids: list[str], start_date: str | _date, end_date: str | _date
+    site_ids: list[str],
+    start_date: str | _date,
+    end_date: str | _date,
+    use_fallback: bool = True,
+    http_timeout: float | None = None,
 ) -> pd.DataFrame:
     """Per-site daily rainfall over [start_date, end_date] inclusive.
 
@@ -196,6 +225,9 @@ def load_rainfall_history(
     site_id, date, rainfall_mm, rain_source — sourced from the satellite
     CSV where available, the Open-Meteo archive as fallback, or NaN /
     rain_source="missing" if neither has data for that day.
+
+    `use_fallback=False` skips the Open-Meteo step (satellite CSV only), and
+    `http_timeout` shortens the per-call HTTP timeout for callers on a request path.
     """
     start_ts = pd.Timestamp(start_date)
     end_ts = pd.Timestamp(end_date)
@@ -210,9 +242,9 @@ def load_rainfall_history(
     merged = merged.rename(columns={"rainfall_source": "rain_source"})
 
     gap_mask = merged["rainfall_mm"].isna()
-    if gap_mask.any():
+    if use_fallback and gap_mask.any():
         gaps = merged.loc[gap_mask, ["site_id", "date"]]
-        filled = _fill_gaps_from_open_meteo(gaps)
+        filled = _fill_gaps_from_open_meteo(gaps, http_timeout)
         filled_indexed = filled.set_index(["site_id", "date"])
         for idx in merged.index[gap_mask]:
             key = (merged.at[idx, "site_id"], merged.at[idx, "date"])

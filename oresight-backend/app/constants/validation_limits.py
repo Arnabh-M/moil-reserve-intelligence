@@ -33,12 +33,16 @@ MAX_FREE_TEXT_LENGTH = 5000
 SIMULATOR_CONDITION_DURATION_MIN_DAYS = 1
 SIMULATOR_CONDITION_DURATION_MAX_DAYS = 365
 
-# Simulator severity is a percentage (see the severity_min_pct/severity_max_pct
-# naming used throughout app/routers/simulate.py's training-range fallback and
-# the "Severity {sev}%..." OOD warning text) — 0-100 is the physical bound of
-# a percentage, not a guess. The highest ceiling actually used across all
-# three scenario types (equipment_down/delay_blasting/rainfall_event) is
-# 100.0 (rainfall_event), so this bound never rejects a legitimate value that
-# out-of-distribution detection already flags as merely unusual.
+# Simulator severity has a per-scenario unit. equipment_down and delay_blasting severities are
+# percentages (see the severity_min_pct/severity_max_pct naming used throughout
+# app/routers/simulate.py's training-range fallback and the "Severity {sev}%..." OOD warning
+# text) -- 0-100 is the physical bound of a percentage, not a guess.
 SEVERITY_PCT_MIN = 0
 SEVERITY_PCT_MAX = 100
+
+# rainfall_event severity is MILLIMETRES of rain over 3 days (it was a 0-100 index before the
+# forecaster was retrained on real rainfall). The training data spans 0-147 mm; this bound only
+# blocks the physically impossible -- the world-record 72-hour rainfall is of the order of
+# 4,000 mm -- and anything beyond the training range is flagged out-of-distribution, not rejected.
+RAINFALL_3D_MM_MIN = 0
+RAINFALL_3D_MM_MAX = 4000

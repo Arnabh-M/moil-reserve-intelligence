@@ -278,7 +278,11 @@ def lenient_client():
 
 
 def test_simulate_severity_over_max_is_422(client):
-    r = client.post("/simulate", json={"scenario_type": "rainfall_event", "site_id": SITE_ID, "duration_days": 5, "severity": 101})
+    # rainfall_event severity is MILLIMETRES of 3-day rain (bounded at the physically impossible,
+    # RAINFALL_3D_MM_MAX); equipment_down / delay_blasting severities are percentages (bounded at 100)
+    r = client.post("/simulate", json={"scenario_type": "rainfall_event", "site_id": SITE_ID, "duration_days": 5, "severity": 4001})
+    assert r.status_code == 422
+    r = client.post("/simulate", json={"scenario_type": "equipment_down", "site_id": SITE_ID, "duration_days": 5, "severity": 101})
     assert r.status_code == 422
 
 
@@ -288,7 +292,9 @@ def test_simulate_severity_negative_is_422(client):
 
 
 def test_simulate_severity_at_max_is_not_rejected_by_validation(lenient_client):
-    r = lenient_client.post("/simulate", json={"scenario_type": "rainfall_event", "site_id": SITE_ID, "duration_days": 5, "severity": 100})
+    r = lenient_client.post("/simulate", json={"scenario_type": "rainfall_event", "site_id": SITE_ID, "duration_days": 5, "severity": 4000})
+    assert r.status_code != 422, r.text
+    r = lenient_client.post("/simulate", json={"scenario_type": "equipment_down", "site_id": SITE_ID, "duration_days": 5, "severity": 100})
     assert r.status_code != 422, r.text
 
 

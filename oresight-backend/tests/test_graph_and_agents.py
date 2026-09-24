@@ -312,7 +312,7 @@ def test_run_watcher_swallows_agent_failure(monkeypatch):
 
 def test_simulate_out_of_distribution_flags(client):
     """Test that /simulate returns out_of_distribution flag per condition and overall."""
-    # 1. Out of distribution request (equipment_down with duration=10 > 1.9d max and severity=75 > 5.3% max)
+    # 1. Out of distribution request (equipment_down with duration=10 > 5.0d max and severity=75 > 14.2% max)
     r_ood = client.post(
         "/simulate",
         json={
@@ -345,7 +345,7 @@ def test_simulate_out_of_distribution_flags(client):
     assert c0["duration_out_of_distribution"] is True
     assert len(c0["warnings"]) == 2
 
-    # Second condition (rainfall_event 50% 7d) is in-range (14.6-100%, 1-30d)
+    # Second condition (rainfall_event 50 mm of 3-day rain, 7d) is in-range (0-147 mm, 1-30d)
     c1 = data_ood["conditions_ood"][1]
     assert c1["out_of_distribution"] is False
     assert c1["severity_out_of_distribution"] is False
@@ -353,7 +353,7 @@ def test_simulate_out_of_distribution_flags(client):
 
     assert "Treat projections with extra caution" in data_ood["out_of_distribution_warning"]
 
-    # 2. In distribution request (rainfall_event 50% 5d)
+    # 2. In distribution request (rainfall_event 50 mm, 5d)
     r_in = client.post(
         "/simulate",
         json={

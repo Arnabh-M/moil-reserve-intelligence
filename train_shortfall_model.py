@@ -102,6 +102,7 @@ MODEL_PARAMS = dict(
 )
 
 # PD verdict thresholds (fixed in advance; see module docstring)
+RAINY_WINDOW_MM = 2.5  # IMD "rainy day" threshold, applied to a 3-day total for the Simulator's severity levels
 BACKLOG_RECOVERED_BAND = (0.5, 2.0)
 BACKLOG_DETECTED_FLOOR = 0.25
 PD_DECREASE_TOLERANCE = 0.0005  # a PD step down by more than this counts as a monotonicity violation
@@ -457,10 +458,18 @@ def _compute_training_data_ranges(
         "duration_p75_days": q(bd, 0.75), "duration_p95_days": q(bd, 0.95),
     }
 
-    rain3 = frame["rain_3d_mm"].dropna()
+    rain3_all = frame["rain_3d_mm"].dropna()
+    # Levels and "typical" bands describe rain EVENTS, so they are percentiles over the 3-day windows that
+    # had measurable rain (>= the IMD 2.5 mm rainy-day threshold): over all windows the median is 0.9 mm
+    # and a "Medium" rainfall event would be a non-event. The OOD bound stays the full range seen.
+    rain3 = rain3_all[rain3_all >= RAINY_WINDOW_MM]
     rain = {
         "severity_unit": "mm of rain over the preceding 3 days (was: 0-100 cosine index)",
-        "severity_min_pct": round(float(rain3.min()), 1), "severity_max_pct": round(float(rain3.max()), 1),
+        "severity_basis": (
+            f"percentiles over the {len(rain3)} of {len(rain3_all)} training 3-day windows with >= {RAINY_WINDOW_MM} mm "
+            "(IMD rainy-day threshold); min/max are over all windows"
+        ),
+        "severity_min_pct": round(float(rain3_all.min()), 1), "severity_max_pct": round(float(rain3_all.max()), 1),
         "severity_p25_pct": q(rain3, 0.25), "severity_p50_pct": q(rain3, 0.50),
         "severity_p75_pct": q(rain3, 0.75), "severity_p95_pct": q(rain3, 0.95),
         "severity_levels": {"low": q(rain3, 0.25), "medium": q(rain3, 0.50), "high": q(rain3, 0.75), "severe": q(rain3, 0.95)},
@@ -638,6 +647,15 @@ def main() -> int:
         "evaluation": "time-ordered 20% holdout; 14-day warm-up dropped per site; see train_shortfall_model.py docstring",
         "ship_gate_passed": ship,
         "xgboost_version": xgboost.__version__,
+        # the feature definitions' constants, so live inference (app/services/live_features.py) uses exactly
+        # the ones the model was trained with
+        "feature_constants": {
+            "machines_per_site": n_machines,
+            "heavy_rain_mm": fe.HEAVY_RAIN_MM,
+            "backlog_decay": fe.BACKLOG_DECAY,
+            "rolling_downtime_window_days": fe.ROLLING_DOWNTIME_WINDOW_DAYS,
+            "maintenance_reason": fe.MAINTENANCE_REASON,
+        },
         "feature_provenance": fe.FEATURE_PROVENANCE,
         "known_limitations": [
             KNOWN_LIMITATION_ROLLING_ORIGIN,

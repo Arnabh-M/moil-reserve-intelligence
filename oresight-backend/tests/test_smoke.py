@@ -153,36 +153,17 @@ def test_production_duplicate_returns_409(client):
         db.close()
 
 
-# The `production_forecast` assertion below is a property of the trained
-# shortfall model, not of the Simulator agent. train_shortfall_model.py's module
-# docstring records why it does not hold: the synthetic training data's
-# shortfall events are isolated 5-10 day windows with no autocorrelated backlog
-# dynamics, so elevated recent-disruption features are statistically followed by
-# mean-reversion rather than more shortfall. Its words: "the Simulator's
-# 'equipment_down' and 'delay_blasting' scenarios currently show weak or
-# counter-intuitive before/after deltas ... not a bug in the Watcher/Simulator/
-# Planner agents built on top of it".
+# History: this test used to be an xfail(strict=False). The old shortfall model was non-monotone in the one
+# feature `equipment_down` perturbed (rolling_7day_downtime_pct), so a disruption lowered the forecast on only
+# some dates (wrong direction on 153 of 365 days for Balaghat when it was measured).
 #
-# Concretely, `equipment_down` perturbs exactly one feature and the model is
-# non-monotonic in it (shortfall falls from 0.132 at 0.0 downtime to 0.095 at
-# 0.05, then plateaus at 0.142 above 0.1), so whether the forecast moves the
-# right way depends on where the site's baseline and the date-derived features
-# land. Measured over 365 days of 2026 against the seeded DB, the direction is
-# wrong on 153 days for Balaghat (`sites[0]`) — this test was green by luck on
-# the days it ran, not because the invariant held.
-#
-# strict=False because it does still pass on ~58% of dates; a strict xfail would
-# just invert the flake. Expected to resolve when Task 2/3 (causal synthetic
-# data + retrain) lands, at which point this marker should come off rather than
-# the assertion being weakened.
-@pytest.mark.xfail(
-    strict=False,
-    reason=(
-        "Shortfall model is non-monotonic in rolling_7day_downtime_pct; "
-        "see train_shortfall_model.py docstring. Resolves with Task 2/3 "
-        "(causal synthetic data + retrain)."
-    ),
-)
+# The model was retrained on causal synthetic data and the Simulator now perturbs equipment_down_today_pct,
+# which the model responds to monotonically (Spearman +0.96; see app/agents/simulator.py). Sweeping every
+# day of 2026-01-01..2026-09-22 (scripts/simulator_sweep.py) the "after" forecast is lower than "before" on
+# 244-264 of 265 days in EVERY site x scenario cell (>= 92%; rainfall_event and equipment_down each go the wrong
+# way on at most ~5% of days), so the marker came off rather than the assertion being weakened.
+# tests/test_simulator_direction.py pins that property across scenarios and sites; this test is the API-level
+# check of the same thing on the live state.
 def test_simulate_after_differs_from_before(client):
     sites = client.get("/sites").json()
     site_id = sites[0]["id"]

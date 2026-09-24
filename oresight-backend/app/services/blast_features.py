@@ -34,8 +34,9 @@ def _delay_days(planned: date, actual: date | None, as_of: date) -> int:
     return min(max(0, (as_of - planned).days), BLAST_DELAY_MAX_DAYS)
 
 
-def blast_delay_days_lag_for_site(db: Session, site_id: int, as_of: date) -> float:
-    """Blast-delay days at `site_id` in the trailing 7 days ending as_of - 1."""
+def blast_delay_events_for_site(db: Session, site_id: int, as_of: date) -> list[tuple[date, int]]:
+    """(planned_date, delay_days) for every blast delay that can touch the trailing 7 days ending
+    as_of - 1. The inputs to app.services.shortfall_features.blast_delay_days_lag."""
     window_start = as_of - timedelta(days=BLAST_LAG_WINDOW_DAYS)
     rows = db.execute(
         select(BlastEvent.planned_date, BlastEvent.actual_date).where(
@@ -46,5 +47,9 @@ def blast_delay_days_lag_for_site(db: Session, site_id: int, as_of: date) -> flo
             or_(BlastEvent.actual_date.is_(None), BlastEvent.actual_date > window_start),
         )
     ).all()
-    events = [(planned, _delay_days(planned, actual, as_of)) for planned, actual in rows]
-    return blast_delay_days_lag(events, as_of)
+    return [(planned, _delay_days(planned, actual, as_of)) for planned, actual in rows]
+
+
+def blast_delay_days_lag_for_site(db: Session, site_id: int, as_of: date) -> float:
+    """Blast-delay days at `site_id` in the trailing 7 days ending as_of - 1."""
+    return blast_delay_days_lag(blast_delay_events_for_site(db, site_id, as_of), as_of)
