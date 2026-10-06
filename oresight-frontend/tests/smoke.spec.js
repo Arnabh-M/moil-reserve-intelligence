@@ -112,6 +112,123 @@ test.describe('scenario simulator contract', () => {
   });
 });
 
+// Task 6: the Equipment tab on Site Intelligence, backed by
+// GET /equipment/metrics. These pin the things that are easy to break
+// silently -- tab order, the deliberately-blank utilisation column, keyboard
+// operability, and the window toggle actually re-fetching rather than
+// re-sorting stale data.
+test.describe('equipment performance panel', () => {
+  // Opens the tab and waits for the live metrics table, so no test below
+  // races the fetch. Returns the first row's machine id.
+  async function openEquipmentTab(page, site = 1) {
+    await page.goto(`/site/${site}?tab=equipment`);
+    await page.waitForSelector('[data-testid="table-equipment-metrics"] tbody tr', { timeout: 15000 });
+    await page.waitForTimeout(300);
+  }
+
+  test('Equipment tab sits between Production and Reserve', async ({ page }) => {
+    await page.goto('/site/1');
+    await page.waitForSelector('.tabs .tab');
+    const tabs = await page.locator('.tabs .tab').allInnerTexts();
+    expect(tabs, `Site tab order drifted: ${JSON.stringify(tabs)}`).toEqual(['Overview', 'Production', 'Equipment', 'Reserve', 'Recommendations', 'Graph']);
+
+    // ?tab=equipment must actually resolve to the panel, not fall through to
+    // an empty tab body the way an unregistered tab value would.
+    await openEquipmentTab(page);
+    await expect(page.locator('[data-testid="tab-site-equipment"]')).toHaveClass(/active/);
+  });
+
+  test('utilisation column renders an em dash for every row, never a number', async ({ page }) => {
+    await openEquipmentTab(page);
+    const cells = await page.locator('[data-testid^="utilisation-"]').allInnerTexts();
+    expect(cells.length, 'No utilisation cells found -- did the column get renamed or dropped?').toBeGreaterThan(0);
+    for (const cell of cells) {
+      // The backend has no hour-meter data, so utilisation_pct is null by
+      // contract. A number here means someone started deriving it.
+      expect(cell.trim(), `Utilisation rendered "${cell}" -- it must always be "—". utilisation_pct is null by contract (no hour-meter data exists); showing a number would be invented data.`).toBe('—');
+      expect(cell, `Utilisation cell "${cell}" contains a digit`).not.toMatch(/\d/);
+    }
+    // The explanation has to be reachable, not just blank.
+    await expect(page.locator('[data-testid^="utilisation-"]').first()).toHaveAttribute('title', /hour-meter/i);
+  });
+
+  test('column headers sort by keyboard alone, and report aria-sort', async ({ page }) => {
+    await openEquipmentTab(page);
+    const namesBefore = await page.locator('[data-testid^="button-equipment-detail-"]').allInnerTexts();
+
+    // Focus the header without clicking it -- sorting must not be mouse-only.
+    await page.focus('[data-testid="sort-name"]');
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('data-testid')), 'The Equipment column header did not take keyboard focus -- it must be a real <button>, not a click handler on <th>.').toBe('sort-name');
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('th', { has: page.locator('[data-testid="sort-name"]') })).toHaveAttribute('aria-sort', 'ascending');
+    const namesAsc = await page.locator('[data-testid^="button-equipment-detail-"]').allInnerTexts();
+    expect(namesAsc, 'Rows did not reorder after an Enter press on the Equipment header').toEqual([...namesBefore].sort((a, b) => a.localeCompare(b)));
+
+    await page.keyboard.press('Enter');
+    await expect(page.locator('th', { has: page.locator('[data-testid="sort-name"]') })).toHaveAttribute('aria-sort', 'descending');
+    const namesDesc = await page.locator('[data-testid^="button-equipment-detail-"]').allInnerTexts();
+    expect(namesDesc, 'Second Enter press did not flip the sort direction').toEqual([...namesAsc].reverse());
+  });
+
+  test('machine detail drawer opens, exposes a dialog, and returns focus on Escape', async ({ page }) => {
+    await openEquipmentTab(page);
+    const trigger = page.locator('[data-testid^="button-equipment-detail-"]').first();
+    const triggerId = await trigger.getAttribute('data-testid');
+
+    await trigger.click();
+    const drawer = page.locator('[data-testid="panel-equipment-metrics-detail"]');
+    await expect(drawer).toBeVisible();
+    await expect(drawer).toHaveAttribute('role', 'dialog');
+    await expect(drawer).toHaveAttribute('aria-modal', 'true');
+
+    // Focus must move into the drawer, or a keyboard user is stranded behind it.
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('data-testid')), 'Opening the drawer left focus outside it').toBe('button-close-equipment-detail');
+
+    await page.waitForSelector('[data-testid="chart-equipment-weekly"]', { timeout: 10000 });
+
+    await page.keyboard.press('Escape');
+    await expect(drawer).toHaveCount(0);
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('data-testid')), 'Closing the drawer dropped focus (to <body>) instead of returning it to the row that opened it.').toBe(triggerId);
+  });
+
+  test('window toggle re-fetches: 90d and 30d disagree in the table and the drawer', async ({ page }) => {
+    await openEquipmentTab(page);
+
+    // Pick a machine that actually has downtime history, otherwise every
+    // window looks identical and this test would pass vacuously.
+    const rowWithHistory = page.locator('[data-testid="table-equipment-metrics"] tbody tr').filter({ hasNot: page.locator('td:nth-child(8):text-is("0")') }).first();
+    const machineId = (await rowWithHistory.locator('[data-testid^="button-equipment-detail-"]').getAttribute('data-testid')).replace('button-equipment-detail-', '');
+
+    const caption90 = await page.locator('[data-testid="text-equipment-metrics-caption"]').innerText();
+    const downtime90 = await rowWithHistory.locator('td').nth(7).innerText();
+
+    await page.click(`[data-testid="button-equipment-detail-${machineId}"]`);
+    await page.waitForSelector('[data-testid="chart-equipment-weekly"]');
+    const events90 = await page.locator('[data-testid="panel-equipment-metrics-detail"] .eq-history-item').count();
+    const bars90 = await page.locator('[data-testid="chart-equipment-weekly"] .recharts-bar-rectangle').count();
+    await page.keyboard.press('Escape');
+
+    await page.click('[data-testid="button-eqmetrics-window-30"]');
+    await page.waitForTimeout(1200);
+
+    const caption30 = await page.locator('[data-testid="text-equipment-metrics-caption"]').innerText();
+    expect(caption30, `The window caption did not change when switching to 30d -- the toggle is re-rendering stale data instead of re-fetching.\n90d: ${caption90}\n30d: ${caption30}`).not.toBe(caption90);
+    expect(caption30, `30d window should report 744 h (31 inclusive days); got: ${caption30}`).toContain('744');
+
+    const downtime30 = await page.locator(`[data-testid="button-equipment-detail-${machineId}"]`).locator('xpath=ancestor::tr').locator('td').nth(7).innerText();
+    expect(Number(downtime30.replace(/,/g, '')), `A 30-day window must report no more downtime than the 90-day window for the same machine (90d=${downtime90}, 30d=${downtime30}).`).toBeLessThanOrEqual(Number(downtime90.replace(/,/g, '')));
+
+    await page.click(`[data-testid="button-equipment-detail-${machineId}"]`);
+    await page.waitForSelector('[data-testid="chart-equipment-weekly"]');
+    const bars30 = await page.locator('[data-testid="chart-equipment-weekly"] .recharts-bar-rectangle').count();
+    const events30 = await page.locator('[data-testid="panel-equipment-metrics-detail"] .eq-history-item').count();
+
+    expect(bars30, `The drawer's weekly chart showed ${bars30} bars for a 30-day window vs ${bars90} for 90 days -- it must re-fetch with the panel's window, not keep the old series.`).toBeLessThan(bars90);
+    expect(events30, `The drawer's event list did not shrink with the window (90d=${events90}, 30d=${events30}).`).toBeLessThanOrEqual(events90);
+  });
+});
+
 test.describe('causal graph contract', () => {
   test('Nagpur (site 2) equipment-down demo path resolves the real neo4j graph, not the fallback', async ({ page }) => {
     let graphBody = null;
