@@ -3,6 +3,11 @@ import { Activity, AlertTriangle, Loader2, Mountain, RefreshCw, Sun, X } from 'l
 import Map, { Layer, Marker, Popup, Source } from 'react-map-gl/maplibre'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+// MapLibre otherwise locates its worker as `./maplibre-gl-worker.mjs` next to
+// its own module, which after bundling is /assets/ — a file the build never
+// emits. `?worker&url` (not plain `?url`) makes Vite bundle the worker
+// together with its `./maplibre-gl-shared.mjs` import into one hashed asset.
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { api } from '../../api/client'
 import { useTileManifest } from '../../lib/useTileManifest'
 import {
@@ -47,9 +52,13 @@ import {
   MOIL_MINES_LABEL_LAYOUT,
   MOIL_MINES_LABEL_PAINT,
   MOIL_MINES_MIN_ZOOM,
+  LABEL_TEXT_FONT,
 } from '../../lib/map'
 import ConfidenceLegend from './ConfidenceLegend'
 import NdviTimeSlider from './NdviTimeSlider'
+
+// Module scope: runs once, on import, before any <Map> can be created.
+maplibregl.setWorkerUrl(maplibreWorkerUrl)
 
 class MapErrorBoundary extends Component {
   constructor(props) {
@@ -661,6 +670,7 @@ export default function MineMap({
             filter={['has', 'point_count']}
             layout={{
               'text-field': '{point_count_abbreviated}',
+              'text-font': LABEL_TEXT_FONT,
               'text-size': 12,
             }}
             paint={{
@@ -688,6 +698,7 @@ export default function MineMap({
             filter={['!', ['has', 'point_count']]}
             layout={{
               'text-field': '{name} Mine',
+              'text-font': LABEL_TEXT_FONT,
               'text-size': 11,
               'text-offset': [0, 1.2],
               'text-anchor': 'top',

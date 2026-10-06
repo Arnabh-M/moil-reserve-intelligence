@@ -171,8 +171,15 @@ export const MOIL_MINES_CIRCLE_PAINT = {
   'circle-stroke-opacity': ['case', ['get', 'in_aoi'], 1, 0.45],
 }
 
+// Every symbol layer with text must name a font the basemap's glyph server
+// actually hosts. Left unset, MapLibre requests its default "Open Sans
+// Regular,Arial Unicode MS Regular" stack, which OpenFreeMap 404s, and the
+// labels silently never draw.
+export const LABEL_TEXT_FONT = ['Noto Sans Regular']
+
 export const MOIL_MINES_LABEL_LAYOUT = {
   'text-field': ['get', 'name'],
+  'text-font': LABEL_TEXT_FONT,
   'text-size': ['interpolate', ['linear'], ['zoom'], 8, 10, 12, 13],
   'text-offset': [0, 1.1],
   'text-anchor': 'top',

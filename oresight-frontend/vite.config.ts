@@ -37,6 +37,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['maplibre-gl'],
   },
+  // MapLibre starts its worker with `new Worker(url, { type: 'module' })`, so
+  // emit workers (MineMap.jsx's `?worker&url` import) as ES modules rather
+  // than Vite's default IIFE.
+  worker: {
+    format: 'es',
+  },
   plugins: [
     react(),
     tailwindcss(),
